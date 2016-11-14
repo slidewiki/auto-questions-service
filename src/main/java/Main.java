@@ -21,7 +21,6 @@ public class Main {
 // read some text in the text variable
         String text = "All day I dream about sports"; // Add your text here!
 
-// create an empty Annotation just with the given text
         Annotation document = new Annotation(text);
 // some change
 // run all Annotators on this text
