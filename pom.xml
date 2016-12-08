@@ -52,5 +52,11 @@
             <version>${log4j.version}</version>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>org.nlp2rdf</groupId>
+            <artifactId>nif</artifactId>
+            <version>0.4</version>
+        </dependency>
+
     </dependencies>
 </project>
