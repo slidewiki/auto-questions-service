@@ -15,7 +15,9 @@ hs_err_pid*
 .idea/
 *.iml
 *.iws
+*.log
 
 # Maven
 log/
 target/
+/questions.txt

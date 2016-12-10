@@ -1,5 +1,4 @@
 import org.apache.jena.rdf.model.*;
-import org.apache.jena.sparql.SystemARQ;
 import org.apache.jena.vocabulary.VCARD;
 
 /**
