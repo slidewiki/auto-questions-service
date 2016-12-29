@@ -1,6 +1,3 @@
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
-
 public class Main {
 
     public static void main(String[] args) {
@@ -14,7 +11,7 @@ public class Main {
 //        }
         DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
         dbPediaSpotlightClient.init();
-        dbPediaSpotlightClient.getResponse("President Obama called Wednesday on Congress to extend a tax break\\n  for students included in last year's economic stimulus package, arguing\\n  that the policy provides more generous assistance.");
+        dbPediaSpotlightClient.annotatePost(NLPConsts.article);
 //        new JenaStuff().runJena();
 //        new NIF().nifRun();
     }
