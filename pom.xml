@@ -8,11 +8,26 @@
     <artifactId>nlp-rdf</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <properties>
         <jena.version>3.1.0</jena.version>
         <nlp.version>3.6.0</nlp.version>
         <slf4j.version>1.6.4</slf4j.version>
         <log4j.version>1.2.16</log4j.version>
+        <dbpedia.spotlight.version>0.7</dbpedia.spotlight.version>
+        <jersey.client.version>2.25</jersey.client.version>
     </properties>
 
 
@@ -56,6 +71,16 @@
             <groupId>org.nlp2rdf</groupId>
             <artifactId>nif</artifactId>
             <version>0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>${jersey.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <version>${jersey.client.version}</version>
         </dependency>
     </dependencies>
 </project>

@@ -9,6 +9,9 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.HashMap.*;
 
 /**
  * Created by andy on 12/6/16.
@@ -21,6 +24,7 @@ public class NLPStuff {
         HashMap<String, ArrayList<String>> sentenceKeywords = getKeywords(summary);
         Iterator<Map.Entry<String, ArrayList<String>>> iterator = sentenceKeywords.entrySet().iterator();
         PrintWriter writer = new PrintWriter("questions.txt", "UTF-8");
+//        Runtime runtime = Runtime.getRuntime();
 
         while (iterator.hasNext()) {
             Map.Entry<String, ArrayList<String>> next = iterator.next();
@@ -29,10 +33,31 @@ public class NLPStuff {
             for (String keyword : value) {
                 String question = sentence.replace(keyword, "__________");
                 writer.println(question);
+//                try {
+//                    Process process = runtime.exec("");
+//                    int resultCode = process.waitFor();
+//
+//                    if (resultCode == 0) {
+//                        // all is good
+//                    }
+//                } catch (Throwable cause) {
+//                    // process cause
+//                }
                 writer.println();
             }
+            System.out.println();
             iterator.remove();
         }
+        writer.close();
+    }
+
+    public void runFrequencyNLP() throws FileNotFoundException, UnsupportedEncodingException {
+        SimpleSummariser simpleSummariser = new SimpleSummariser();
+        String text = simpleSummariser.summarise(NLPConsts.article, 10);
+//        String text = NLPConsts.article;
+        HashMap<String, Integer> frequentWords = getFrequentWords(text);
+        PrintWriter writer = new PrintWriter("frequentWords.txt", "UTF-8");
+        frequentWords.forEach((s, integer) -> writer.println(s + " " + integer));
         writer.close();
     }
 
@@ -77,5 +102,34 @@ public class NLPStuff {
             sentenceKeywordPairs.put(sentence.toString(), keywords);
         }
         return sentenceKeywordPairs;
+    }
+
+    private LinkedHashMap<String, Integer> getFrequentWords(String text) {
+        Properties props = new Properties();
+        props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
+        StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
+
+        LinkedHashMap<String, Integer> wordFrequencyPairs = new LinkedHashMap<String, Integer>();
+        Annotation document = new Annotation(text);
+
+        pipeline.annotate(document);
+        List<CoreLabel> coreLabels = document.get(CoreAnnotations.TokensAnnotation.class);
+
+        for (CoreLabel token: coreLabels) {
+            String word = token.get(CoreAnnotations.TextAnnotation.class);
+            String ne = token.get(CoreAnnotations.NamedEntityTagAnnotation.class);
+
+            if(!ne.equals("O")) {
+                wordFrequencyPairs.put(word, wordFrequencyPairs.getOrDefault(word, 0) + 1);
+            }
+        }
+        return sortMap(wordFrequencyPairs);
+    }
+
+    private LinkedHashMap<String, Integer> sortMap(LinkedHashMap<String, Integer> map) {
+        return map.entrySet().stream().
+                sorted(Entry.comparingByValue()).
+                collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+                        (e1, e2) -> e1, LinkedHashMap::new));
     }
 }
