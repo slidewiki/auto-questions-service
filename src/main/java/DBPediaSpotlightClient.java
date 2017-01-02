@@ -26,27 +26,25 @@ public class DBPediaSpotlightClient {
      * Annotate small piece of text via GET request
      * @param text
      */
-    public void annotateGet(String text) {
-        DBPediaSpotlightPOJO response = webTarget
+    public DBPediaSpotlightPOJO annotateGet(String text) {
+        return webTarget
                 .queryParam("confidence", CONFIDENCE)
                 .queryParam("text", text)
                 .request(MediaType.APPLICATION_JSON)
                 .get(DBPediaSpotlightPOJO.class);
-        System.out.println(response.toString());
     }
 
     /**
      * Annotate large piece of text via POST request
      * @param text Text to be annotated
      */
-    public void annotatePost(String text) {
+    public DBPediaSpotlightPOJO annotatePost(String text) {
         Form form = new Form();
         form.param("confidence", String.valueOf(CONFIDENCE));
         form.param("text", text);
-        DBPediaSpotlightPOJO response = webTarget.
+        return webTarget.
                 request()
                 .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED), DBPediaSpotlightPOJO.class);
-        System.out.println(response.toString());
     }
 }

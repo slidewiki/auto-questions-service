@@ -22,7 +22,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
         "@similarityScore",
         "@percentageOfSecondRank"
 })
-public class DBPediaResource implements Serializable
+public class DBPediaResource implements Serializable, Comparable
 {
 
     @JsonProperty("@URI")
@@ -156,4 +156,8 @@ public class DBPediaResource implements Serializable
         this.additionalProperties.put(name, value);
     }
 
+    @Override
+    public int compareTo(Object o) {
+        return 0;
+    }
 }
