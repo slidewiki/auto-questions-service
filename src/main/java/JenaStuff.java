@@ -2,7 +2,7 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.VCARD;
 
 /**
- * Created by andy on 12/6/16.
+ * Created by Ainuddin Faizan on 12/6/16.
  */
 public class JenaStuff {
 

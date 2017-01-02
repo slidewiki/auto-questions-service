@@ -7,7 +7,7 @@ import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 
 /**
- * Created by andy on 12/29/16.
+ * Created by Ainuddin Faizan on 12/29/16.
  */
 public class DBPediaSpotlightClient {
     private Client client;

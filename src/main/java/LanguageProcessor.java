@@ -6,7 +6,7 @@ import edu.stanford.nlp.util.CoreMap;
 import java.util.*;
 
 /**
- * Created by andy on 12/6/16.
+ * Created by Ainuddin Faizan on 12/6/16.
  */
 public class LanguageProcessor {
 

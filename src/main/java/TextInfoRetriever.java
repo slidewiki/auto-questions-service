@@ -3,7 +3,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
- * Created by andy on 1/2/17.
+ * Created by Ainuddin Faizan on 1/2/17.
  */
 public class TextInfoRetriever {
 
