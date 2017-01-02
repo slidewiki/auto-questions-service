@@ -13,7 +13,7 @@ public class DBPediaSpotlightClient {
     private Client client;
     private WebTarget webTarget;
     private final static String API_URL = "http://spotlight.sztaki.hu:2222/";
-    private static final double CONFIDENCE = 0.35;
+    private static final double CONFIDENCE = 0.85;
     private static final int SUPPORT = 0;
 
     @PostConstruct
