@@ -12,8 +12,8 @@ public class QuestionGenerator {
 
     public void generate() throws FileNotFoundException, UnsupportedEncodingException {
         String text = NLPConsts.article;
-        TextInfoRetriever retriever = new TextInfoRetriever();
-        Map<DBPediaResource, Integer> frequentWords = retriever.getFrequentWords(text);
+        TextInfoRetriever retriever = new TextInfoRetriever(text);
+        Map<DBPediaResource, Integer> frequentWords = retriever.getFrequentWords();
 
         PrintWriter wordWriter = new PrintWriter("frequentWords.txt", "UTF-8");
         frequentWords.forEach((resource, integer) -> wordWriter.println(resource.getSurfaceForm() + " " + integer));
@@ -29,6 +29,12 @@ public class QuestionGenerator {
                 if(s.contains(entry.getSurfaceForm())){
                     questionWriter.println("Question: " + s.replace(entry.getSurfaceForm(), "________"));
                     questionWriter.println("Answer: " + entry.getSurfaceForm());
+                    questionWriter.print("Distractors: ");
+                    List<String> distractors = retriever.getDistractors(entry);
+                    distractors.forEach(d -> {
+                        questionWriter.print(d + ", ");
+                    });
+                    questionWriter.println();
                 }
             });
             questionWriter.println();

@@ -7,13 +7,19 @@ import java.util.*;
  */
 public class TextInfoRetriever {
 
-    public Map<DBPediaResource, Integer> getFrequentWords(String text) throws FileNotFoundException, UnsupportedEncodingException {
+    private List<DBPediaResource> dbPediaResources;
+
+    public TextInfoRetriever(String text) {
         DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
         dbPediaSpotlightClient.init();
         DBPediaSpotlightPOJO response = dbPediaSpotlightClient.annotatePost(text);
+        dbPediaResources = response.getDBPediaResources();
+    }
+
+    public Map<DBPediaResource, Integer> getFrequentWords() throws FileNotFoundException, UnsupportedEncodingException {
+
         Map<String, Integer> wordFrequencyPairs = new LinkedHashMap<>();
         Map<String, DBPediaResource> frequentResources = new LinkedHashMap<>();
-        List<DBPediaResource> dbPediaResources = response.getDBPediaResources();
 
         // get frequency of each unique word
         for (DBPediaResource dbPediaResource : dbPediaResources) {
@@ -35,4 +41,11 @@ public class TextInfoRetriever {
 
         return topWords;
     }
+
+    public List<String> getDistractors(DBPediaResource resource) {
+        DistractorGenerator generator = new DistractorGenerator();
+        return generator.generate(resource, dbPediaResources);
+    }
+
+
 }
