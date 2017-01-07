@@ -13,6 +13,11 @@ public class QuestionGenerator {
     public void generate() throws FileNotFoundException, UnsupportedEncodingException {
         String text = NLPConsts.article;
         TextInfoRetriever retriever = new TextInfoRetriever(text);
+        List<DBPediaResource> resources = retriever.getDbPediaResources();
+        PrintWriter resourceWriter = new PrintWriter("resources.txt", "UTF-8");
+        resources.forEach(resource -> resourceWriter.println(resource.toString()));
+        resourceWriter.close();
+
         Map<DBPediaResource, Integer> frequentWords = retriever.getFrequentWords();
 
         PrintWriter wordWriter = new PrintWriter("frequentWords.txt", "UTF-8");

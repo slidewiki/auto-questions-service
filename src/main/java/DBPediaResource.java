@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "@URI",
@@ -143,7 +145,7 @@ public class DBPediaResource implements Serializable, Comparable
 
     @Override
     public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+        return ToStringBuilder.reflectionToString(this, MULTI_LINE_STYLE);
     }
 
     @JsonAnyGetter
