@@ -8,6 +8,7 @@ public class Main {
 //        } catch (UnsupportedEncodingException e) {
 //            e.printStackTrace();
 //        }
+//        new NIF().nifRun();
         ARQClient.sampleRequest();
     }
 }
