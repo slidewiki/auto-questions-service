@@ -16,7 +16,14 @@ public class TextInfoRetriever {
         dbPediaResources = response.getDBPediaResources();
     }
 
-    public Map<DBPediaResource, Integer> getFrequentWords() throws FileNotFoundException, UnsupportedEncodingException {
+    /**
+     *
+     * @param n Number of frequent words desired. Pass 0 to get all words
+     * @return A Map of most frequent DBPediaResource objects and their count in Integer
+     * @throws FileNotFoundException
+     * @throws UnsupportedEncodingException
+     */
+    public Map<DBPediaResource, Integer> getFrequentWords(int n) throws FileNotFoundException, UnsupportedEncodingException {
 
         Map<String, Integer> wordFrequencyPairs = new LinkedHashMap<>();
         Map<String, DBPediaResource> frequentResources = new LinkedHashMap<>();
@@ -34,7 +41,11 @@ public class TextInfoRetriever {
         List<Map.Entry<String,Integer>> entryList = new ArrayList<>(sortedMap.entrySet());
         int size = entryList.size();
         sortedMap.clear();
-        entryList.subList(size - 20, size - 1).forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue()));
+        int firstIndex = 0;
+        if(n > 0 && n < size) {
+            firstIndex = size - n;
+        }
+        entryList.subList(firstIndex, size - 1).forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue()));
 
         Map<DBPediaResource, Integer> topWords = new LinkedHashMap<>();
         sortedMap.forEach((s, integer) -> topWords.put(frequentResources.get(s), integer));

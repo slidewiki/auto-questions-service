@@ -120,4 +120,71 @@ public class NLPConsts {
             "Brazil's Mário Zagallo and West Germany's Franz Beckenbauer are the only people to date to win the World Cup as both player and head coach. Zagallo won in 1958 and 1962 as a player and in 1970 as head coach.[83] Beckenbauer won in 1974 as captain and in 1990 as head coach.[84] Italy's Vittorio Pozzo is the only head coach to ever win two World Cups (1934 and 1938).[85] All World Cup winning head coaches were natives of the country they coached to victory.\n" +
             "\n" +
             "Among the national teams, Germany has played the most World Cup matches (106) and appeared in the most finals (8), semi-finals (13), quarter-finals (16) as well as scoring the most World Cup goals (224), while Brazil has appeared in the most World Cups (20).[86] The two teams have played each other twice in the World Cup, in the 2002 final and in the 2014 semi-final.";
+
+    public static final String SOLAR_SYSTEM_ARTICLE = "Our solar system consists of an average star we call the Sun, the planets Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, and Pluto. It includes: the satellites of the planets; numerous comets, asteroids, and meteoroids; and the interplanetary medium. The Sun is the richest source of electromagnetic energy (mostly in the form of heat and light) in the solar system. The Sun's nearest known stellar neighbor is a red dwarf star called Proxima Centauri, at a distance of 4.3 light years away. The whole solar system, together with the local stars visible on a clear night, orbits the center of our home galaxy, a spiral disk of 200 billion stars we call the Milky Way. The Milky Way has two small galaxies orbiting it nearby, which are visible from the southern hemisphere. They are called the Large Magellanic Cloud and the Small Magellanic Cloud. The nearest large galaxy is the Andromeda Galaxy. It is a spiral galaxy like the Milky Way but is 4 times as massive and is 2 million light years away. Our galaxy, one of billions of galaxies known, is traveling through intergalactic space.\n" +
+            "\n" +
+            "The planets, most of the satellites of the planets and the asteroids revolve around the Sun in the same direction, in nearly circular orbits. When looking down from above the Sun's north pole, the planets orbit in a counter-clockwise direction. The planets orbit the Sun in or near the same plane, called the ecliptic. Pluto is a special case in that its orbit is the most highly inclined (18 degrees) and the most highly elliptical of all the planets. Because of this, for part of its orbit, Pluto is closer to the Sun than is Neptune. The axis of rotation for most of the planets is nearly perpendicular to the ecliptic. The exceptions are Uranus and Pluto, which are tipped on their sides. " +
+            "The Sun contains 99.85% of all the matter in the Solar System. The planets, which condensed out of the same disk of material that formed the Sun, contain only 0.135% of the mass of the solar system. Jupiter contains more than twice the matter of all the other planets combined. Satellites of the planets, comets, asteroids, meteoroids, and the interplanetary medium constitute the remaining 0.015%. " +
+            "Nearly all the solar system by volume appears to be an empty void. Far from being nothingness, this vacuum of \"space\" comprises the interplanetary medium. It includes various forms of energy and at least two material components: interplanetary dust and interplanetary gas. Interplanetary dust consists of microscopic solid particles. Interplanetary gas is a tenuous flow of gas and charged particles, mostly protons and electrons -- plasma -- which stream from the Sun, called the solar wind.\n" +
+            "\n" +
+            "Solar wind diagram\n" +
+            "\n" +
+            "The solar wind can be measured by spacecraft, and it has a large effect on comet tails. It also has a measurable effect on the motion of spacecraft. The speed of the solar wind is about 400 kilometers (250 miles) per second in the vicinity of Earth's orbit. The point at which the solar wind meets the interstellar medium, which is the \"solar\" wind from other stars, is called the heliopause. It is a boundary theorized to be roughly circular or teardrop-shaped, marking the edge of the Sun's influence perhaps 100 AU from the Sun. The space within the boundary of the heliopause, containing the Sun and solar system, is referred to as the heliosphere.\n" +
+            "\n" +
+            "The solar magnetic field extends outward into interplanetary space; it can be measured on Earth and by spacecraft. The solar magnetic field is the dominating magnetic field throughout the interplanetary regions of the solar system, except in the immediate environment of planets which have their own magnetic fields.\n" +
+            "Terrestrial Planets The Terrestrial Planets\n" +
+            "The terrestrial planets are the four innermost planets in the solar system, Mercury, Venus, Earth and Mars. They are called terrestrial because they have a compact, rocky surface like the Earth's. The planets, Venus, Earth, and Mars have significant atmospheres while Mercury has almost none. The following diagram shows the approximate distance of the terrestrial planets to the Sun.\n" +
+            "\n" +
+            "Inner Planets\n" +
+            "\n" +
+            "Jovian Planets The Jovian Planets\n" +
+            "Jupiter, Saturn, Uranus, and Neptune are known as the Jovian (Jupiter-like) planets, because they are all gigantic compared with Earth, and they have a gaseous nature like Jupiter's. The Jovian planets are also referred to as the gas giants, although some or all of them might have small solid cores. The following diagram shows the approximate distance of the Jovian planets to the Sun.\n" +
+            "\n" +
+            "Outer Planets\n" +
+            "\n" +
+            "Solar System Animation\n" +
+            "\n" +
+            "    Formation of the Solar System. \n" +
+            "\n" +
+            "Views of the Solar System\n" +
+            "\n" +
+            "Milky Way Our Milkyway Galaxy\n" +
+            "This image of our galaxy, the Milky Way, was taken with NASA's Cosmic Background Explorer's (COBE) Diffuse Infrared Background Experiment (DIRBE). This never-before-seen view shows the Milky Way from an edge-on perspective with the galactic north pole at the top, the south pole at the bottom and the galactic center at the center. The picture combines images obtained at several near-infrared wavelengths. Stars within our galaxy are the dominant source of light at these wavelengths. Even though our solar system is part of the Milky Way, the view looks distant because most of the light comes from the population of stars that are closer to the galactic center than our own Sun. (Courtesy NASA)\n" +
+            "\n" +
+            "Our Milky Way Gets a Makeover Our Milky Way Gets a Makeover\n" +
+            "Like early explorers mapping the continents of our globe, astronomers are busy charting the spiral structure of our galaxy, the Milky Way. Using infrared images from NASA's Spitzer Space Telescope, scientists have discovered that the Milky Way's elegant spiral structure is dominated by just two arms wrapping off the ends of a central bar of stars. Previously, our galaxy was thought to possess four major arms.\n" +
+            "\n" +
+            "This artist's concept illustrates the new view of the Milky Way, along with other findings presented at the 212th American Astronomical Society meeting in St. Louis, Mo. The galaxy's two major arms (Scutum-Centaurus and Perseus) can be seen attached to the ends of a thick central bar, while the two now-demoted minor arms (Norma and Sagittarius) are less distinct and located between the major arms. The major arms consist of the highest densities of both young and old stars; the minor arms are primarily filled with gas and pockets of star-forming activity.\n" +
+            "\n" +
+            "The artist's concept also includes a new spiral arm, called the \"Far-3 kiloparsec arm,\" discovered via a radio-telescope survey of gas in the Milky Way. This arm is shorter than the two major arms and lies along the bar of the galaxy.\n" +
+            "\n" +
+            "Our sun lies near a small, partial arm called the Orion Arm, or Orion Spur, located between the Sagittarius and Perseus arms. (Courtesy NASA/JPL-Caltech)\n" +
+            "\n" +
+            "Andromeda Spiral Galaxy, NGC 4414\n" +
+            "The majestic galaxy, NGC 4414, is located 60 million light-years away. Like the Milky Way, NGC 4414 is a giant spiral-shaped disk of stars, with a bulbous central hub of older yellow and red stars. The outer spiral arms are considerably bluer due to ongoing formation of young, blue stars, the brightest of which can be seen individually at the high resolution provided by the Hubble camera. The arms are also very rich in clouds of interstellar dust, seen as dark patches and streaks silhouetted against the starlight. (Courtesy NASA/STSCI)\n" +
+            "\n" +
+            "Planet Obliquity Obliquity of the Eight Planets\n" +
+            "This illustration shows the obliquity of the eight planets. Obliquity is the angle between a planet's equatorial plane and its orbital plane. By International Astronomical Union (IAU) convention, a planet's north pole lies above the ecliptic plane. By this convention, Venus, Uranus, and Pluto have a retrograde rotation, or a rotation that is in the opposite direction from the other planets. (Copyright 2008 by Calvin J. Hamilton)\n" +
+            "\n" +
+            "Solar System The Solar System\n" +
+            "During the past three decades a myriad of space explorers have escaped the confines of planet Earth and have set out to discover our planetary neighbors. This picture shows the Sun and all nine planets of the solar system as seen by the space explorers. Starting at the top-left corner is the Sun followed by the planets Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, and Pluto. (Copyright 1998 by Calvin J. Hamilton)\n" +
+            "\n" +
+            "Solar System Sun and Planets\n" +
+            "This image shows the Sun and nine planets approximately to scale. The order of these bodies are: Sun, Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, and Pluto. (Copyright Calvin J. Hamilton)\n" +
+            "\n" +
+            "Jovian Planets Jovian Planets\n" +
+            "This image shows the Jovian planets Jupiter, Saturn, Uranus and Neptune approximately to scale. The Jovian planets are named because of their gigantic Jupiter-like appearance. (Copyright Calvin J. Hamilton)\n" +
+            "\n" +
+            "Largest moons and smallest planets The Largest Moons and Smallest Planets\n" +
+            "This image shows the relative sizes of the largest moons and the smallest planets in the solarsystem. The largest satellites pictured in this image are: Ganymede (5262 km), Titan (5150 km), Callisto (4806 km), Io (3642 km), the Moon (3476 km), Europa (3138 km), Triton (2706 km), and Titania (1580 km). Both Ganymede and Titan are larger than planet Mercury followed by Io, the Moon, Europa, and Triton which are larger than the planet Pluto. (Copyright Calvin J. Hamilton)\n" +
+            "\n" +
+            "Solar System Diagram of Portrait Frames\n" +
+            "On February 14, 1990, the cameras of Voyager 1 pointed back toward the Sun and took a series of pictures of the Sun and the planets, making the first ever \"portrait\" of our solar system as seen from the outside. This image is a diagram of how the frames for the solar system portrait were taken. (Courtesy NASA/JPL)\n" +
+            "\n" +
+            "Solar System All Frames from the Family Portrait\n" +
+            "This image shows the series of pictures of the Sun and the planets taken on February 14, 1990, for the solar system family portrait as seen from the outside. In the course of taking this mosaic consisting of a total of 60 frames, Voyager 1 made several images of the inner solar system from a distance of approximately 6.4 billion kilometers (4 billion miles) and about 32° above the ecliptic plane. Thirty-nine wide angle frames link together six of the planets of our solar system in this mosaic. Outermost Neptune is 30 times further from the Sun than Earth. Our Sun is seen as the bright object in the center of the circle of frames. The insets show the planets magnified many times. (Courtesy NASA/JPL)\n" +
+            "\n" +
+            "Solar System Portrait of the Solar System\n" +
+            "These six narrow-angle color images were made from the first ever \"portrait\" of the solar system taken by Voyager 1, which was more than 6.4 billion kilometers (4 billion miles) from Earth and about 32° above the ecliptic. Mercury is too close to the Sun to be seen. Mars was not detectable by the Voyager cameras due to scattered sunlight in the optics, and Pluto was not included in the mosaic because of its small size and distance from the Sun. These blown-up images, left to right and top to bottom are Venus, Earth, Jupiter, Saturn, Uranus, and Neptune. (Courtesy NASA/JPL)\n";
+    public static int FREQUENT_WORDS_COUNT = 20;
 }
