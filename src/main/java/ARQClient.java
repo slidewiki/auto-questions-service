@@ -21,6 +21,10 @@ public class ARQClient {
             return null;// TODO Use URI to fetch data about resource
         }
 
+        if(resource.getSurfaceForm().contains("Platini")){
+            System.out.println(resource.toString());
+        }
+
         String queryString =
                 "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                 "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
@@ -28,35 +32,36 @@ public class ARQClient {
                 "?s foaf:name ?name .\n";
         String[] resourceTypes = resource.getTypes().split(",");
         for (String nsAndType : resourceTypes) {
-            if(nsAndType.contains("://")){
+            if(nsAndType.contains("Http://")){ // TODO Something more flexible?
+                nsAndType = nsAndType.replace("Http://", "http://");
                 queryString += "?s rdf:type <" + nsAndType + "> .\n";
             }
             else {
                 String[] nsTypePair = nsAndType.split(":");
                 String namespace = nsTypePair[0];
                 String type = nsTypePair[1];
-
-                if(namespace.equalsIgnoreCase("dbpedia")) {
-                    queryString = addPrefix(queryString, PREFIX_DBRES);
-                } else if(namespace.equalsIgnoreCase("schema")) {
-                    queryString = addPrefix(queryString, PREFIX_SCHEMA);
-                }
+                queryString = addPrefix(queryString, namespace);
                 queryString += "?s rdf:type " + getNamespace(namespace) + ":" + type + " .\n";
             }
         }
-        queryString += "} LIMIT 20";
-        System.out.println(queryString);
+        queryString += "} LIMIT 100";
+
+        // TODO Refine Query results
         List<String> resourceNames = new ArrayList<>();
         Query query = QueryFactory.create(queryString);
         QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
         try {
             ResultSet results = qexec.execSelect();
+            if(!results.hasNext()) {
+                System.out.println(results.toString());
+            }
             for (; results.hasNext(); ) {
                 QuerySolution result = results.next();
                 RDFNode n = result.get("name");
                 String nameLiteral = "";
-                if ( n.isLiteral() )
+                if ( n.isLiteral() ){
                     nameLiteral = ((Literal)n).getLexicalForm() ;
+                }
                 if ( n.isResource() )
                 {
                     Resource r = (Resource)n ;
@@ -99,7 +104,13 @@ public class ARQClient {
         }
     }
 
-    private String addPrefix(String queryString, String prefix){
+    private String addPrefix(String queryString, String namespace){
+        String prefix = "";
+        if(namespace.equalsIgnoreCase("dbpedia")) {
+            prefix = PREFIX_DBRES;
+        } else if(namespace.equalsIgnoreCase("schema")) {
+            prefix = PREFIX_SCHEMA;
+        }
         if(!queryString.contains(prefix)) {
             queryString = prefix + queryString;
         }

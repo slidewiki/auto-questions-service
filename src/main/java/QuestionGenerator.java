@@ -11,7 +11,7 @@ import java.util.Set;
 public class QuestionGenerator {
 
     public void generate() throws FileNotFoundException, UnsupportedEncodingException {
-        String text = NLPConsts.FIFA_WC_ARTICLE;
+        String text = NLPConsts.SOLAR_SYSTEM_ARTICLE;
         TextInfoRetriever retriever = new TextInfoRetriever(text);
         List<DBPediaResource> resources = retriever.getDbPediaResources();
         PrintWriter resourceWriter = new PrintWriter("resources.txt", "UTF-8");
@@ -31,16 +31,16 @@ public class QuestionGenerator {
         List<String> sentences = processor.getSentences();
 
         //TODO Efficiency?
-        for(DBPediaResource entry : frequentResources) {
+        for(DBPediaResource resource : frequentResources) {
+            String surfaceForm = resource.getSurfaceForm();
+            List<String> distractors = retriever.getDistractors(resource); // TODO Cache distractors
             sentences.forEach(s -> {
-                if(s.contains(entry.getSurfaceForm())){
-                    questionWriter.println("Question: " + s.replace(entry.getSurfaceForm(), "________"));
-                    questionWriter.println("Answer: " + entry.getSurfaceForm());
+                if(s.contains(surfaceForm)){
+                    questionWriter.println("Question: " + s.replace(surfaceForm, "________"));
+                    questionWriter.println("Answer: " + surfaceForm);
                     questionWriter.print("Distractors: ");
-                    List<String> distractors = retriever.getDistractors(entry);
-                    distractors.forEach(d -> {
-                        questionWriter.print(d + ", ");
-                    });
+                    List<String> finalDistractors = DataStructureUtils.getRandomItemsFromList(distractors, 5);
+                    finalDistractors.forEach(d -> questionWriter.print(d + ", "));
                     questionWriter.println("\n");
                 }
             });
