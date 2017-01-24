@@ -12,6 +12,6 @@ public class Main {
             e.printStackTrace();
         }
 //        new NIF().nifRun();
-//        ARQClient.sampleRequest();
+//        ARQClient.getResourceTypes();
     }
 }

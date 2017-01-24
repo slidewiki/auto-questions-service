@@ -29,6 +29,7 @@ public class QuestionGenerator {
         LanguageProcessor processor = new LanguageProcessor(text);
         List<String> sentences = processor.getSentences();
 
+        //TODO Efficiency?
         for(DBPediaResource entry : frequentResources) {
             sentences.forEach(s -> {
                 if(s.contains(entry.getSurfaceForm())){
@@ -39,10 +40,9 @@ public class QuestionGenerator {
                     distractors.forEach(d -> {
                         questionWriter.print(d + ", ");
                     });
-                    questionWriter.println();
+                    questionWriter.println("\n");
                 }
             });
-            questionWriter.println();
         }
         questionWriter.close();
     }

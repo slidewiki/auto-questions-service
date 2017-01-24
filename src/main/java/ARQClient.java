@@ -1,5 +1,8 @@
 import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 
 import java.util.List;
 
@@ -8,38 +11,75 @@ import java.util.List;
  */
 public class ARQClient {
 
-    public static void sampleRequest() {
+    private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
+    private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
+
+    public List<DBPediaResource> getSimilarResources(DBPediaResource resource) {
+
+        if (resource.getTypes().isEmpty()) {
+            return null;// TODO Use URI to fetch data about resource
+        }
         String queryString =
-                "PREFIX dbres: <http://dbpedia.org/ontology/>\n" +
-                "PREFIX schema: <http://schema.org/>\n" +
-                        "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                        "SELECT DISTINCT ?s WHERE {\n" +
-                        "?s rdf:type dbres:Organisation .\n" +
-                        "?s rdf:type dbres:Agent .\n" +
-                        "?s rdf:type schema:Organization .\n" +
-                        "?s rdf:type schema:SportsTeam .\n" +
-                        "?s rdf:type dbres:SportsTeam .\n" +
-                        "?s rdf:type dbres:SoccerClub .\n" +
-                        "} LIMIT 20";
+                "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
+                "SELECT DISTINCT ?name ?s WHERE {\n" +
+                "?s foaf:name ?name .";
+        String[] resourceTypes = resource.getTypes().split(",");
+        for (String nsAndType : resourceTypes) {
+            String[] nsTypePair = nsAndType.split(":");
+            String namespace = nsTypePair[0];
+            String type = nsTypePair[1];
+
+            if(namespace.equalsIgnoreCase("dbpedia")) {
+                queryString = addPrefix(queryString, PREFIX_DBRES);
+            } else if(namespace.equalsIgnoreCase("schema")) {
+                queryString = addPrefix(queryString, PREFIX_SCHEMA);
+            }
+            queryString += "?s rdf:type " + getNamespace(namespace) + ":" + type + " .\n";
+        }
+        queryString += "} LIMIT 20";
+        System.out.println(queryString);
+
+        Query query = QueryFactory.create(queryString);
+        QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+        try {
+            ResultSet results = qexec.execSelect();
+            for (; results.hasNext(); ) {
+                QuerySolution result = results.next();
+                RDFNode n = result.get("s");
+                // If you need to test the thing returned
+                if ( n.isLiteral() )
+                    ((Literal)n).getLexicalForm() ;
+                if ( n.isResource() )
+                {
+                    Resource r = (Resource)n ;
+                    if ( ! r.isAnon() )
+                    {
+                        r.getURI();
+                    }
+                }
+                System.out.println(result.toString());
+            }
+        } finally {
+            qexec.close();
+        }
+        return null;
+    }
+
+    public void getResourceTypes() {
 
         String uri = "<http://dbpedia.org/resource/Berlin>";
-        queryString = "construct { \n" +
+        String queryString = "construct { \n" +
                 "  " + uri + " ?p ?o .\n" +
                 "} \n" +
                 "where { \n" +
                 "  { " + uri + " ?p ?o } \n" +
                 "}";
 
-        // now creating query object
         Query query = QueryFactory.create(queryString);
-
-        // initializing queryExecution factory with remote service.
         QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
 
-        //after it goes standard query execution and result processing which can
-        // be found in almost any Jena/SPARQL tutorial.
         try {
-//            ResultSet results = qexec.execSelect();
             Model results = qexec.execConstruct();
 //            for (; results.hasNext(); ) {
 //                QuerySolution result = results.next();
@@ -50,6 +90,24 @@ public class ARQClient {
         } finally {
             qexec.close();
         }
+    }
+
+    private String addPrefix(String queryString, String prefix){
+        if(!queryString.contains(prefix)) {
+            queryString = prefix + queryString;
+        }
+        return queryString;
+    }
+
+    // TODO
+    private String getNamespace(String ns) {
+        switch (ns) {
+            case "DBpedia":
+                return "dbres";
+            case "Schema":
+                return "schema";
+        }
+        return "";
     }
 
     //TODO

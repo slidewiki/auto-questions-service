@@ -55,6 +55,7 @@ public class TextInfoRetriever {
 
     public List<String> getDistractors(DBPediaResource resource) {
         DistractorGenerator generator = new DistractorGenerator();
+        generator.getExternalDistractors(resource);
         return generator.getInTextDistractors(resource, dbPediaResources);
     }
 

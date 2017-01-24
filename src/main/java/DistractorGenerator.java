@@ -27,22 +27,8 @@ public class DistractorGenerator {
 
     // TODO
     public List<String> getExternalDistractors(DBPediaResource answer) {
-        String resourceTypes = answer.getTypes();
-        String[] answerTypes = resourceTypes.split(",");
-        for (String answerType : answerTypes) {
-            String namespace = answerType.split(":")[0];
-        }
+        ARQClient arqClient = new ARQClient();
+        arqClient.getSimilarResources(answer);
         return null;
-    }
-
-    // TODO
-    private String getNamespace(String ns) {
-        switch (ns) {
-            case "DBpedia":
-                return "http://dbpedia.org/page/";
-            case "Schema":
-                return "";
-        }
-        return "";
     }
 }
