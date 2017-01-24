@@ -18,22 +18,24 @@ public class QuestionGenerator {
         resources.forEach(resource -> resourceWriter.println(resource.toString()));
         resourceWriter.close();
 
-        Map<DBPediaResource, Integer> frequentWords = retriever.getFrequentWords(NLPConsts.FREQUENT_WORDS_COUNT);
 
-        PrintWriter wordWriter = new PrintWriter("frequentWords.txt", "UTF-8");
-        frequentWords.forEach((resource, integer) -> wordWriter.println(resource.getSurfaceForm() + " " + integer));
+//        Map<DBPediaResource, Integer> frequentWords = retriever.getFrequentWords(NLPConsts.FREQUENT_WORDS_COUNT);
+//        Set<DBPediaResource> topResources = frequentWords.keySet();
+
+        PrintWriter questionWriter = new PrintWriter("questions.txt", "UTF-8");
+
+        List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.FREQUENT_WORDS_COUNT);
+        PrintWriter wordWriter = new PrintWriter("relevantWords.txt", "UTF-8");
+        topResources.forEach((resource) -> wordWriter.println(resource.getSurfaceForm()));
         wordWriter.close();
 
-        // TODO Get most relevant words
-        PrintWriter questionWriter = new PrintWriter("questions.txt", "UTF-8");
-        Set<DBPediaResource> frequentResources = frequentWords.keySet();
         LanguageProcessor processor = new LanguageProcessor(text);
         List<String> sentences = processor.getSentences();
 
         //TODO Efficiency?
-        for(DBPediaResource resource : frequentResources) {
+        for(DBPediaResource resource : topResources) {
             String surfaceForm = resource.getSurfaceForm();
-            List<String> distractors = retriever.getDistractors(resource); // TODO Cache distractors
+            List<String> distractors = retriever.getDistractors(resource); // TODO Cache distractors, need to be much more specific
             sentences.forEach(s -> {
                 if(s.contains(surfaceForm)){
                     questionWriter.println("Question: " + s.replace(surfaceForm, "________"));

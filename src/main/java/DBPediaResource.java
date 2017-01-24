@@ -162,4 +162,18 @@ public class DBPediaResource implements Serializable, Comparable
     public int compareTo(Object o) {
         return 0;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof DBPediaResource){
+            DBPediaResource otherObj = (DBPediaResource) obj;
+            return otherObj.getURI().equals(this.getURI()) && otherObj.getSurfaceForm().equals(this.getSurfaceForm());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getURI().hashCode();
+    }
 }

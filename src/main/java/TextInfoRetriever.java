@@ -1,7 +1,6 @@
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by Ainuddin Faizan on 1/2/17.
@@ -52,6 +51,20 @@ public class TextInfoRetriever {
         sortedMap.forEach((s, integer) -> topWords.put(frequentResources.get(s), integer));
 
         return topWords;
+    }
+
+    public List<DBPediaResource> getMostRelevantWords(int n) {
+        Set<DBPediaResource> noDupeResources = new LinkedHashSet<>(dbPediaResources);
+        dbPediaResources.clear();
+        dbPediaResources.addAll(noDupeResources);
+        Comparator<DBPediaResource> comparator = Comparator.comparing(o -> Double.valueOf(o.getPercentageOfSecondRank()));
+        Collections.sort(dbPediaResources, comparator);
+        int size = dbPediaResources.size();
+        int firstIndex = 0;
+        if(n > 0 && n < size) {
+            firstIndex = size - n;
+        }
+        return dbPediaResources.subList(firstIndex, size - 1);
     }
 
     public List<String> getDistractors(DBPediaResource resource) {
