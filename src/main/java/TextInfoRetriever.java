@@ -55,8 +55,19 @@ public class TextInfoRetriever {
 
     public List<String> getDistractors(DBPediaResource resource) {
         DistractorGenerator generator = new DistractorGenerator();
-        generator.getExternalDistractors(resource);
-        return generator.getInTextDistractors(resource, dbPediaResources);
+        List<String> distractors = new ArrayList<>();
+        List<String> inTextDistractors = generator.getInTextDistractors(resource, dbPediaResources);
+        List<String> externalDistractors = generator.getExternalDistractors(resource);
+
+        if(inTextDistractors != null && !inTextDistractors.isEmpty()){
+            distractors.add("\nIn text distractors\n");
+            distractors.addAll(inTextDistractors);
+        }
+        if(externalDistractors != null && !externalDistractors.isEmpty()){
+            distractors.add("\nExternal distractors\n");
+            distractors.addAll(externalDistractors);
+        }
+        return distractors;
     }
 
     public List<DBPediaResource> getDbPediaResources() {

@@ -4,6 +4,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,42 +15,48 @@ public class ARQClient {
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
 
-    public List<DBPediaResource> getSimilarResources(DBPediaResource resource) {
+    public List<String> getSimilarResourceNames(DBPediaResource resource) {
 
         if (resource.getTypes().isEmpty()) {
             return null;// TODO Use URI to fetch data about resource
         }
+
         String queryString =
                 "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                 "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
-                "SELECT DISTINCT ?name ?s WHERE {\n" +
-                "?s foaf:name ?name .";
+                "SELECT DISTINCT ?name WHERE {\n" +
+                "?s foaf:name ?name .\n";
         String[] resourceTypes = resource.getTypes().split(",");
         for (String nsAndType : resourceTypes) {
-            String[] nsTypePair = nsAndType.split(":");
-            String namespace = nsTypePair[0];
-            String type = nsTypePair[1];
-
-            if(namespace.equalsIgnoreCase("dbpedia")) {
-                queryString = addPrefix(queryString, PREFIX_DBRES);
-            } else if(namespace.equalsIgnoreCase("schema")) {
-                queryString = addPrefix(queryString, PREFIX_SCHEMA);
+            if(nsAndType.contains("://")){
+                queryString += "?s rdf:type <" + nsAndType + "> .\n";
             }
-            queryString += "?s rdf:type " + getNamespace(namespace) + ":" + type + " .\n";
+            else {
+                String[] nsTypePair = nsAndType.split(":");
+                String namespace = nsTypePair[0];
+                String type = nsTypePair[1];
+
+                if(namespace.equalsIgnoreCase("dbpedia")) {
+                    queryString = addPrefix(queryString, PREFIX_DBRES);
+                } else if(namespace.equalsIgnoreCase("schema")) {
+                    queryString = addPrefix(queryString, PREFIX_SCHEMA);
+                }
+                queryString += "?s rdf:type " + getNamespace(namespace) + ":" + type + " .\n";
+            }
         }
         queryString += "} LIMIT 20";
         System.out.println(queryString);
-
+        List<String> resourceNames = new ArrayList<>();
         Query query = QueryFactory.create(queryString);
         QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
         try {
             ResultSet results = qexec.execSelect();
             for (; results.hasNext(); ) {
                 QuerySolution result = results.next();
-                RDFNode n = result.get("s");
-                // If you need to test the thing returned
+                RDFNode n = result.get("name");
+                String nameLiteral = "";
                 if ( n.isLiteral() )
-                    ((Literal)n).getLexicalForm() ;
+                    nameLiteral = ((Literal)n).getLexicalForm() ;
                 if ( n.isResource() )
                 {
                     Resource r = (Resource)n ;
@@ -58,12 +65,12 @@ public class ARQClient {
                         r.getURI();
                     }
                 }
-                System.out.println(result.toString());
+                resourceNames.add(nameLiteral);
             }
         } finally {
             qexec.close();
         }
-        return null;
+        return resourceNames;
     }
 
     public void getResourceTypes() {

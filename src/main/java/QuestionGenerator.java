@@ -11,7 +11,7 @@ import java.util.Set;
 public class QuestionGenerator {
 
     public void generate() throws FileNotFoundException, UnsupportedEncodingException {
-        String text = NLPConsts.SOLAR_SYSTEM_ARTICLE;
+        String text = NLPConsts.FIFA_WC_ARTICLE;
         TextInfoRetriever retriever = new TextInfoRetriever(text);
         List<DBPediaResource> resources = retriever.getDbPediaResources();
         PrintWriter resourceWriter = new PrintWriter("resources.txt", "UTF-8");
@@ -24,6 +24,7 @@ public class QuestionGenerator {
         frequentWords.forEach((resource, integer) -> wordWriter.println(resource.getSurfaceForm() + " " + integer));
         wordWriter.close();
 
+        // TODO Get most relevant words
         PrintWriter questionWriter = new PrintWriter("questions.txt", "UTF-8");
         Set<DBPediaResource> frequentResources = frequentWords.keySet();
         LanguageProcessor processor = new LanguageProcessor(text);

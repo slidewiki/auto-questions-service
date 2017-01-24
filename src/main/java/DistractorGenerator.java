@@ -18,8 +18,6 @@ public class DistractorGenerator {
                     && !dbPediaResource.getSurfaceForm().equals(answer.getSurfaceForm())) {
                 resourceMap.put(dbPediaResource.getSurfaceForm(), dbPediaResource);
             }
-//            if (resourceMap.size() == 3)
-//                break;
         }
         distractors = new ArrayList<>(resourceMap.keySet());
         return distractors;
@@ -28,7 +26,6 @@ public class DistractorGenerator {
     // TODO
     public List<String> getExternalDistractors(DBPediaResource answer) {
         ARQClient arqClient = new ARQClient();
-        arqClient.getSimilarResources(answer);
-        return null;
+        return arqClient.getSimilarResourceNames(answer);
     }
 }
