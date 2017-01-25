@@ -2,8 +2,6 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by Ainuddin Faizan on 1/2/17.
@@ -33,9 +31,10 @@ public class QuestionGenerator {
         List<String> sentences = processor.getSentences();
 
         //TODO Efficiency?
+        //TODO Create distractor cache for resources with same types or create some scheme
         for(DBPediaResource resource : topResources) {
             String surfaceForm = resource.getSurfaceForm();
-            List<String> distractors = retriever.getDistractors(resource); // TODO Cache distractors, need to be much more specific
+            List<String> distractors = retriever.getDistractors(resource); // TODO distractors need to be much more specific
             sentences.forEach(s -> {
                 if(s.contains(surfaceForm)){
                     questionWriter.println("Question: " + s.replace(surfaceForm, "________"));

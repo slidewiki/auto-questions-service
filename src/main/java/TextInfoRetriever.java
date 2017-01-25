@@ -23,7 +23,7 @@ public class TextInfoRetriever {
      * @throws FileNotFoundException
      * @throws UnsupportedEncodingException
      */
-    public Map<DBPediaResource, Integer> getFrequentWords(int n) throws FileNotFoundException, UnsupportedEncodingException {
+    public Map<DBPediaResource, Integer> getFrequentWords(int n) {
 
         Map<String, Integer> wordFrequencyPairs = new LinkedHashMap<>();
         Map<String, DBPediaResource> frequentResources = new LinkedHashMap<>();
