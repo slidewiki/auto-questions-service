@@ -9,7 +9,7 @@ import java.util.List;
 public class QuestionGenerator {
 
     public void generate() throws FileNotFoundException, UnsupportedEncodingException {
-        String text = NLPConsts.SOLAR_SYSTEM_ARTICLE;
+        String text = NLPConsts.FIFA_WC_ARTICLE;
         TextInfoRetriever retriever = new TextInfoRetriever(text);
         List<DBPediaResource> resources = retriever.getDbPediaResources();
         PrintWriter resourceWriter = new PrintWriter("resources.txt", "UTF-8");
@@ -34,7 +34,7 @@ public class QuestionGenerator {
         //TODO Create distractor cache for resources with same types or create some scheme
         for(DBPediaResource resource : topResources) {
             String surfaceForm = resource.getSurfaceForm();
-            List<String> distractors = retriever.getDistractors(resource); // TODO distractors need to be much more specific
+            List<String> distractors = retriever.getDistractors(resource); // TODO distractors need to be much more specific - calculate contextual score ?
             sentences.forEach(s -> {
                 if(s.contains(surfaceForm)){
                     questionWriter.println("Question: " + s.replace(surfaceForm, "________"));

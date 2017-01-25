@@ -20,8 +20,6 @@ public class TextInfoRetriever {
      *
      * @param n Number of frequent words desired. Pass 0 to get all words
      * @return A Map of most frequent DBPediaResource objects and their count in Integer
-     * @throws FileNotFoundException
-     * @throws UnsupportedEncodingException
      */
     public Map<DBPediaResource, Integer> getFrequentWords(int n) {
 
@@ -45,7 +43,7 @@ public class TextInfoRetriever {
         if(n > 0 && n < size) {
             firstIndex = size - n;
         }
-        entryList.subList(firstIndex, size - 1).forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue()));
+        entryList.subList(firstIndex, size).forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue()));
 
         Map<DBPediaResource, Integer> topWords = new LinkedHashMap<>();
         sortedMap.forEach((s, integer) -> topWords.put(frequentResources.get(s), integer));
@@ -53,6 +51,11 @@ public class TextInfoRetriever {
         return topWords;
     }
 
+    /**
+     *
+     * @param n The number of relevant words desired. Pass 0 to get all words
+     * @return A List of most relevant DBPediaResource objects
+     */
     public List<DBPediaResource> getMostRelevantWords(int n) {
         Set<DBPediaResource> noDupeResources = new LinkedHashSet<>(dbPediaResources);
         dbPediaResources.clear();
@@ -64,7 +67,7 @@ public class TextInfoRetriever {
         if(n > 0 && n < size) {
             firstIndex = size - n;
         }
-        return dbPediaResources.subList(firstIndex, size - 1);
+        return dbPediaResources.subList(firstIndex, size);
     }
 
     public List<String> getDistractors(DBPediaResource resource) {
