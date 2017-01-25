@@ -14,6 +14,8 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
 
+//TODO Shorten using Project Lombok
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "@URI",
