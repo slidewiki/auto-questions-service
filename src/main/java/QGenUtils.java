@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Ainuddin Faizan on 1/2/17.
  */
-public class DataStructureUtils {
+public class QGenUtils {
 
     public static Map<String, Integer> sortMap(Map<String, Integer> map) {
         return map.entrySet().stream().

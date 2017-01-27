@@ -186,5 +186,5 @@ public class NLPConsts {
             "\n" +
             "Solar System Portrait of the Solar System\n" +
             "These six narrow-angle color images were made from the first ever \"portrait\" of the solar system taken by Voyager 1, which was more than 6.4 billion kilometers (4 billion miles) from Earth and about 32° above the ecliptic. Mercury is too close to the Sun to be seen. Mars was not detectable by the Voyager cameras due to scattered sunlight in the optics, and Pluto was not included in the mosaic because of its small size and distance from the Sun. These blown-up images, left to right and top to bottom are Venus, Earth, Jupiter, Saturn, Uranus, and Neptune. (Courtesy NASA/JPL)\n";
-    public static int FREQUENT_WORDS_COUNT = 20;
+    public static int WORDS_COUNT = 20;
 }

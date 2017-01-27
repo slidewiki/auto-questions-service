@@ -1,5 +1,3 @@
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
@@ -35,7 +33,7 @@ public class TextInfoRetriever {
             }
         }
 
-        Map<String, Integer> sortedMap = DataStructureUtils.sortMap(wordFrequencyPairs);
+        Map<String, Integer> sortedMap = QGenUtils.sortMap(wordFrequencyPairs);
         List<Map.Entry<String,Integer>> entryList = new ArrayList<>(sortedMap.entrySet());
         int size = entryList.size();
         sortedMap.clear();

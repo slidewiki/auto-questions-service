@@ -1,11 +1,9 @@
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.*;
 
 /**
  * Created by Ainuddin Faizan on 1/7/17.
@@ -16,19 +14,6 @@ public class ARQClient {
     public static final int QUERY_LIMIT = 20;
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
-    private static final Logger LOGGER = Logger.getLogger(ARQClient.class.getName());
-    private Handler fileHandler;
-
-    public ARQClient() {
-        try {
-            fileHandler = new FileHandler("./query_messages.log");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        LOGGER.addHandler(fileHandler);
-        fileHandler.setLevel(Level.ALL);
-        LOGGER.setLevel(Level.ALL);
-    }
 
     public List<String> getSimilarResourceNames(DBPediaResource resource) {
 
@@ -41,8 +26,7 @@ public class ARQClient {
 
         String resourceTypes = resource.getTypes();
         if (resourceTypes.isEmpty()) {
-//            resourceTypeList = getResourceTypes(resource);// TODO Use URI to fetch data about resource
-            return null;
+            resourceTypeList = getResourceTypes(resource);
         } else {
             String[] typeArray = resourceTypes.split(",");
             resourceTypeList = new ArrayList<>(Arrays.asList(typeArray));
@@ -83,10 +67,7 @@ public class ARQClient {
                 }
             }
         } catch (Exception e) {
-            LOGGER.severe("Exception in SELECT\n" + resource.getURI() + "\n" + queryString + "\n" + e.getMessage());
-//            LOGGER.severe(resource.getURI());
-//            LOGGER.severe(queryString);
-//            LOGGER.severe(e.getMessage());
+            QGenLogger.severe("Exception in SELECT\n" + resource.getURI() + "\n" + queryString + "\n" + e.getMessage());
         } finally {
             qexec.close();
         }
@@ -115,15 +96,15 @@ public class ARQClient {
                     Statement statement = stmtIterator.nextStatement();
                     if (statement.getPredicate().getLocalName().equals("type")) {
                         RDFNode object = statement.getObject();
-                        resourceTypes.add(object.toString());
+                        String objectNodeAsString = object.toString();
+//                        if(!objectNodeAsString.contains("class/yago")){
+                            resourceTypes.add(objectNodeAsString);
+//                        }
                     }
                 }
             }
         } catch (Exception e) {
-            LOGGER.severe("Exception in CONSTRUCT\n" + queryString + "\n" + e.getMessage());
-//            LOGGER.severe("Exception in CONSTRUCT");
-//            LOGGER.info(queryString);
-//            LOGGER.severe(e.getMessage());
+            QGenLogger.severe("Exception in CONSTRUCT\n" + queryString + "\n" + e.getMessage());
         }
         finally {
             qexec.close();
