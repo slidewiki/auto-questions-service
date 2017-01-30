@@ -44,7 +44,12 @@ public class QuestionGenerator {
                     questionWriter.println("Answer: " + surfaceForm);
                     questionWriter.print("Distractors: ");
 //                    List<String> finalDistractors = QGenUtils.getRandomItemsFromList(distractors, 5);
-                    distractors.forEach(d -> questionWriter.print(d + ", "));
+                    distractors.forEach(d -> {
+                        questionWriter.print(d + ", ");
+                        if(distractors.indexOf(d) % 5 == 0){
+                            questionWriter.println();
+                        }
+                    });
                     questionWriter.println("\n");
                 }
             });

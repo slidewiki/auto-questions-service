@@ -10,8 +10,8 @@ import java.util.List;
  */
 public class ARQClient {
 
-    public static final String SPARQL_SERVICE = "http://dbpedia.org/sparql";
-    public static final int QUERY_LIMIT = 20;
+    private static final String SPARQL_SERVICE = "http://dbpedia.org/sparql";
+    private static final int QUERY_LIMIT = 20;
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
 
@@ -74,6 +74,7 @@ public class ARQClient {
         return resourceNames;
     }
 
+    // TODO Write query to fetch types, not the entire object
     private List<String> getResourceTypes(DBPediaResource resource) {
 
         List<String> resourceTypes = new ArrayList<>();

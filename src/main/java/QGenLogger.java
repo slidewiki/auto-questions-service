@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -13,7 +14,8 @@ public class QGenLogger {
 
     static {
         try {
-            fileHandler = new FileHandler("./query_messages.log");
+            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+            fileHandler = new FileHandler("./query_messages_" + timestamp.toString() + ".log");
         } catch (IOException e) {
             e.printStackTrace();
         }
