@@ -39,7 +39,7 @@ public class QuestionGenerator {
             String surfaceForm = resource.getSurfaceForm();
             List<String> distractors = retriever.getDistractors(resource); // TODO distractors need to be much more specific - calculate contextual score ?
             sentences.forEach(s -> {
-                if(s.contains(surfaceForm)){
+                if(QGenUtils.sourceHasWord(s, surfaceForm)){
                     questionWriter.println("Question: " + s.replace(surfaceForm, "________"));
                     questionWriter.println("Answer: " + surfaceForm);
                     questionWriter.print("Distractors: ");

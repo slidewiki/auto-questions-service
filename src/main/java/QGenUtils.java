@@ -3,6 +3,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -35,5 +37,12 @@ public class QGenUtils {
             randomItems.add(random);
         }
         return randomItems;
+    }
+
+    public static boolean sourceHasWord(String source, String word){
+        String pattern = "\\b"+word+"\\b";
+        Pattern p=Pattern.compile(pattern);
+        Matcher m=p.matcher(source);
+        return m.find();
     }
 }
