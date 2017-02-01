@@ -27,6 +27,14 @@ public class ARQClient {
         String resourceTypes = resource.getTypes();
         if (resourceTypes.isEmpty()) {
             resourceTypeList = getResourceTypes(resource);
+            if(!resourceTypeList.isEmpty()){
+                String mostSpecificType = getMostSpecificType(resourceTypeList);
+                if(mostSpecificType != null){
+                    List<String> tempList = new ArrayList<>();
+                    tempList.add(mostSpecificType);
+                    resourceTypeList = tempList;
+                }
+            }
         } else {
             String[] typeArray = resourceTypes.split(",");
             resourceTypeList = new ArrayList<>(Arrays.asList(typeArray));
@@ -53,10 +61,9 @@ public class ARQClient {
         // TODO Refine Query results
         List<String> resourceNames = new ArrayList<>();
         resourceNames.add("Distractors queried from DBPedia\n");
-        Query query = QueryFactory.create(queryString);
-        QueryExecution qexec = QueryExecutionFactory.sparqlService(SPARQL_SERVICE, query);
+
         try {
-            ResultSet results = qexec.execSelect();
+            ResultSet results = runSelectQuery(queryString);
             while (results.hasNext()) {
                 QuerySolution result = results.next();
                 RDFNode n = result.get("name");
@@ -68,8 +75,6 @@ public class ARQClient {
             }
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + resource.getURI() + "\n" + queryString + "\n" + e.getMessage());
-        } finally {
-            qexec.close();
         }
         return resourceNames;
     }
@@ -111,6 +116,67 @@ public class ARQClient {
             qexec.close();
         }
         return resourceTypes;
+    }
+
+    private ResultSet runSelectQuery(String queryString) throws Exception {
+        Query query = QueryFactory.create(queryString);
+        QueryExecution qExec = QueryExecutionFactory.sparqlService(SPARQL_SERVICE, query);
+        ResultSet set = null;
+        try {
+            set = qExec.execSelect();
+            set = ResultSetFactory.copyResults(set);
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            qExec.close();
+        }
+        return set;
+    }
+
+    //TODO Select multiple types for more results or changing difficulty
+    /**
+     * Get the most specific rdf:type i.e. the one that has the most number of super classes
+     * @param types
+     * @return
+     */
+    private String getMostSpecificType(List<String> types) {
+
+        if(types.size() <= 1) {
+            return null;
+        }
+
+        String mostSpecificType = null;
+        int maxPathDepth = 0;
+
+        for (String type: types) {
+            if(type.contains("dbpedia")){
+                String queryString =
+                        "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                                "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
+                                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                                "SELECT DISTINCT ?path FROM <http://dbpedia.org> WHERE {\n" +
+                                "<" + type + "> rdfs:subClassOf* ?path . }";
+
+                ResultSet results;
+                int count = 0;
+
+                try {
+                    results = runSelectQuery(queryString);
+                    while (results.hasNext()) {
+                        results.next();
+                        count++;
+                    }
+                    System.out.println("Type: " + type + "\t" + "Depth: " + count);
+                    if(count > maxPathDepth) {
+                        maxPathDepth = count;
+                        mostSpecificType = type;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return mostSpecificType;
     }
 
     private String addPrefix(String queryString, String namespace) {
