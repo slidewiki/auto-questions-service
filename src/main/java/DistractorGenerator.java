@@ -23,7 +23,6 @@ public class DistractorGenerator {
         return distractors;
     }
 
-    // TODO
     public List<String> getExternalDistractors(DBPediaResource answer) {
         ARQClient arqClient = new ARQClient();
         return arqClient.getSimilarResourceNames(answer);
