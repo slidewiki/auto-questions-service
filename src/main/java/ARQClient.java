@@ -12,6 +12,9 @@ public class ARQClient {
 
     private static final String SPARQL_SERVICE = "http://dbpedia.org/sparql";
     private static final int QUERY_LIMIT = 20;
+    private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
+    private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
+    private static final String PREFIX_RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n";
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
 
@@ -19,8 +22,7 @@ public class ARQClient {
 
         List<String> resourceTypeList;
         String queryString =
-                "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                        "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
+                PREFIX_RDF + PREFIX_FOAF +
                         "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
                         "?s foaf:name ?name .\n";
 
@@ -151,9 +153,7 @@ public class ARQClient {
         for (String type: types) {
             if(type.contains("dbpedia")){
                 String queryString =
-                        "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                                "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
-                                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                        PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
                                 "SELECT DISTINCT ?path FROM <http://dbpedia.org> WHERE {\n" +
                                 "<" + type + "> rdfs:subClassOf* ?path . }";
 
