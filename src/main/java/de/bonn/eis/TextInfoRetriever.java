@@ -1,3 +1,5 @@
+package de.bonn.eis;
+
 import java.util.*;
 
 /**
@@ -17,7 +19,7 @@ public class TextInfoRetriever {
     /**
      *
      * @param n Number of frequent words desired. Pass 0 to get all words
-     * @return A Map of most frequent DBPediaResource objects and their count in Integer
+     * @return A Map of most frequent de.bonn.eis.DBPediaResource objects and their count in Integer
      */
     public Map<DBPediaResource, Integer> getFrequentWords(int n) {
 
@@ -52,7 +54,7 @@ public class TextInfoRetriever {
     /**
      *
      * @param n The number of relevant words desired. Pass 0 to get all words
-     * @return A List of most relevant DBPediaResource objects
+     * @return A List of most relevant de.bonn.eis.DBPediaResource objects
      */
     public List<DBPediaResource> getMostRelevantWords(int n) {
         Set<DBPediaResource> noDupeResources = new LinkedHashSet<>(dbPediaResources);

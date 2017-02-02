@@ -1,3 +1,5 @@
+package de.bonn.eis;
+
 import org.nlp2rdf.bean.NIFBean;
 import org.nlp2rdf.bean.NIFType;
 import org.nlp2rdf.nif21.impl.NIF21;

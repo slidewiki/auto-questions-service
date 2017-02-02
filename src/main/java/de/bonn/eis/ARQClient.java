@@ -1,3 +1,5 @@
+package de.bonn.eis;
+
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 

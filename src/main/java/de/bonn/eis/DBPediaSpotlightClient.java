@@ -1,3 +1,5 @@
+package de.bonn.eis;
+
 import javax.annotation.PostConstruct;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;

@@ -1,3 +1,5 @@
+package de.bonn.eis;
+
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 
@@ -11,7 +13,11 @@ public class Main {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-//        new NIF().nifRun();
-//        ARQClient.getResourceTypes();
+//        new de.bonn.eis.NIF().nifRun();
+//        de.bonn.eis.ARQClient.getResourceTypes();
+    }
+
+    public static String getMessage() {
+        return "Hello World";
     }
 }

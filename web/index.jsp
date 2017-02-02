@@ -1,4 +1,4 @@
-<%--
+<%@ page import="de.bonn.eis.Main" %><%--
   Created by IntelliJ IDEA.
   User: Ainuddin Faizan
   Date: 2/2/17
@@ -8,9 +8,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
   <head>
-    <title>$Title$</title>
+    <title>Question Generator</title>
   </head>
   <body>
-  $END$
+  <h3 class="message"><%=Main.getMessage()%></h3>
   </body>
 </html>

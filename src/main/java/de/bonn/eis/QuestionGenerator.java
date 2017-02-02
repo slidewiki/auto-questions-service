@@ -1,3 +1,5 @@
+package de.bonn.eis;
+
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -18,8 +20,8 @@ public class QuestionGenerator {
 
 
         // Selecting most frequently occurring words
-//        Map<DBPediaResource, Integer> frequentWords = retriever.getFrequentWords(NLPConsts.WORDS_COUNT);
-//        Set<DBPediaResource> topResources = frequentWords.keySet();
+//        Map<de.bonn.eis.DBPediaResource, Integer> frequentWords = retriever.getFrequentWords(de.bonn.eis.NLPConsts.WORDS_COUNT);
+//        Set<de.bonn.eis.DBPediaResource> topResources = frequentWords.keySet();
 
         PrintWriter questionWriter = new PrintWriter("questions.txt", "UTF-8");
 //        topResources.forEach((resource) -> questionWriter.println(resource.getSurfaceForm()));
@@ -43,7 +45,7 @@ public class QuestionGenerator {
                     questionWriter.println("Question: " + s.replace(surfaceForm, "________"));
                     questionWriter.println("Answer: " + surfaceForm);
                     questionWriter.print("Distractors: ");
-//                    List<String> finalDistractors = QGenUtils.getRandomItemsFromList(distractors, 5);
+//                    List<String> finalDistractors = de.bonn.eis.QGenUtils.getRandomItemsFromList(distractors, 5);
                     distractors.forEach(d -> {
                         questionWriter.print(d + ", ");
                         if(distractors.indexOf(d) % 5 == 0){
