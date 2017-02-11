@@ -11,6 +11,6 @@
     <title>Question Generator</title>
   </head>
   <body>
-  <h3 class="message"><%=Main.getMessage()%></h3>
+  <%--<h3 class="message"><%=Main.getMessage()%></h3>--%>
   </body>
 </html>

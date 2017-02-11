@@ -1,8 +1,13 @@
 package de.bonn.eis;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 
+@Path("/hello")
 public class Main {
 
     public static void main(String[] args) {
@@ -17,6 +22,8 @@ public class Main {
 //        de.bonn.eis.ARQClient.getResourceTypes();
     }
 
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
     public static String getMessage() {
         try {
             new QuestionGenerator().generate();
