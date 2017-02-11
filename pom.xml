@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>de.uni-bonn.iai.eis</groupId>
+    <groupId>de.bonn.eis</groupId>
     <artifactId>nlp-rdf</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -29,6 +29,7 @@
         <dbpedia.spotlight.version>0.7</dbpedia.spotlight.version>
         <jersey.client.version>2.25</jersey.client.version>
         <lombok.version>1.16.12</lombok.version>
+        <jersey-bundle.version>1.19.3</jersey-bundle.version>
     </properties>
 
 
@@ -44,12 +45,6 @@
             <artifactId>stanford-corenlp</artifactId>
             <version>${nlp.version}</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>edu.stanford.nlp</groupId>-->
-            <!--<artifactId>stanford-corenlp</artifactId>-->
-            <!--<version>${nlp.version}</version>-->
-            <!--<classifier>models</classifier>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -87,6 +82,11 @@
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-bundle</artifactId>
+            <version>${jersey-bundle.version}</version>
         </dependency>
     </dependencies>
 </project>
