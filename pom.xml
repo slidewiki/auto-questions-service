@@ -55,6 +55,7 @@
         <jersey-bundle.version>1.18.3</jersey-bundle.version>
         <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
         <maven-war-plugin.version>2.6</maven-war-plugin.version>
+        <commons-lang.version>2.6</commons-lang.version>
     </properties>
 
 
@@ -71,26 +72,9 @@
             <version>${nlp.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j.version}</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${log4j.version}</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.nlp2rdf</groupId>
-            <artifactId>nif</artifactId>
-            <version>0.4</version>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons-lang.version}</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.core</groupId>
@@ -101,12 +85,6 @@
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
             <version>${jersey.client.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
