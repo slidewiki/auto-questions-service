@@ -11,27 +11,28 @@ import java.io.UnsupportedEncodingException;
 public class Main {
 
     public static void main(String[] args) {
-        try {
-            new QuestionGenerator().generate();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            new QuestionGenerator().generate();
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
 //        new de.bonn.eis.NIF().nifRun();
 //        de.bonn.eis.ARQClient.getResourceTypes();
     }
 
+    @Path("/hi")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public static String getMessage() {
-        try {
-            new QuestionGenerator().generate();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            new QuestionGenerator().generate();
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
         return "Hello World";
     }
 }
