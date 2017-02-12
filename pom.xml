@@ -47,12 +47,8 @@
     <properties>
         <jena.version>3.1.0</jena.version>
         <nlp.version>3.6.0</nlp.version>
-        <slf4j.version>1.6.4</slf4j.version>
-        <log4j.version>1.2.16</log4j.version>
-        <dbpedia.spotlight.version>0.7</dbpedia.spotlight.version>
         <jersey.client.version>2.25</jersey.client.version>
         <lombok.version>1.16.12</lombok.version>
-        <jersey-bundle.version>1.18.3</jersey-bundle.version>
         <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
         <maven-war-plugin.version>2.6</maven-war-plugin.version>
         <commons-lang.version>2.6</commons-lang.version>
