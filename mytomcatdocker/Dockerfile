@@ -1,4 +1,5 @@
-FROM tomcat:8.0-jre8
+FROM tomcat:7.0-jre8
 MAINTAINER "Ainuddin Faizan <andyfaizan@gmail.com>"
 
+ADD settings.xml /usr/local/tomcat/conf/
 ADD tomcat-users.xml /usr/local/tomcat/conf/
