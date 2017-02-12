@@ -26,13 +26,13 @@ public class Main {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public static String getMessage() {
-//        try {
-//            new QuestionGenerator().generate();
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (UnsupportedEncodingException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            new QuestionGenerator().generate();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         return "Hello World";
     }
 }
