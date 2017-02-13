@@ -29,27 +29,9 @@ public class QuestionGenerator {
         List<Question> questions = new ArrayList<>();
         String text = content.getText();
         TextInfoRetriever retriever = new TextInfoRetriever(text);
-        List<DBPediaResource> resources = retriever.getDbPediaResources();
-
-        //TODO Log extraneous info
-//        PrintWriter resourceWriter = new PrintWriter("resources.txt", "UTF-8");
-//        resources.forEach(resource -> resourceWriter.println(resource.toString()));
-//        resourceWriter.close();
-
-
-        // Selecting most frequently occurring words
-//        Map<de.bonn.eis.model.DBPediaResource, Integer> frequentWords = retriever.getFrequentWords(de.bonn.eis.utils.NLPConsts.WORDS_COUNT);
-//        Set<de.bonn.eis.model.DBPediaResource> topResources = frequentWords.keySet();
-
-//        PrintWriter questionWriter = new PrintWriter("questions.txt", "UTF-8");
-//        topResources.forEach((resource) -> questionWriter.println(resource.getSurfaceForm()));
 
         // Selecting most relevant occurring words
         List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.WORDS_COUNT);
-//        PrintWriter wordWriter = new PrintWriter("relevantWords.txt", "UTF-8");
-//        topResources.forEach((resource) -> wordWriter.println(resource.getSurfaceForm()));
-//        wordWriter.close();
-
         LanguageProcessor processor = new LanguageProcessor(text);
         List<String> sentences = processor.getSentences();
 
