@@ -8,5 +8,5 @@ import lombok.Data;
 @Data
 public class SlideContent {
     private String text;
-    private float confidence;
+//    private float confidence;
 }
