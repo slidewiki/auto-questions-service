@@ -1,4 +1,4 @@
-<%@ page import="de.bonn.eis.controller.Main" %><%--
+<%--
   Created by IntelliJ IDEA.
   User: Ainuddin Faizan
   Date: 2/2/17
@@ -11,6 +11,6 @@
     <title>Question Generator</title>
   </head>
   <body>
-  <%--<h3 class="message"><%=Main.getMessage()%></h3>--%>
+  Hi
   </body>
 </html>
