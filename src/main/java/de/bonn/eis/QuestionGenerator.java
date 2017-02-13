@@ -17,8 +17,9 @@ public class QuestionGenerator {
     @POST
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
-    public String generate(String text) throws FileNotFoundException, UnsupportedEncodingException {
+    public String generate(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
 //        String text = NLPConsts.SOLAR_SYSTEM_ARTICLE;
+        String text = content.getText();
         TextInfoRetriever retriever = new TextInfoRetriever(text);
         List<DBPediaResource> resources = retriever.getDbPediaResources();
 
@@ -76,6 +77,7 @@ public class QuestionGenerator {
             });
         }
 //        questionWriter.close();
+        response[0] += "\nConfidence = " + content.getConfidence();
         return response[0];
     }
 }
