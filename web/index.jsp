@@ -1,4 +1,4 @@
-<%@ page import="de.bonn.eis.Main" %><%--
+<%@ page import="de.bonn.eis.controller.Main" %><%--
   Created by IntelliJ IDEA.
   User: Ainuddin Faizan
   Date: 2/2/17

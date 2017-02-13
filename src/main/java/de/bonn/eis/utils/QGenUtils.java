@@ -1,4 +1,6 @@
-package de.bonn.eis;
+package de.bonn.eis.utils;
+
+import de.bonn.eis.model.DBPediaResource;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

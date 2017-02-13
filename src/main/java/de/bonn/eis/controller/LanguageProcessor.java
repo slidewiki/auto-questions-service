@@ -1,4 +1,4 @@
-package de.bonn.eis;
+package de.bonn.eis.controller;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.pipeline.Annotation;

@@ -1,4 +1,4 @@
-package de.bonn.eis;
+package de.bonn.eis.utils;
 
 /**
  * Created by Ainuddin Faizan on 12/8/16.
@@ -51,7 +51,7 @@ public class NLPConsts {
             "\n" +
             "In October 2016 FIFA president Gianni Infantino stated his support for a 48-team World Cup in 2026.[27]\n" +
             "2015 FIFA corruption case\n" +
-            "de.bonn.eis.Main FIFA_WC_ARTICLE: 2015 FIFA corruption case\n" +
+            "de.bonn.eis.controller.Main FIFA_WC_ARTICLE: 2015 FIFA corruption case\n" +
             "\n" +
             "By May 2015, the games were under a particularly dark cloud because of the 2015 FIFA corruption case, allegations and criminal charges of bribery, fraud and money laundering to corrupt the issuing of media and marketing rights (rigged bids) for FIFA games,[28] with FIFA officials accused of taking bribes totaling more than $150 million over 24 years. In late May, the U.S. Justice Department announced a 47-count indictment with charges of racketeering, wire fraud and money laundering conspiracy against 14 people. Arrests of over a dozen FIFA officials were made since that time, particularly on May 29 and December 3.[29]\n" +
             "\n" +
@@ -77,7 +77,7 @@ public class NLPConsts {
             "\n" +
             "When the U-20 Women's World Cup is held the year before the Women's World Cup, both tournaments are awarded in a single bidding process. The U-20 tournament serves as a dress rehearsal for the larger competition, the same role as the Confederations Cup plays in the men's game.\n" +
             "Trophy\n" +
-            "de.bonn.eis.Main FIFA_WC_ARTICLE: FIFA World Cup Trophy\n" +
+            "de.bonn.eis.controller.Main FIFA_WC_ARTICLE: FIFA World Cup Trophy\n" +
             "\n" +
             "From 1930 to 1970, the Jules Rimet Trophy was awarded to the World Cup winning team. It was originally simply known as the World Cup or Coupe du Monde, but in 1946 it was renamed after the FIFA president Jules Rimet who set up the first tournament. In 1970, Brazil's third victory in the tournament entitled them to keep the trophy permanently. However, the trophy was stolen in 1983 and has never been recovered, apparently melted down by the thieves.[40]\n" +
             "\n" +
@@ -88,7 +88,7 @@ public class NLPConsts {
             "Currently, all members (players, coaches, and managers) of the top three teams receive medals with an insignia of the World Cup Trophy; winners' (gold), runners-up' (silver), and third-place (bronze). In the 2002 edition, fourth-place medals were awarded to hosts South Korea. Before the 1978 tournament, medals were only awarded to the eleven players on the pitch at the end of the final and the third-place match. In November 2007, FIFA announced that all members of World Cup-winning squads between 1930 and 1974 were to be retroactively awarded winners' medals.[43][44][45]\n" +
             "Format\n" +
             "Qualification\n" +
-            "de.bonn.eis.Main FIFA_WC_ARTICLE: FIFA World Cup qualification\n" +
+            "de.bonn.eis.controller.Main FIFA_WC_ARTICLE: FIFA World Cup qualification\n" +
             "\n" +
             "Since the second World Cup in 1934, qualifying tournaments have been held to thin the field for the final tournament.[46] They are held within the six FIFA continental zones (Africa, Asia, North and Central America and Caribbean, South America, Oceania, and Europe), overseen by their respective confederations. For each tournament, FIFA decides the number of places awarded to each of the continental zones beforehand, generally based on the relative strength of the confederations' teams.\n" +
             "\n" +

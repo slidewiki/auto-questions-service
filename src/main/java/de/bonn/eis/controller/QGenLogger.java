@@ -1,4 +1,6 @@
-package de.bonn.eis;
+package de.bonn.eis.controller;
+
+import de.bonn.eis.utils.QGenUtils;
 
 import java.io.IOException;
 import java.sql.Timestamp;

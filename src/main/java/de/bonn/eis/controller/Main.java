@@ -1,4 +1,4 @@
-package de.bonn.eis;
+package de.bonn.eis.controller;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -19,7 +19,7 @@ public class Main {
 //            e.printStackTrace();
 //        }
 //        new de.bonn.eis.NIF().nifRun();
-//        de.bonn.eis.ARQClient.getResourceTypes();
+//        de.bonn.eis.controller.ARQClient.getResourceTypes();
     }
 
     @Path("/hi")

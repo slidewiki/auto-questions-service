@@ -1,4 +1,6 @@
-package de.bonn.eis;
+package de.bonn.eis.controller;
+
+import de.bonn.eis.model.DBPediaSpotlightPOJO;
 
 import javax.annotation.PostConstruct;
 import javax.ws.rs.client.Client;

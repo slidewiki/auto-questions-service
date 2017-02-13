@@ -1,4 +1,4 @@
-package de.bonn.eis;
+package de.bonn.eis.model;
 
 import lombok.Data;
 

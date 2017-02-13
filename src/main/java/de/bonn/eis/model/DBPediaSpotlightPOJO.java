@@ -1,4 +1,4 @@
-package de.bonn.eis; /**
+package de.bonn.eis.model; /**
  * Created by Ainuddin Faizan on 12/28/16.
  */
 import java.io.Serializable;

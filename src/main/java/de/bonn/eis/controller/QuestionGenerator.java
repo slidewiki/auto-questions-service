@@ -1,9 +1,13 @@
-package de.bonn.eis;
+package de.bonn.eis.controller;
+
+import de.bonn.eis.model.DBPediaResource;
+import de.bonn.eis.model.SlideContent;
+import de.bonn.eis.utils.NLPConsts;
+import de.bonn.eis.utils.QGenUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
@@ -30,8 +34,8 @@ public class QuestionGenerator {
 
 
         // Selecting most frequently occurring words
-//        Map<de.bonn.eis.DBPediaResource, Integer> frequentWords = retriever.getFrequentWords(de.bonn.eis.NLPConsts.WORDS_COUNT);
-//        Set<de.bonn.eis.DBPediaResource> topResources = frequentWords.keySet();
+//        Map<de.bonn.eis.model.DBPediaResource, Integer> frequentWords = retriever.getFrequentWords(de.bonn.eis.utils.NLPConsts.WORDS_COUNT);
+//        Set<de.bonn.eis.model.DBPediaResource> topResources = frequentWords.keySet();
 
 //        PrintWriter questionWriter = new PrintWriter("questions.txt", "UTF-8");
 //        topResources.forEach((resource) -> questionWriter.println(resource.getSurfaceForm()));
@@ -62,7 +66,7 @@ public class QuestionGenerator {
                     response[0] += "Answer: " + surfaceForm;
                     response[0] += ("Distractors: ");
 
-//                    List<String> finalDistractors = de.bonn.eis.QGenUtils.getRandomItemsFromList(distractors, 5);
+//                    List<String> finalDistractors = de.bonn.eis.utils.QGenUtils.getRandomItemsFromList(distractors, 5);
                     distractors.forEach(d -> {
 //                        questionWriter.print(d + ", ");
                         response[0] += (d + ", ");

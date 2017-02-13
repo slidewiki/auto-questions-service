@@ -1,5 +1,6 @@
-package de.bonn.eis;
+package de.bonn.eis.controller;
 
+import de.bonn.eis.model.DBPediaResource;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 
