@@ -1,9 +1,6 @@
 package de.bonn.eis;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -17,10 +14,10 @@ import java.util.List;
 @Path("/qgen")
 public class QuestionGenerator {
 
-    @Path("{text}")
     @POST
     @Produces(MediaType.TEXT_PLAIN)
-    public String generate(@PathParam("text") String text) throws FileNotFoundException, UnsupportedEncodingException {
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String generate(String text) throws FileNotFoundException, UnsupportedEncodingException {
 //        String text = NLPConsts.SOLAR_SYSTEM_ARTICLE;
         TextInfoRetriever retriever = new TextInfoRetriever(text);
         List<DBPediaResource> resources = retriever.getDbPediaResources();
