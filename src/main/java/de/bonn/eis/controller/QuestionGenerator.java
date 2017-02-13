@@ -1,6 +1,7 @@
 package de.bonn.eis.controller;
 
 import de.bonn.eis.model.DBPediaResource;
+import de.bonn.eis.model.Question;
 import de.bonn.eis.model.SlideContent;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenUtils;
@@ -9,6 +10,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,10 +21,11 @@ import java.util.List;
 public class QuestionGenerator {
 
     @POST
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public String generate(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
-//        String text = NLPConsts.SOLAR_SYSTEM_ARTICLE;
+    public List<Question> generate(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
+
+        List<Question> questions = new ArrayList<>();
         String text = content.getText();
         TextInfoRetriever retriever = new TextInfoRetriever(text);
         List<DBPediaResource> resources = retriever.getDbPediaResources();
@@ -51,37 +54,21 @@ public class QuestionGenerator {
 
         //TODO Efficiency?
         //TODO Create distractor cache for resources with same types or create some scheme
-        final String[] response = {""};
         for(DBPediaResource resource : topResources) {
             String surfaceForm = resource.getSurfaceForm();
             List<String> distractors = retriever.getDistractors(resource); // TODO distractors need to be much more specific - calculate contextual score ?
 
             sentences.forEach(s -> {
                 if(QGenUtils.sourceHasWord(s, surfaceForm)){
-//                    questionWriter.println("Question: " + s.replace(surfaceForm, "________"));
-//                    questionWriter.println("Answer: " + surfaceForm);
-//                    questionWriter.print("Distractors: ");
-
-                    response[0] += "Question: " + s.replace(surfaceForm, "________");
-                    response[0] += "Answer: " + surfaceForm;
-                    response[0] += ("Distractors: ");
-
-//                    List<String> finalDistractors = de.bonn.eis.utils.QGenUtils.getRandomItemsFromList(distractors, 5);
-                    distractors.forEach(d -> {
-//                        questionWriter.print(d + ", ");
-                        response[0] += (d + ", ");
-                        if(distractors.indexOf(d) % 5 == 0){
-//                            questionWriter.println();
-                            response[0] += "\n";
-                        }
-                    });
-//                    questionWriter.println("\n");
-                    response[0] += "\n";
+                    Question question = new Question();
+                    String questionText = s.replace(surfaceForm, "________");
+                    question.setQuestionText(questionText);
+                    question.setAnswer(surfaceForm);
+                    question.setDistractors(distractors);
+                    questions.add(question);
                 }
             });
         }
-//        questionWriter.close();
-        response[0] += "\nConfidence = " + content.getConfidence();
-        return response[0];
+        return questions;
     }
 }
