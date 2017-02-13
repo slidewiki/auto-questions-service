@@ -8,6 +8,7 @@ import de.bonn.eis.utils.QGenUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class QuestionGenerator {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public List<Question> generate(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
+    public Response generate(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
 
         List<Question> questions = new ArrayList<>();
         String text = content.getText();
@@ -69,6 +70,6 @@ public class QuestionGenerator {
                 }
             });
         }
-        return questions;
+        return Response.status(200).entity(questions).build();
     }
 }
