@@ -1,5 +1,7 @@
 # Question Generation Microservice #
 
+[![License](https://img.shields.io/badge/License-MPL%202.0-green.svg)](https://github.com/slidewiki/notification-service/blob/master/LICENSE)
+
 This microservice generates questions automatically for slide/deck content
 
 The service makes use of [DBPediaSpotlight](https://github.com/dbpedia-spotlight/dbpedia-spotlight/) to annotate text and find DBPedia resources in it.
