@@ -30,6 +30,10 @@ public class QuestionGenerator {
         String text = content.getText();
         TextInfoRetriever retriever = new TextInfoRetriever(text);
 
+        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
+        if(dbPediaResources == null || dbPediaResources.size() == 0) {
+            return Response.noContent().build();
+        }
         // Selecting most relevant occurring words
         List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.WORDS_COUNT);
         LanguageProcessor processor = new LanguageProcessor(text);
