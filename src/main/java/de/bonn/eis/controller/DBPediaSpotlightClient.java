@@ -17,13 +17,15 @@ public class DBPediaSpotlightClient {
     private Client client;
     private WebTarget webTarget;
     private final static String API_URL = "http://spotlight.sztaki.hu:2222/";
+    private final static String LOCAL_API_URL = "http://spotlight/";
     private static final double CONFIDENCE = 0.85;
     private static final int SUPPORT = 0;
 
     @PostConstruct
     protected void init(){
         client = ClientBuilder.newClient();
-        webTarget = client.target(API_URL + "rest/annotate/");
+        String hostIp = API_URL; // TODO automate selection of ip
+        webTarget = client.target(hostIp + "rest/annotate/");
     }
 
     /**
