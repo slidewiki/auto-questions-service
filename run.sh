@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 cd 'mytomcatdocker'
 
 docker build -t andy/tomcat .

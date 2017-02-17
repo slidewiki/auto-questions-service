@@ -16,6 +16,7 @@ public class TextInfoRetriever {
     public TextInfoRetriever(String text) {
         DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
         dbPediaSpotlightClient.init();
+        //TODO get when text is small
         DBPediaSpotlightPOJO response = dbPediaSpotlightClient.annotatePost(text);
         dbPediaResources = response.getDBPediaResources();
     }
