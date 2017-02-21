@@ -3,10 +3,12 @@ package de.bonn.eis.controller;
 import de.bonn.eis.model.DBPediaSpotlightPOJO;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 
@@ -21,10 +23,15 @@ public class DBPediaSpotlightClient {
     private static final double CONFIDENCE = 0.85;
     private static final int SUPPORT = 0;
 
+
     @PostConstruct
-    protected void init(){
+    protected void init(ServletContext servletContext){
         client = ClientBuilder.newClient();
+        String attr = servletContext.getInitParameter("env");
         String hostIp = API_URL; // TODO automate selection of ip
+        if(attr !=null && attr.equalsIgnoreCase("prod")){
+            hostIp = LOCAL_API_URL;
+        }
         webTarget = client.target(hostIp + "rest/annotate/");
     }
 

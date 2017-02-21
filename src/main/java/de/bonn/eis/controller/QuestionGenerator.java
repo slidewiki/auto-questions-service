@@ -6,7 +6,9 @@ import de.bonn.eis.model.SlideContent;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenUtils;
 
+import javax.servlet.ServletContext;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.FileNotFoundException;
@@ -24,11 +26,11 @@ public class QuestionGenerator {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response generate(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
+    public Response generate(SlideContent content, @Context ServletContext servletContext) throws FileNotFoundException, UnsupportedEncodingException {
 
         List<Question> questions = new ArrayList<>();
         String text = content.getText();
-        TextInfoRetriever retriever = new TextInfoRetriever(text);
+        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
 
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
         if(dbPediaResources == null || dbPediaResources.size() == 0) {

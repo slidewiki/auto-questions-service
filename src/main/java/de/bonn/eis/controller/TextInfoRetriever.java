@@ -4,6 +4,7 @@ import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.DBPediaSpotlightPOJO;
 import de.bonn.eis.utils.QGenUtils;
 
+import javax.servlet.ServletContext;
 import java.util.*;
 
 /**
@@ -13,9 +14,9 @@ public class TextInfoRetriever {
 
     private List<DBPediaResource> dbPediaResources;
 
-    public TextInfoRetriever(String text) {
+    public TextInfoRetriever(String text, ServletContext servletContext) {
         DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
-        dbPediaSpotlightClient.init();
+        dbPediaSpotlightClient.init(servletContext);
         //TODO get when text is small
         DBPediaSpotlightPOJO response = dbPediaSpotlightClient.annotatePost(text);
         dbPediaResources = response.getDBPediaResources();
