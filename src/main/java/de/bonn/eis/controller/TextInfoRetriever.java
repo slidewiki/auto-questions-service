@@ -17,8 +17,15 @@ public class TextInfoRetriever {
     public TextInfoRetriever(String text, ServletContext servletContext) {
         DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
         dbPediaSpotlightClient.init(servletContext);
-        //TODO get when text is small
-        DBPediaSpotlightPOJO response = dbPediaSpotlightClient.annotatePost(text);
+        DBPediaSpotlightPOJO response;
+        //TODO Check for text length limit
+        if(text.length() < 200) {
+            System.out.println("GET");
+            response = dbPediaSpotlightClient.annotateGet(text);
+        } else{
+            System.out.println("POST");
+            response = dbPediaSpotlightClient.annotatePost(text);
+        }
         dbPediaResources = response.getDBPediaResources();
     }
 

@@ -53,6 +53,9 @@
         <maven-war-plugin.version>2.6</maven-war-plugin.version>
         <commons-lang.version>2.6</commons-lang.version>
         <jersey-container-servlet.version>2.22.1</jersey-container-servlet.version>
+        <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
+        <mockito-core.version>2.7.10</mockito-core.version>
+        <junit.version>4.12</junit.version>
     </properties>
 
 
@@ -97,8 +100,18 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
+            <version>${javax.servlet-api.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
         </dependency>
     </dependencies>
 </project>
