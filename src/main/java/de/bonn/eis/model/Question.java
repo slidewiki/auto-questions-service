@@ -11,5 +11,6 @@ import java.util.List;
 public class Question {
     private String questionText;
     private String answer;
-    private List<String> distractors;
+    private List<String> externalDistractors;
+    private List<String> inTextDistractors;
 }

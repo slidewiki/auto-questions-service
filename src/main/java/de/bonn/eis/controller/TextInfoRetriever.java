@@ -6,6 +6,7 @@ import de.bonn.eis.utils.QGenUtils;
 
 import javax.servlet.ServletContext;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Ainuddin Faizan on 1/2/17.
@@ -84,21 +85,53 @@ public class TextInfoRetriever {
         return dbPediaResources.subList(firstIndex, size);
     }
 
-    public List<String> getDistractors(DBPediaResource resource) {
-        DistractorGenerator generator = new DistractorGenerator();
-        List<String> distractors = new ArrayList<>();
-        List<String> inTextDistractors = generator.getInTextDistractors(resource, dbPediaResources);
-        List<String> externalDistractors = generator.getExternalDistractors(resource);
+    public List<List<DBPediaResource>> groupResourcesByType(List<DBPediaResource> dbPediaResources)
+    {
+//        Iterator<DBPediaResource> iter = dbPediaResources.iterator();
+//        while (iter.hasNext()) {
+//            List<DBPediaResource> resourceList = new ArrayList<>();
+//            DBPediaResource resource = iter.next();
+//            resourceList.add(resource);
+//            while (iter.hasNext()){
+//                DBPediaResource nextResource = iter.next();
+//                if(nextResource.getTypes().equals(resource.getTypes())
+//                        && !nextResource.getSurfaceForm().equals(resource.getSurfaceForm())) {
+//                    resourceList.add(nextResource);
+//                    iter.remove();
+//                }
+//                groupedResources.add(resourceList);
+//            }
+//        }
 
-        if(inTextDistractors != null && !inTextDistractors.isEmpty()){
-            distractors.add("\nIn text distractors\n");
-            distractors.addAll(inTextDistractors);
+        List<List<DBPediaResource>> groupedResources = new ArrayList<>();
+        // TODO Iterator somehow
+        List<DBPediaResource> resourcesDone = new ArrayList<>();
+        for (DBPediaResource resource: dbPediaResources) {
+            if(resource!= null && !resourcesDone.contains(resource)){
+                List<DBPediaResource> resourceList = new ArrayList<>();
+                resourceList.add(resource);
+                resourcesDone.add(resource);
+                for (DBPediaResource nextResource: dbPediaResources) {
+                    if(nextResource!= null && resource != nextResource && !resourcesDone.contains(nextResource)) {
+                        if(nextResource.getTypes().equals(resource.getTypes())
+                                && !nextResource.getSurfaceForm().equals(resource.getSurfaceForm())) {
+                            resourceList.add(nextResource);
+                            resourcesDone.add(nextResource);
+//                            dbPediaResources.add(dbPediaResources.indexOf(nextResource), null);
+                        }
+                    }
+                }
+                groupedResources.add(resourceList);
+            }
+//            resourceList.add(dbPediaResources.indexOf(resource), null);
         }
-        if(externalDistractors != null && !externalDistractors.isEmpty()){
-            distractors.add("\nExternal distractors\n");
-            distractors.addAll(externalDistractors);
-        }
-        return distractors;
+        return groupedResources;
+    }
+
+    public List<String> getExternalDistractors(DBPediaResource resource) {
+        DistractorGenerator generator = new DistractorGenerator();
+        List<String> externalDistractors = generator.getExternalDistractors(resource);
+            return externalDistractors;
     }
 
     public List<DBPediaResource> getDbPediaResources() {

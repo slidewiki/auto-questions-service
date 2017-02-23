@@ -15,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Ainuddin Faizan on 1/2/17.
@@ -43,21 +44,41 @@ public class QuestionGenerator {
 
         //TODO Efficiency?
         //TODO Create distractor cache for resources with same types or create some scheme
-        for(DBPediaResource resource : topResources) {
-            String surfaceForm = resource.getSurfaceForm();
-            List<String> distractors = retriever.getDistractors(resource); // TODO distractors need to be much more specific - calculate contextual score ?
 
-            sentences.forEach(s -> {
-                if(QGenUtils.sourceHasWord(s, surfaceForm)){
-                    Question question = new Question();
-                    String questionText = s.replace(surfaceForm, "________");
-                    question.setQuestionText(questionText);
-                    question.setAnswer(surfaceForm);
-                    question.setDistractors(distractors);
-                    questions.add(question);
+        List<List<DBPediaResource>> listOfGroupedResources = retriever.groupResourcesByType(topResources);
+        for (List<DBPediaResource> groupedResources : listOfGroupedResources) {
+            DBPediaResource firstResource = groupedResources.get(0);
+            if(firstResource.getTypes().isEmpty()){
+                for (DBPediaResource resource : groupedResources) {
+                    List<String> externalDistractors = retriever.getExternalDistractors(resource);
+                    questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, new ArrayList<>()));
                 }
-            });
+            } else {
+                List<String> externalDistractors = retriever.getExternalDistractors(firstResource); // TODO externalDistractors need to be much more specific - calculate contextual score ?
+                for (DBPediaResource resource : groupedResources) {
+                    List<DBPediaResource> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource)).collect(Collectors.toList());
+                    List<String> inTextDistractorsAsString = inTextDistractors.stream().map(res -> res.getSurfaceForm()).collect(Collectors.toList());
+                    questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, inTextDistractorsAsString));
+                }
+            }
         }
         return Response.status(200).entity(questions).build();
+    }
+
+private List<Question> getQuestionsForResource(List<String> sentences, String resourceName, List<String> externalDistractors, List<String> inTextDistractors) {
+        List<Question> questions = new ArrayList<>();
+
+        sentences.forEach(s -> {
+            if(QGenUtils.sourceHasWord(s, resourceName)){
+                Question question = new Question();
+                String questionText = s.replace(resourceName, "________");
+                question.setQuestionText(questionText);
+                question.setAnswer(resourceName);
+                question.setExternalDistractors(externalDistractors);
+                question.setInTextDistractors(inTextDistractors);
+                questions.add(question);
+            }
+        });
+        return questions;
     }
 }
