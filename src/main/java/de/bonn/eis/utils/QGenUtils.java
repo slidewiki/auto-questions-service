@@ -2,10 +2,7 @@ package de.bonn.eis.utils;
 
 import de.bonn.eis.model.DBPediaResource;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,5 +45,12 @@ public class QGenUtils {
         Pattern p=Pattern.compile(pattern);
         Matcher m=p.matcher(source);
         return m.find();
+    }
+
+    public static <T> boolean listEqualsNoOrder(List<T> l1, List<T> l2) {
+        final Set<T> s1 = new HashSet<>(l1);
+        final Set<T> s2 = new HashSet<>(l2);
+
+        return s1.equals(s2);
     }
 }

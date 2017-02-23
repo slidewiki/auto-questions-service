@@ -3,6 +3,7 @@ package de.bonn.eis.controller;
 import de.bonn.eis.model.DBPediaResource;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,8 +19,10 @@ public class ARQClient {
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
     private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
     private static final String PREFIX_RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n";
+    private static final String PREFIX_WIKIDATA = "PREFIX wikidata: <http://www.wikidata.org/entity/>\n";
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
+    private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
 
     public List<String> getSimilarResourceNames(DBPediaResource resource) {
 
@@ -50,9 +53,9 @@ public class ARQClient {
                 nsAndType = nsAndType.replace("Http://", "http://");
                 queryString += "?s rdf:type <" + nsAndType + "> .\n";
             } else {
-                if(nsAndType.contains(":")){
+                if(nsAndType.indexOf(":") > 0){
                     String[] nsTypePair = nsAndType.split(":");
-                    String namespace = nsTypePair[0];
+                    String namespace = nsTypePair[0].trim();
                     String type = nsTypePair[1];
                     queryString = addPrefix(queryString, namespace);
                     nsAndType = getNamespace(namespace) + ":" + type;
@@ -96,11 +99,14 @@ public class ARQClient {
                 "  { " + uri + " ?p ?o } \n" +
                 "}";
 
-        Query query = QueryFactory.create(queryString);
-        QueryExecution qexec = QueryExecutionFactory.sparqlService(SPARQL_SERVICE, query);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQL_SERVICE, queryString);
+        qExec.addParam("timeout","1000"); //1 sec
+
+//        Query query = QueryFactory.create(queryString);
+//        QueryExecution qexec = QueryExecutionFactory.sparqlService(SPARQL_SERVICE, query);
 
         try {
-            Model result = qexec.execConstruct();
+            Model result = qExec.execConstruct();
             if (result != null) {
                 StmtIterator stmtIterator = result.listStatements();
                 while (stmtIterator.hasNext()) {
@@ -118,14 +124,17 @@ public class ARQClient {
             QGenLogger.severe("Exception in CONSTRUCT\n" + queryString + "\n" + e.getMessage());
         }
         finally {
-            qexec.close();
+            qExec.close();
         }
         return resourceTypes;
     }
 
     private ResultSet runSelectQuery(String queryString) throws Exception {
-        Query query = QueryFactory.create(queryString);
-        QueryExecution qExec = QueryExecutionFactory.sparqlService(SPARQL_SERVICE, query);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQL_SERVICE, queryString);
+        qExec.addParam("timeout","1000"); //1 sec
+
+//        Query query = QueryFactory.create(queryString);
+//        QueryExecution qExec = QueryExecutionFactory.sparqlService(SPARQL_SERVICE, query);
         ResultSet set = null;
         try {
             set = qExec.execSelect();
@@ -188,6 +197,10 @@ public class ARQClient {
             prefix = PREFIX_DBRES;
         } else if (namespace.equalsIgnoreCase("schema")) {
             prefix = PREFIX_SCHEMA;
+        } else if (namespace.equalsIgnoreCase("dul")) {
+            prefix = PREFIX_DUL;
+        } else if (namespace.equalsIgnoreCase("wikidata")) {
+            prefix = PREFIX_WIKIDATA;
         }
         if (!queryString.contains(prefix)) {
             queryString = prefix + queryString;
@@ -202,6 +215,10 @@ public class ARQClient {
                 return "dbres";
             case "Schema":
                 return "schema";
+            case "DUL":
+                return "dul";
+            case "Wikidata":
+                return "wikidata";
         }
         return "";
     }
