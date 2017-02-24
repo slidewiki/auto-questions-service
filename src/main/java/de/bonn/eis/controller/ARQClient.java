@@ -65,7 +65,7 @@ public class ARQClient {
                 queryString += "?s rdf:type " + nsAndType + " .\n";
             }
         }
-        queryString += "} LIMIT " + QUERY_LIMIT;
+        queryString += "} LIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
         // TODO Refine Query results
         List<String> resourceNames = new ArrayList<>();
         resourceNames.add("Distractors queried from DBPedia\n");
@@ -88,6 +88,12 @@ public class ARQClient {
     }
 
     // TODO Write query to fetch types, not the entire object
+    /*
+    "SELECT ?o WHERE {\n" +
+    uri + " rdf:type ?o .\n" +
+    "} \n"
+     */
+    //TODO Query builder
     private List<String> getResourceTypes(DBPediaResource resource) {
 
         List<String> resourceTypes = new ArrayList<>();

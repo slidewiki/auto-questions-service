@@ -6,7 +6,6 @@ import de.bonn.eis.utils.QGenUtils;
 
 import javax.servlet.ServletContext;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by Ainuddin Faizan on 1/2/17.

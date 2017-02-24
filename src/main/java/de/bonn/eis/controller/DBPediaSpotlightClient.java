@@ -18,7 +18,7 @@ import javax.ws.rs.core.MediaType;
 public class DBPediaSpotlightClient {
     private Client client;
     private WebTarget webTarget;
-    private final static String API_URL = "http://spotlight.sztaki.hu:2222/";
+    private final static String API_URL = "http://spotlight.sztaki.hu:2222/"; // TODO Update spotlight api URL
     private final static String LOCAL_API_URL = "http://spotlight/";
     private static final double CONFIDENCE = 0.85;
     private static final int SUPPORT = 0;
@@ -28,7 +28,7 @@ public class DBPediaSpotlightClient {
     protected void init(ServletContext servletContext){
         client = ClientBuilder.newClient();
         String attr = servletContext.getInitParameter("env");
-        String hostIp = API_URL; // TODO automate selection of ip
+        String hostIp = API_URL;
         if(attr !=null && attr.equalsIgnoreCase("prod")){
             hostIp = LOCAL_API_URL;
         }
