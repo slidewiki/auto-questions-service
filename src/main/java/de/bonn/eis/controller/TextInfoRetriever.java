@@ -73,7 +73,6 @@ public class TextInfoRetriever {
         Set<DBPediaResource> noDupeResources = new LinkedHashSet<>(dbPediaResources);
         dbPediaResources.clear();
         dbPediaResources.addAll(noDupeResources);
-        // TODO Fix similarity score rounding off to 1.0
         Comparator<DBPediaResource> comparator = Comparator.comparing(o -> Double.valueOf(o.getPercentageOfSecondRank()));
         Collections.sort(dbPediaResources, comparator);
         int size = dbPediaResources.size();

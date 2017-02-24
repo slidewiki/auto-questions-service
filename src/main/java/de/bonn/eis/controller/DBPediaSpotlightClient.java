@@ -16,7 +16,6 @@ import javax.ws.rs.core.MediaType;
  * Created by Ainuddin Faizan on 12/29/16.
  */
 public class DBPediaSpotlightClient {
-    private Client client;
     private WebTarget webTarget;
     private final static String API_URL = "http://spotlight.sztaki.hu:2222/"; // TODO Update spotlight api URL
     private final static String LOCAL_API_URL = "http://spotlight/";
@@ -26,7 +25,7 @@ public class DBPediaSpotlightClient {
 
     @PostConstruct
     protected void init(ServletContext servletContext){
-        client = ClientBuilder.newClient();
+        Client client = ClientBuilder.newClient();
         String attr = servletContext.getInitParameter("env");
         String hostIp = API_URL;
         if(attr !=null && attr.equalsIgnoreCase("prod")){
