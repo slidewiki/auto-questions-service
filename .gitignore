@@ -23,3 +23,7 @@ target/
 /*.txt
 libs/
 out/
+/src/main/java/de/bonn/eis/controller/DistractorCache.java
+/src/main/java/de/bonn/eis/controller/MyApplication.java
+/src/main/java/de/bonn/eis/controller/InMemoryCache.java
+/src/main/java/de/bonn/eis/controller/DistractorLists.java

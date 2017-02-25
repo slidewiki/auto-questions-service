@@ -1,5 +1,8 @@
 package de.bonn.eis.controller;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Multimaps;
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.DBPediaSpotlightPOJO;
 import de.bonn.eis.utils.QGenUtils;
@@ -83,47 +86,15 @@ public class TextInfoRetriever {
         return dbPediaResources.subList(firstIndex, size);
     }
 
-    public List<List<DBPediaResource>> groupResourcesByType(List<DBPediaResource> dbPediaResources)
+    /**
+     *
+     * @param dbPediaResources List of resources returned by DBPediaSpotlight
+     * @return An ImmutableListMultimap of lists of DBPediaResources grouped by their types
+     */
+    public ImmutableListMultimap<String, DBPediaResource> groupResourcesByType(List<DBPediaResource> dbPediaResources)
     {
-//        Iterator<DBPediaResource> iter = dbPediaResources.iterator();
-//        while (iter.hasNext()) {
-//            List<DBPediaResource> resourceList = new ArrayList<>();
-//            DBPediaResource resource = iter.next();
-//            resourceList.add(resource);
-//            while (iter.hasNext()){
-//                DBPediaResource nextResource = iter.next();
-//                if(nextResource.getTypes().equals(resource.getTypes())
-//                        && !nextResource.getSurfaceForm().equals(resource.getSurfaceForm())) {
-//                    resourceList.add(nextResource);
-//                    iter.remove();
-//                }
-//                groupedResources.add(resourceList);
-//            }
-//        }
-
-        List<List<DBPediaResource>> groupedResources = new ArrayList<>();
-        // TODO Iterator somehow
-        List<DBPediaResource> resourcesDone = new ArrayList<>();
-        for (DBPediaResource resource: dbPediaResources) {
-            if(resource!= null && !resourcesDone.contains(resource)){
-                List<DBPediaResource> resourceList = new ArrayList<>();
-                resourceList.add(resource);
-                resourcesDone.add(resource);
-                for (DBPediaResource nextResource: dbPediaResources) {
-                    if(nextResource!= null && resource != nextResource && !resourcesDone.contains(nextResource)) {
-                        if(nextResource.getTypes().equals(resource.getTypes())
-                                && !nextResource.getSurfaceForm().equals(resource.getSurfaceForm())) {
-                            resourceList.add(nextResource);
-                            resourcesDone.add(nextResource);
-//                            dbPediaResources.add(dbPediaResources.indexOf(nextResource), null);
-                        }
-                    }
-                }
-                groupedResources.add(resourceList);
-            }
-//            resourceList.add(dbPediaResources.indexOf(resource), null);
-        }
-        return groupedResources;
+        Function<DBPediaResource, String> typesFunction = resource -> resource.getTypes();
+        return Multimaps.index(dbPediaResources, typesFunction);
     }
 
     public List<String> getExternalDistractors(DBPediaResource resource) {

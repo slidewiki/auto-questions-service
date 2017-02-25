@@ -1,5 +1,8 @@
 package de.bonn.eis.controller;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableSet;
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.Question;
 import de.bonn.eis.model.SlideContent;
@@ -45,23 +48,25 @@ public class QuestionGenerator {
         //TODO Efficiency?
         //TODO Create distractor cache for resources with same types or create some scheme
 
-        List<List<DBPediaResource>> listOfGroupedResources = retriever.groupResourcesByType(topResources);
-        for (List<DBPediaResource> groupedResources : listOfGroupedResources) {
-            DBPediaResource firstResource = groupedResources.get(0);
-            if(firstResource.getTypes().isEmpty()){
+        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = retriever.groupResourcesByType(topResources);
+        ImmutableSet<String> types = mapOfGroupedResources.keySet();
+        types.forEach(type -> {
+            ImmutableList<DBPediaResource> groupedResources = mapOfGroupedResources.get(type);
+            if(type.isEmpty()){
                 for (DBPediaResource resource : groupedResources) {
                     List<String> externalDistractors = retriever.getExternalDistractors(resource);
                     questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, new ArrayList<>()));
                 }
             } else {
+                DBPediaResource firstResource = groupedResources.get(0);
                 List<String> externalDistractors = retriever.getExternalDistractors(firstResource); // TODO externalDistractors need to be much more specific - calculate contextual score ?
                 for (DBPediaResource resource : groupedResources) {
-                    List<DBPediaResource> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource)).collect(Collectors.toList());
-                    List<String> inTextDistractorsAsString = inTextDistractors.stream().map(res -> res.getSurfaceForm()).collect(Collectors.toList());
-                    questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, inTextDistractorsAsString));
+                    List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
+                            .map(res -> res.getSurfaceForm()).collect(Collectors.toList());
+                    questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, inTextDistractors));
                 }
             }
-        }
+        });
         return Response.status(200).entity(questions).build();
     }
 

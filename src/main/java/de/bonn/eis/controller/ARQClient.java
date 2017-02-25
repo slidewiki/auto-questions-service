@@ -24,6 +24,8 @@ public class ARQClient {
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
 
+    // TODO Use QueryBuilder
+    // http://stackoverflow.com/questions/7250189/how-to-build-sparql-queries-in-java
     public List<String> getSimilarResourceNames(DBPediaResource resource) {
 
         List<String> resourceTypeList;
