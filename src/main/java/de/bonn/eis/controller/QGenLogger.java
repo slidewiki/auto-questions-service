@@ -28,6 +28,10 @@ public class QGenLogger {
         LOGGER.setLevel(Level.ALL);
     }
 
+    public static void info(String message) {
+        LOGGER.info(message);
+    }
+
     public static void severe(String message) {
         LOGGER.severe(message);
     }

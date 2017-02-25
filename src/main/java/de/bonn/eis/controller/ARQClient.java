@@ -5,9 +5,7 @@ import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Ainuddin Faizan on 1/7/17.
@@ -38,18 +36,17 @@ public class ARQClient {
         if (resourceTypes.isEmpty()) {
             resourceTypeList = getResourceTypes(resource);
             if(!resourceTypeList.isEmpty()){
-                String mostSpecificType = getMostSpecificType(resourceTypeList);
-                if(mostSpecificType != null){
-                    List<String> tempList = new ArrayList<>();
-                    tempList.add(mostSpecificType);
-                    resourceTypeList = tempList;
-                }
+                QGenLogger.info("Resource: " + resource.getSurfaceForm());
+                resourceTypeList = getMostSpecificTypes(resourceTypeList);
             }
         } else {
             String[] typeArray = resourceTypes.split(",");
             resourceTypeList = new ArrayList<>(Arrays.asList(typeArray));
         }
 
+        if(resourceTypeList == null){
+            return new ArrayList<>();
+        }
         for (String nsAndType : resourceTypeList) {
             if (nsAndType.contains("Http://") || nsAndType.contains("http://")) { // TODO Something more flexible?
                 nsAndType = nsAndType.replace("Http://", "http://");
@@ -132,16 +129,19 @@ public class ARQClient {
     //TODO Select multiple types for more results or changing difficulty
     /**
      * Get the most specific rdf:type i.e. the one that has the most number of super classes
+     *
      * @param types
      * @return
      */
-    private String getMostSpecificType(List<String> types) {
+    private List<String> getMostSpecificTypes(List<String> types) {
 
-        if(types.size() <= 1) {
+        if(types.isEmpty()){
             return null;
+        } else if(types.size() == 1) {
+            return types;
         }
 
-        String mostSpecificType = null;
+        List<String> mostSpecificTypes = new ArrayList<>();
         int maxPathDepth = 0;
 
         for (String type: types) {
@@ -153,24 +153,28 @@ public class ARQClient {
 
                 ResultSet results;
                 int count = 0;
-
                 try {
                     results = runSelectQuery(queryString);
                     while (results.hasNext()) {
                         results.next();
                         count++;
                     }
-                    System.out.println("Type: " + type + "\t" + "Depth: " + count);
+                    QGenLogger.info("Type: " + type + "\t" + "Depth: " + count);
                     if(count > maxPathDepth) {
+                        if(!mostSpecificTypes.isEmpty()){
+                            mostSpecificTypes.clear();
+                        }
                         maxPathDepth = count;
-                        mostSpecificType = type;
+                        mostSpecificTypes.add(type);
+                    } else if(count == maxPathDepth) {
+                        mostSpecificTypes.add(type);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
-        return mostSpecificType;
+        return mostSpecificTypes;
     }
 
     private String addPrefix(String queryString, String namespace) {
