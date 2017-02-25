@@ -89,50 +89,26 @@ public class ARQClient {
         return resourceNames;
     }
 
-    // TODO Write query to fetch types, not the entire object
-    /*
-    "SELECT ?o WHERE {\n" +
-    uri + " rdf:type ?o .\n" +
-    "} \n"
-     */
     //TODO Query builder
     private List<String> getResourceTypes(DBPediaResource resource) {
 
         List<String> resourceTypes = new ArrayList<>();
         String uri = "<" + resource.getURI() + ">";
-        String queryString = "construct { \n" +
-                "  " + uri + " ?p ?o .\n" +
-                "} \n" +
-                "where { \n" +
-                "  { " + uri + " ?p ?o } \n" +
+        String queryString = PREFIX_RDF  + "SELECT ?o WHERE {\n" +
+                uri + " rdf:type ?o .\n" +
                 "}";
 
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQL_SERVICE, queryString);
-        qExec.addParam("timeout","1000"); //1 sec
-
-//        Query query = QueryFactory.create(queryString);
-//        QueryExecution qexec = QueryExecutionFactory.sparqlService(SPARQL_SERVICE, query);
-
         try {
-            Model result = qExec.execConstruct();
-            if (result != null) {
-                StmtIterator stmtIterator = result.listStatements();
-                while (stmtIterator.hasNext()) {
-                    Statement statement = stmtIterator.nextStatement();
-                    if (statement.getPredicate().getLocalName().equals("type")) {
-                        RDFNode object = statement.getObject();
-                        String objectNodeAsString = object.toString();
-//                        if(!objectNodeAsString.contains("class/yago")){
-                            resourceTypes.add(objectNodeAsString);
-//                        }
-                    }
+            ResultSet results = runSelectQuery(queryString);
+            while (results.hasNext()) {
+                QuerySolution result = results.next();
+                if(result != null){
+                    RDFNode node = result.get("o");
+                    resourceTypes.add(node.toString());
                 }
             }
         } catch (Exception e) {
-            QGenLogger.severe("Exception in CONSTRUCT\n" + queryString + "\n" + e.getMessage());
-        }
-        finally {
-            qExec.close();
+            e.printStackTrace();
         }
         return resourceTypes;
     }
@@ -141,9 +117,7 @@ public class ARQClient {
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQL_SERVICE, queryString);
         qExec.addParam("timeout","1000"); //1 sec
 
-//        Query query = QueryFactory.create(queryString);
-//        QueryExecution qExec = QueryExecutionFactory.sparqlService(SPARQL_SERVICE, query);
-        ResultSet set = null;
+        ResultSet set;
         try {
             set = qExec.execSelect();
             set = ResultSetFactory.copyResults(set);
