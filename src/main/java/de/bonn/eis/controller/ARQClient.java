@@ -1,6 +1,7 @@
 package de.bonn.eis.controller;
 
 import de.bonn.eis.model.DBPediaResource;
+import de.bonn.eis.utils.QGenLogger;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
@@ -33,6 +34,12 @@ public class ARQClient {
                         "?s foaf:name ?name .\n";
 
         String resourceTypes = resource.getTypes();
+        resourceTypeList = getResourceTypes(resource);
+        if(!resourceTypeList.isEmpty()){
+            QGenLogger.info("Resource: " + resource.getSurfaceForm());
+            resourceTypeList = getMostSpecificTypes(resourceTypeList);
+        }
+
         if (resourceTypes.isEmpty()) {
             resourceTypeList = getResourceTypes(resource);
             if(!resourceTypeList.isEmpty()){
@@ -64,7 +71,8 @@ public class ARQClient {
                 queryString += "?s rdf:type " + nsAndType + " .\n";
             }
         }
-        queryString += "} LIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
+//        queryString += "BIND(RAND(1 + strlen(str(?s))*0) as ?rid)\n";
+        queryString += "}\nORDER BY RAND()\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
         // TODO Refine Query results
         List<String> resourceNames = new ArrayList<>();
         resourceNames.add("Distractors queried from DBPedia\n");
@@ -173,6 +181,9 @@ public class ARQClient {
                     e.printStackTrace();
                 }
             }
+        }
+        if(mostSpecificTypes.size() > 5){
+            mostSpecificTypes = mostSpecificTypes.subList(0,6);
         }
         return mostSpecificTypes;
     }
