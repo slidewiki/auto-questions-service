@@ -9,6 +9,7 @@ import de.bonn.eis.model.SlideContent;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
+import rita.RiString;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.*;
@@ -37,6 +38,11 @@ public class QuestionGenerator {
         String text = content.getText();
         String env = servletContext.getInitParameter("env");
         boolean envIsDev = env == null || !env.equalsIgnoreCase("prod");
+
+        RiString rs = new RiString("The elephant took a bite!");
+        if(envIsDev){
+            QGenLogger.info(rs.features().toString());
+        }
 
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();

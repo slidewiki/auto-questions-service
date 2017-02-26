@@ -60,6 +60,12 @@
         <guava.version>21.0</guava.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>my-local-repo</id>
+            <url>file://${project.basedir}/src/main/resources/</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -124,6 +130,11 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.rednoise</groupId>
+            <artifactId>rita</artifactId>
+            <version>1.0.92-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>
