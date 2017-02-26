@@ -19,7 +19,7 @@ public class DBPediaSpotlightClient {
     private WebTarget webTarget;
     private final static String API_URL = "http://spotlight.sztaki.hu:2222/"; // TODO Update spotlight api URL
     private final static String LOCAL_API_URL = "http://spotlight/";
-    private static final double CONFIDENCE = 0.85;
+    private static final double CONFIDENCE = 0.35;
     private static final int SUPPORT = 0;
 
 

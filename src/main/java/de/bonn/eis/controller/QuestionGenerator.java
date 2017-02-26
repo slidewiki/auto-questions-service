@@ -7,6 +7,7 @@ import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.Question;
 import de.bonn.eis.model.SlideContent;
 import de.bonn.eis.utils.NLPConsts;
+import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
 
 import javax.servlet.ServletContext;
@@ -34,14 +35,24 @@ public class QuestionGenerator {
 
         List<Question> questions = new ArrayList<>();
         String text = content.getText();
-        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
+        String env = servletContext.getInitParameter("env");
+        boolean envIsDev = env == null || !env.equalsIgnoreCase("prod");
 
+        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
         if(dbPediaResources == null || dbPediaResources.size() == 0) {
             return Response.noContent().build();
         }
+        if(envIsDev){
+            QGenLogger.info("Resources retrieved");
+            dbPediaResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
+        }
         // Selecting most relevant occurring words
         List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.WORDS_COUNT);
+        if(envIsDev){
+            QGenLogger.info("Relevant resources");
+            topResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
+        }
         LanguageProcessor processor = new LanguageProcessor(text);
         List<String> sentences = processor.getSentences();
 
@@ -52,8 +63,12 @@ public class QuestionGenerator {
         ImmutableSet<String> types = mapOfGroupedResources.keySet();
         types.forEach(type -> {
             ImmutableList<DBPediaResource> groupedResources = mapOfGroupedResources.get(type);
+            if(envIsDev)
+                QGenLogger.info(type);
             if(type.isEmpty()){
                 for (DBPediaResource resource : groupedResources) {
+                    if(envIsDev)
+                        QGenLogger.info(resource.getSurfaceForm());
                     List<String> externalDistractors = retriever.getExternalDistractors(resource);
                     questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, new ArrayList<>()));
                 }
@@ -61,6 +76,8 @@ public class QuestionGenerator {
                 DBPediaResource firstResource = groupedResources.get(0);
                 List<String> externalDistractors = retriever.getExternalDistractors(firstResource); // TODO externalDistractors need to be much more specific - calculate contextual score ?
                 for (DBPediaResource resource : groupedResources) {
+                    if(envIsDev)
+                        QGenLogger.info(resource.getSurfaceForm());
                     List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
                             .map(res -> res.getSurfaceForm()).collect(Collectors.toList());
                     questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, inTextDistractors));
