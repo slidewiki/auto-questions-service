@@ -1,13 +1,8 @@
-package de.bonn.eis.controller;
-
-import de.bonn.eis.utils.QGenUtils;
+package de.bonn.eis.utils;
 
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 /**
  * Created by Ainuddin Faizan on 1/27/17.
@@ -24,7 +19,10 @@ public class QGenLogger {
             e.printStackTrace();
         }
         LOGGER.addHandler(fileHandler);
+        SimpleFormatter simpleFormatter = new SimpleFormatter();
+        fileHandler.setFormatter(simpleFormatter);
         fileHandler.setLevel(Level.ALL);
+        LOGGER.setUseParentHandlers(false);
         LOGGER.setLevel(Level.ALL);
     }
 
