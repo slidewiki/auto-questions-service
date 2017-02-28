@@ -46,4 +46,8 @@ public class QGenLogger {
             LOGGER.severe(message);
         }
     }
+
+    public static void fine(String message) {
+        LOGGER.fine(message);
+    }
 }
