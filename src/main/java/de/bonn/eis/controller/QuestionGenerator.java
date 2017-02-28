@@ -10,6 +10,7 @@ import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
 import rita.RiString;
+import rita.RiWordNet;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.*;
@@ -19,6 +20,7 @@ import javax.ws.rs.core.Response;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,10 +41,11 @@ public class QuestionGenerator {
         String env = servletContext.getInitParameter("env");
         boolean envIsDev = env == null || !env.equalsIgnoreCase("prod");
 
-        RiString rs = new RiString("The elephant took a bite!");
-        if(envIsDev){
-            QGenLogger.info(rs.features().toString());
-        }
+//        RiWordNet wordnet = new RiWordNet("/questions-service/wordnet");
+//        if(envIsDev){
+//            String[] syn = wordnet.getAllSynonyms("The W3C has over 10000 standards", RiWordNet.NOUN);
+//            Arrays.asList(syn).forEach(s -> QGenLogger.info(s));
+//        }
 
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();

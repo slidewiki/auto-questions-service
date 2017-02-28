@@ -57,7 +57,7 @@ public class ARQClient {
         for (String nsAndType : resourceTypeList) {
             if (nsAndType.contains("Http://") || nsAndType.contains("http://")) { // TODO Something more flexible?
                 nsAndType = nsAndType.replace("Http://", "http://");
-                queryString += "?s rdf:type <" + nsAndType + "> .\n";
+                queryString += "?s a <" + nsAndType + "> .\n";
             } else {
                 if(nsAndType.indexOf(":") > 0){
                     String[] nsTypePair = nsAndType.split(":");
@@ -68,7 +68,7 @@ public class ARQClient {
                 } else if(nsAndType.contains("@")){
                     nsAndType = nsAndType.substring(0, nsAndType.indexOf("@")).trim();
                 }
-                queryString += "?s rdf:type " + nsAndType + " .\n";
+                queryString += "?s a " + nsAndType + " .\n";
             }
         }
 //        queryString += "BIND(RAND(1 + strlen(str(?s))*0) as ?rid)\n";
@@ -100,7 +100,7 @@ public class ARQClient {
         List<String> resourceTypes = new ArrayList<>();
         String uri = "<" + resource.getURI() + ">";
         String queryString = PREFIX_RDF  + "SELECT ?o WHERE {\n" +
-                uri + " rdf:type ?o .\n" +
+                uri + " a ?o .\n" +
                 "}";
 
         try {
