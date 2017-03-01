@@ -112,4 +112,14 @@ private List<Question> getQuestionsForResource(List<String> sentences, String re
         });
         return questions;
     }
+
+    @Path("/numbers")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response generateQuestionsForNumbers(SlideContent slideContent) {
+        String text = slideContent.getText();
+        LanguageProcessor processor = new LanguageProcessor(text);
+        return Response.status(200).entity(processor.getCardinals()).build();
+    }
 }

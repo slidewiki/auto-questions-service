@@ -46,7 +46,7 @@
 
     <properties>
         <jena.version>3.1.0</jena.version>
-        <nlp.version>3.6.0</nlp.version>
+        <nlp.version>3.7.0</nlp.version>
         <jersey.client.version>2.25</jersey.client.version>
         <lombok.version>1.16.14</lombok.version>
         <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
@@ -78,6 +78,12 @@
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
             <version>${nlp.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.stanford.nlp</groupId>
+            <artifactId>stanford-corenlp</artifactId>
+            <version>${nlp.version}</version>
+            <classifier>models</classifier>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
