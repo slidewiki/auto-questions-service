@@ -19,9 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,16 +47,16 @@ public class QuestionGenerator {
 
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        if(dbPediaResources == null || dbPediaResources.size() == 0) {
+        if (dbPediaResources == null || dbPediaResources.size() == 0) {
             return Response.noContent().build();
         }
-        if(envIsDev){
+        if (envIsDev) {
             QGenLogger.info("Resources retrieved");
             dbPediaResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
         }
         // Selecting most relevant occurring words
         List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.WORDS_COUNT);
-        if(envIsDev){
+        if (envIsDev) {
             QGenLogger.info("Relevant resources");
             topResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
         }
@@ -72,11 +70,11 @@ public class QuestionGenerator {
         ImmutableSet<String> types = mapOfGroupedResources.keySet();
         types.forEach(type -> {
             ImmutableList<DBPediaResource> groupedResources = mapOfGroupedResources.get(type);
-            if(envIsDev)
+            if (envIsDev)
                 QGenLogger.info(type);
-            if(type.isEmpty()){
+            if (type.isEmpty()) {
                 for (DBPediaResource resource : groupedResources) {
-                    if(envIsDev)
+                    if (envIsDev)
                         QGenLogger.info(resource.getSurfaceForm());
                     List<String> externalDistractors = retriever.getExternalDistractors(resource);
                     questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, new ArrayList<>()));
@@ -85,7 +83,7 @@ public class QuestionGenerator {
                 DBPediaResource firstResource = groupedResources.get(0);
                 List<String> externalDistractors = retriever.getExternalDistractors(firstResource); // TODO externalDistractors need to be much more specific - calculate contextual score ?
                 for (DBPediaResource resource : groupedResources) {
-                    if(envIsDev)
+                    if (envIsDev)
                         QGenLogger.info(resource.getSurfaceForm());
                     List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
                             .map(res -> res.getSurfaceForm()).collect(Collectors.toList());
@@ -96,18 +94,18 @@ public class QuestionGenerator {
         return Response.status(200).entity(questions).build();
     }
 
-private List<Question> getQuestionsForResource(List<String> sentences, String resourceName, List<String> externalDistractors, List<String> inTextDistractors) {
+    private List<Question> getQuestionsForResource(List<String> sentences, String resourceName, List<String> externalDistractors, List<String> inTextDistractors) {
         List<Question> questions = new ArrayList<>();
 
         sentences.forEach(s -> {
-            if(QGenUtils.sourceHasWord(s, resourceName)){
-                Question question = new Question();
+            if (QGenUtils.sourceHasWord(s, resourceName)) {
+                Question.QuestionBuilder builder = Question.builder();
                 String questionText = s.replace(resourceName, "________");
-                question.setQuestionText(questionText);
-                question.setAnswer(resourceName);
-                question.setExternalDistractors(externalDistractors);
-                question.setInTextDistractors(inTextDistractors);
-                questions.add(question);
+                builder.questionText(questionText).
+                        answer(resourceName).
+                        externalDistractors(externalDistractors).
+                        inTextDistractors(inTextDistractors);
+                questions.add(builder.build());
             }
         });
         return questions;
@@ -117,9 +115,21 @@ private List<Question> getQuestionsForResource(List<String> sentences, String re
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response generateQuestionsForNumbers(SlideContent slideContent) {
+    public Response generateQuestionsForValues(SlideContent slideContent) {
         String text = slideContent.getText();
         LanguageProcessor processor = new LanguageProcessor(text);
-        return Response.status(200).entity(processor.getCardinals()).build();
+        List<Question> questions = new ArrayList<>();
+        Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
+        Set<String> numbers = sentencesWithNumbers.keySet();
+        sentencesWithNumbers.forEach((numberString, sentences) -> sentences.forEach(sentence -> {
+            String questionText = sentence.replace(numberString, "________");
+            Question.QuestionBuilder builder = Question.builder();
+            builder.questionText(questionText).
+                    answer(numberString).
+                    inTextDistractors(numbers.stream().
+                    filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
+            questions.add(builder.build());
+        }));
+        return Response.status(200).entity(questions).build();
     }
 }
