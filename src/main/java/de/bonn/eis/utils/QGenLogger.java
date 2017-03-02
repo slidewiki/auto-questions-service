@@ -9,19 +9,23 @@ import java.util.logging.*;
  */
 public class QGenLogger {
     private static final Logger LOGGER = Logger.getLogger(QGenUtils.class.getName());
-    private static Handler fileHandler;
+    private static Handler fileHandler, fineFileHandler;
 
     static {
         try {
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
             fileHandler = new FileHandler("./query_messages_" + timestamp.toString() + ".log");
+            fineFileHandler = new FileHandler("./fine_messages_" + timestamp.toString() + ".log");
         } catch (IOException e) {
             e.printStackTrace();
         }
         LOGGER.addHandler(fileHandler);
+        LOGGER.addHandler(fineFileHandler);
         SimpleFormatter simpleFormatter = new SimpleFormatter();
         fileHandler.setFormatter(simpleFormatter);
-        fileHandler.setLevel(Level.ALL);
+        fineFileHandler.setFormatter(simpleFormatter);
+        fileHandler.setLevel(Level.INFO);
+        fineFileHandler.setLevel(Level.FINE);
         LOGGER.setUseParentHandlers(false);
         LOGGER.setLevel(Level.ALL);
     }
