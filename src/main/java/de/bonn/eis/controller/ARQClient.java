@@ -5,6 +5,7 @@ import de.bonn.eis.utils.QGenLogger;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
+import rita.wordnet.jwnl.wndata.Exc;
 
 import java.util.*;
 
@@ -19,10 +20,11 @@ public class ARQClient {
     private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
     private static final String PREFIX_RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n";
     private static final String PREFIX_WIKIDATA = "PREFIX wikidata: <http://www.wikidata.org/entity/>\n";
-    private static final String TIMEOUT_VALUE = "5000";
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
+    private static final String TIMEOUT_VALUE = "5000";
+    private static final String UNION = "UNION\n";
 
     // TODO Use QueryBuilder
     // http://stackoverflow.com/questions/7250189/how-to-build-sparql-queries-in-java
@@ -30,29 +32,34 @@ public class ARQClient {
 
         List<String> resourceTypeList;
         String queryString =
-                PREFIX_RDF + PREFIX_FOAF +
+                PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
                         "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
-                        "?s foaf:name ?name .\n";
+                        "{ ?s foaf:name ?name }\n" + UNION +
+                        "{ ?s rdfs:label ?name }\n";
 
-        String resourceTypes = resource.getTypes();
-        if (resourceTypes.isEmpty()) {
         resourceTypeList = getResourceTypes(resource);
-        if (!resourceTypeList.isEmpty()) {
+        if (resourceTypeList != null && !resourceTypeList.isEmpty()) {
             QGenLogger.info("Resource: " + resource.getSurfaceForm());
             resourceTypeList = getMostSpecificTypes(resourceTypeList);
         }
-        } else {
-            String[] typeArray = resourceTypes.split(",");
-            resourceTypeList = new ArrayList<>(Arrays.asList(typeArray));
-        }
 
-        if (resourceTypeList == null) {
+        if (resourceTypeList == null || resourceTypeList.isEmpty()) {
             return new ArrayList<>();
         }
-        for (String nsAndType : resourceTypeList) {
+
+        int numberOfTypes = resourceTypeList.size();
+        int groupSize = getGroupSize(numberOfTypes);
+        int count = 0;
+        boolean curlyBraceOpened = false;
+        for (int i = 0; i < numberOfTypes; i++) {
+            String nsAndType = resourceTypeList.get(i);
+            if (groupSize > 0 && count == 0) {
+                queryString += "{\n";
+                curlyBraceOpened = true;
+            }
             if (nsAndType.contains("Http://") || nsAndType.contains("http://")) { // TODO Something more flexible?
                 nsAndType = nsAndType.replace("Http://", "http://");
-                queryString += "?s a <" + nsAndType + "> .\n";
+                nsAndType = "<" + nsAndType + ">";
             } else {
                 if (nsAndType.indexOf(":") > 0) {
                     String[] nsTypePair = nsAndType.split(":");
@@ -63,26 +70,56 @@ public class ARQClient {
                 } else if (nsAndType.contains("@")) {
                     nsAndType = nsAndType.substring(0, nsAndType.indexOf("@")).trim();
                 }
-                queryString += "?s a " + nsAndType + " .\n";
+            }
+            queryString += "?s a " + nsAndType + " .\n";
+            if (groupSize > 0) {
+                count++;
+                if (groupSize == count) {
+                    queryString += "}\n";
+                    curlyBraceOpened = false;
+                    if (i < numberOfTypes - 1) {
+                        queryString += UNION;
+                    }
+                    count = 0;
+                }
             }
         }
-//        queryString += "BIND(RAND(1 + strlen(str(?s))*0) as ?rid)\n";
+        if(curlyBraceOpened){
+            queryString += "}\n";
+        }
+        queryString += "FILTER (langMatches(lang(?name), \"EN\")) .";
         queryString += "}\nORDER BY RAND()\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
         // TODO Refine Query results
         List<String> resourceNames = new ArrayList<>();
         resourceNames.add("Distractors queried from DBPedia\n");
 
-        ResultSet results = runSelectQuery(queryString);
-        while (results.hasNext()) {
-            QuerySolution result = results.next();
-            RDFNode n = result.get("name");
-            String nameLiteral;
-            if (n.isLiteral()) {
-                nameLiteral = ((Literal) n).getLexicalForm();
-                resourceNames.add(nameLiteral);
+        ResultSet results = null;
+        try {
+            QGenLogger.fine("###########################RESOURCE: " + resource.getSurfaceForm() + "###########################\n" + "SELECT Query:\n" + queryString);
+            results = runSelectQuery(queryString);
+        } catch (Exception e) {
+            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
+        }
+        if (results != null) {
+            while (results.hasNext()) {
+                QuerySolution result = results.next();
+                RDFNode n = result.get("name");
+                String nameLiteral;
+                if (n.isLiteral()) {
+                    nameLiteral = ((Literal) n).getLexicalForm();
+                    resourceNames.add(nameLiteral);
+                }
             }
         }
         return resourceNames;
+    }
+
+    private int getGroupSize(int sizeOfList) {
+        int maxGroupSize = 2;
+        if (sizeOfList < maxGroupSize) {
+            return sizeOfList - 1;
+        }
+        return maxGroupSize;
     }
 
     //TODO Query builder
@@ -94,28 +131,33 @@ public class ARQClient {
                 uri + " a ?o .\n" +
                 "}";
 
-        ResultSet results = runSelectQuery(queryString);
-        while (results.hasNext()) {
-            QuerySolution result = results.next();
-            if (result != null) {
-                RDFNode node = result.get("o");
-                resourceTypes.add(node.toString());
+        ResultSet results = null;
+        try {
+            results = runSelectQuery(queryString);
+        } catch (Exception e) {
+            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
+        }
+        if (results != null) {
+            while (results.hasNext()) {
+                QuerySolution result = results.next();
+                if (result != null) {
+                    RDFNode node = result.get("o");
+                    resourceTypes.add(node.toString());
+                }
             }
         }
         return resourceTypes;
     }
 
-    private ResultSet runSelectQuery(String queryString) {
+    private ResultSet runSelectQuery(String queryString) throws Exception {
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQL_SERVICE, queryString);
         qExec.addParam("timeout", TIMEOUT_VALUE); //1 sec
-        QGenLogger.fine("SELECT Query:\n" + queryString);
-        ResultSet set;
+        ResultSet set = null;
         try {
             set = qExec.execSelect();
             set = ResultSetFactory.copyResults(set);
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
-            throw e;
         } finally {
             qExec.close();
         }
@@ -156,7 +198,6 @@ public class ARQClient {
                         results.next();
                         count++;
                     }
-                    QGenLogger.info("Type: " + type + "\t" + "Depth: " + count);
                     if (count > maxPathDepth) {
                         if (!mostSpecificTypes.isEmpty()) {
                             mostSpecificTypes.clear();

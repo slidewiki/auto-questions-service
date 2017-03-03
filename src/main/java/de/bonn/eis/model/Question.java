@@ -9,7 +9,7 @@ import java.util.List;
  * Created by Ainuddin Faizan on 2/13/17.
  */
 @Builder
-@Data
+@Data // Needed for JSON serialization
 public class Question implements Serializable{
     private String questionText;
     private String answer;
