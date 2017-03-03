@@ -10,6 +10,7 @@ import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
 import rita.RiString;
+import rita.RiTa;
 import rita.RiWordNet;
 
 import javax.servlet.ServletContext;
@@ -74,35 +75,45 @@ public class QuestionGenerator {
                 QGenLogger.info(type);
             if (type.isEmpty()) {
                 for (DBPediaResource resource : groupedResources) {
-                    if (envIsDev)
-                        QGenLogger.info(resource.getSurfaceForm());
+                    String surfaceForm = resource.getSurfaceForm();
+                    String plural = RiTa.pluralize(surfaceForm);
+                    if (envIsDev) {
+                        QGenLogger.info(surfaceForm);
+                    }
                     List<String> externalDistractors = retriever.getExternalDistractors(resource);
-                    questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, new ArrayList<>()));
+                    questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, new ArrayList<>()));
                 }
             } else {
                 DBPediaResource firstResource = groupedResources.get(0);
                 List<String> externalDistractors = retriever.getExternalDistractors(firstResource); // TODO externalDistractors need to be much more specific - calculate contextual score ?
                 for (DBPediaResource resource : groupedResources) {
+                    String surfaceForm = resource.getSurfaceForm();
+                    String plural = RiTa.pluralize(surfaceForm);
                     if (envIsDev)
-                        QGenLogger.info(resource.getSurfaceForm());
+                        QGenLogger.info(surfaceForm);
                     List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
-                            .map(res -> res.getSurfaceForm()).collect(Collectors.toList());
-                    questions.addAll(getQuestionsForResource(sentences, resource.getSurfaceForm(), externalDistractors, inTextDistractors));
+                            .map(res -> surfaceForm).collect(Collectors.toList());
+                    questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
                 }
             }
         });
         return Response.status(200).entity(questions).build();
     }
 
-    private List<Question> getQuestionsForResource(List<String> sentences, String resourceName, List<String> externalDistractors, List<String> inTextDistractors) {
+    private List<Question> getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
         List<Question> questions = new ArrayList<>();
 
         sentences.forEach(s -> {
             if (QGenUtils.sourceHasWord(s, resourceName)) {
                 Question.QuestionBuilder builder = Question.builder();
-                String questionText = s.replace(resourceName, "________");
+                String questionText = s.replaceAll("\\b"+resourceName+"\\b", "________");
+                String answer = resourceName;
+                if(QGenUtils.sourceHasWord(s, pluralResourceName)){
+                    questionText = questionText.replaceAll("\\b"+pluralResourceName+"\\b", "________");
+                    answer+= "(s)";
+                }
                 builder.questionText(questionText).
-                        answer(resourceName).
+                        answer(answer).
                         externalDistractors(externalDistractors).
                         inTextDistractors(inTextDistractors);
                 questions.add(builder.build());
@@ -122,7 +133,7 @@ public class QuestionGenerator {
         Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
         Set<String> numbers = sentencesWithNumbers.keySet();
         sentencesWithNumbers.forEach((numberString, sentences) -> sentences.forEach(sentence -> {
-            String questionText = sentence.replace(numberString, "________");
+            String questionText = sentence.replaceAll("\\b"+numberString+"\\b", "________");
             Question.QuestionBuilder builder = Question.builder();
             builder.questionText(questionText).
                     answer(numberString).
