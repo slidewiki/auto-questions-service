@@ -48,4 +48,10 @@ public class LanguageProcessor {
         });
         return cardinalsAndSentencesMap;
     }
+//
+//    public String getPOSTag(int offset) {
+//        List<CoreLabel> tokens = document.get(CoreAnnotations.TokensAnnotation.class);
+//        CoreLabel token = tokens.get(offset);
+//        return token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
+//    }
 }

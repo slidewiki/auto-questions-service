@@ -39,12 +39,18 @@ public class ARQClient {
 
         resourceTypeList = getResourceTypes(resource);
         if (resourceTypeList != null && !resourceTypeList.isEmpty()) {
+            if(resourceTypeList.size() == 1){
+                String type = resourceTypeList.get(0);
+                if(type.contains("owl:Thing") || type.contains("owl#Thing")){
+                    return null;
+                }
+            }
             QGenLogger.info("Resource: " + resource.getSurfaceForm());
             resourceTypeList = getMostSpecificTypes(resourceTypeList);
         }
 
         if (resourceTypeList == null || resourceTypeList.isEmpty()) {
-            return new ArrayList<>();
+            return null;
         }
 
         int numberOfTypes = resourceTypeList.size();

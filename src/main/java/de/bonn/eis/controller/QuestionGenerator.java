@@ -9,7 +9,6 @@ import de.bonn.eis.model.SlideContent;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
-import rita.RiString;
 import rita.RiTa;
 import rita.RiWordNet;
 
@@ -30,6 +29,8 @@ import java.util.stream.Collectors;
 @Path("/qgen")
 public class QuestionGenerator {
 
+    private static final String BLANK = "________";
+
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -40,11 +41,8 @@ public class QuestionGenerator {
         String env = servletContext.getInitParameter("env");
         boolean envIsDev = env == null || !env.equalsIgnoreCase("prod");
 
-//        RiWordNet wordnet = new RiWordNet("/questions-service/wordnet");
-//        if(envIsDev){
-//            String[] syn = wordnet.getAllSynonyms("The W3C has over 10000 standards", RiWordNet.NOUN);
-//            Arrays.asList(syn).forEach(s -> QGenLogger.info(s));
-//        }
+        String dir = System.getProperty("user.dir");
+        RiWordNet wordnet = new RiWordNet(dir + "/wordnet/");
 
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
@@ -81,16 +79,23 @@ public class QuestionGenerator {
                         QGenLogger.info(surfaceForm);
                     }
                     List<String> externalDistractors = retriever.getExternalDistractors(resource);
+                    if(externalDistractors == null){
+                        externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
+                    }
                     questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, new ArrayList<>()));
                 }
             } else {
                 DBPediaResource firstResource = groupedResources.get(0);
-                List<String> externalDistractors = retriever.getExternalDistractors(firstResource); // TODO externalDistractors need to be much more specific - calculate contextual score ?
+                List<String> externalDistractors = retriever.getExternalDistractors(firstResource);
                 for (DBPediaResource resource : groupedResources) {
                     String surfaceForm = resource.getSurfaceForm();
                     String plural = RiTa.pluralize(surfaceForm);
-                    if (envIsDev)
+                    if (envIsDev) {
                         QGenLogger.info(surfaceForm);
+                    }
+                    if(externalDistractors == null){
+                        externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
+                    }
                     List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
                             .map(res -> surfaceForm).collect(Collectors.toList());
                     questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
@@ -100,16 +105,23 @@ public class QuestionGenerator {
         return Response.status(200).entity(questions).build();
     }
 
+    private List<String> attemptToGetSynonyms(RiWordNet wordnet, String surfaceForm) {
+        List<String> synList;
+        String[] synonyms = wordnet.getAllSynonyms(surfaceForm, RiWordNet.NOUN);
+        synList = Arrays.asList(synonyms);
+        return synList;
+    }
+
     private List<Question> getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
         List<Question> questions = new ArrayList<>();
 
         sentences.forEach(s -> {
             if (QGenUtils.sourceHasWord(s, resourceName)) {
                 Question.QuestionBuilder builder = Question.builder();
-                String questionText = s.replaceAll("\\b"+resourceName+"\\b", "________");
+                String questionText = s.replaceAll("\\b"+resourceName+"\\b", BLANK);
                 String answer = resourceName;
                 if(QGenUtils.sourceHasWord(s, pluralResourceName)){
-                    questionText = questionText.replaceAll("\\b"+pluralResourceName+"\\b", "________");
+                    questionText = questionText.replaceAll("\\b"+pluralResourceName+"\\b", BLANK);
                     answer+= "(s)";
                 }
                 builder.questionText(questionText).
@@ -133,7 +145,7 @@ public class QuestionGenerator {
         Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
         Set<String> numbers = sentencesWithNumbers.keySet();
         sentencesWithNumbers.forEach((numberString, sentences) -> sentences.forEach(sentence -> {
-            String questionText = sentence.replaceAll("\\b"+numberString+"\\b", "________");
+            String questionText = sentence.replaceAll("\\b"+numberString+"\\b", BLANK);
             Question.QuestionBuilder builder = Question.builder();
             builder.questionText(questionText).
                     answer(numberString).
