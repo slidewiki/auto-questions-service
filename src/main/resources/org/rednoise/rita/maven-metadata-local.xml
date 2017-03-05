@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>org.rednoise</groupId>
+  <artifactId>rita</artifactId>
+  <versioning>
+    <versions>
+      <version>1.0.92-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20170226202245</lastUpdated>
+  </versioning>
+</metadata>
