@@ -8,7 +8,7 @@ The service makes use of [DBPediaSpotlight](https://github.com/dbpedia-spotlight
 
 To start the service, simply clone the repo and run the `run.sh` shell script.
 
-This will start a tomcat server at ```http://localhost:8080``` docker container and maven will deploy a war file to tomcat. Once the server is running, you can simply POST data to the server at the ```/qgen``` endpoint as shown:
+This will start a tomcat server at ```http://localhost:8080``` in a docker container and maven will deploy a war file to tomcat. Once the server is running, you can simply POST data to the server at the ```/qgen``` endpoint as shown:
 
 ```
 curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the FIFA World Cup"}' "http://localhost:8080/qgen/"
@@ -42,4 +42,6 @@ Once the spotlight container is up and running, run the shell script with an arg
 
 ```./run.sh prod```
 
-This will build the docker container using the Dockerfile-prod file.
+The prod argument will use the production docker container designed to run with the spotlight container.
+
+Both dev and prod images are available on DockerHub [here](https://hub.docker.com/r/andyfaizan/).
