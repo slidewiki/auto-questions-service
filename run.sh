@@ -11,7 +11,7 @@ cd 'mytomcatdocker'
 
 if [ "$env" != "prod" ]; then
     docker build -f Dockerfile-dev -t andy/tomcat-dev .
-    docker run --rm --name tomcat-dev -p 8080:8080 andy/tomcat &
+    docker run --rm --name tomcat-dev -p 8080:8080 andy/tomcat-dev &
 else
     ### Scenario 2 ###
     # Running this docker container with another container for spotlight on the same host
