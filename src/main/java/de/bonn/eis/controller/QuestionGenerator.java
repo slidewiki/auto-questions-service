@@ -13,7 +13,10 @@ import rita.RiTa;
 import rita.RiWordNet;
 
 import javax.servlet.ServletContext;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -79,7 +82,7 @@ public class QuestionGenerator {
                         QGenLogger.info(surfaceForm);
                     }
                     List<String> externalDistractors = retriever.getExternalDistractors(resource);
-                    if(externalDistractors == null){
+                    if (externalDistractors == null) {
                         externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
                     }
                     questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, new ArrayList<>()));
@@ -93,7 +96,7 @@ public class QuestionGenerator {
                     if (envIsDev) {
                         QGenLogger.info(surfaceForm);
                     }
-                    if(externalDistractors == null){
+                    if (externalDistractors == null) {
                         externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
                     }
                     List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
@@ -118,11 +121,11 @@ public class QuestionGenerator {
         sentences.forEach(s -> {
             if (QGenUtils.sourceHasWord(s, resourceName)) {
                 Question.QuestionBuilder builder = Question.builder();
-                String questionText = s.replaceAll("\\b"+resourceName+"\\b", BLANK);
+                String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
                 String answer = resourceName;
-                if(QGenUtils.sourceHasWord(s, pluralResourceName)){
-                    questionText = questionText.replaceAll("\\b"+pluralResourceName+"\\b", BLANK);
-                    answer+= "(s)";
+                if (QGenUtils.sourceHasWord(s, pluralResourceName)) {
+                    questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
+                    answer += "(s)";
                 }
                 builder.questionText(questionText).
                         answer(answer).
@@ -145,12 +148,12 @@ public class QuestionGenerator {
         Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
         Set<String> numbers = sentencesWithNumbers.keySet();
         sentencesWithNumbers.forEach((numberString, sentences) -> sentences.forEach(sentence -> {
-            String questionText = sentence.replaceAll("\\b"+numberString+"\\b", BLANK);
+            String questionText = sentence.replaceAll("\\b" + numberString + "\\b", BLANK);
             Question.QuestionBuilder builder = Question.builder();
             builder.questionText(questionText).
                     answer(numberString).
                     inTextDistractors(numbers.stream().
-                    filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
+                            filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
             questions.add(builder.build());
         }));
         return Response.status(200).entity(questions).build();

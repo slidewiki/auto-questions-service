@@ -30,7 +30,7 @@ public class QGenUtils {
         return list;
     }
 
-    public static List<String> getRandomItemsFromList (List<String> list, int n){
+    public static List<String> getRandomItemsFromList(List<String> list, int n) {
         List<String> randomItems = new ArrayList<>();
         int size = list.size();
         for (int i = 0; i < n && i < size; i++) {
@@ -40,10 +40,10 @@ public class QGenUtils {
         return randomItems;
     }
 
-    public static boolean sourceHasWord(String source, String word){
-        String pattern = "\\b"+word+"\\b";
-        Pattern p=Pattern.compile(pattern);
-        Matcher m=p.matcher(source);
+    public static boolean sourceHasWord(String source, String word) {
+        String pattern = "\\b" + word + "\\b";
+        Pattern p = Pattern.compile(pattern);
+        Matcher m = p.matcher(source);
         return m.find();
     }
 

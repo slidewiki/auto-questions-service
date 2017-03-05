@@ -8,7 +8,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 
@@ -16,19 +15,18 @@ import javax.ws.rs.core.MediaType;
  * Created by Ainuddin Faizan on 12/29/16.
  */
 public class DBPediaSpotlightClient {
-    private WebTarget webTarget;
     private final static String API_URL = "http://spotlight.sztaki.hu:2222/"; // TODO Update spotlight api URL
     private final static String LOCAL_API_URL = "http://spotlight/";
     private static final double CONFIDENCE = 0.35;
     private static final int SUPPORT = 0;
-
+    private WebTarget webTarget;
 
     @PostConstruct
-    protected void init(ServletContext servletContext){
+    protected void init(ServletContext servletContext) {
         Client client = ClientBuilder.newClient();
         String attr = servletContext.getInitParameter("env");
         String hostIp = API_URL;
-        if(attr !=null && attr.equalsIgnoreCase("prod")){
+        if (attr != null && attr.equalsIgnoreCase("prod")) {
             hostIp = LOCAL_API_URL;
         }
         webTarget = client.target(hostIp + "rest/annotate/");
@@ -36,6 +34,7 @@ public class DBPediaSpotlightClient {
 
     /**
      * Annotate small piece of text via GET request
+     *
      * @param text
      */
     public DBPediaSpotlightPOJO annotateGet(String text) {
@@ -48,6 +47,7 @@ public class DBPediaSpotlightClient {
 
     /**
      * Annotate large piece of text via POST request
+     *
      * @param text Text to be annotated
      */
     public DBPediaSpotlightPOJO annotatePost(String text) {

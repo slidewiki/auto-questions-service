@@ -22,10 +22,10 @@ public class TextInfoRetriever {
         dbPediaSpotlightClient.init(servletContext);
         DBPediaSpotlightPOJO response;
         //TODO Check for text length limit
-        if(text.length() < 200) {
+        if (text.length() < 200) {
             System.out.println("GET");
             response = dbPediaSpotlightClient.annotateGet(text);
-        } else{
+        } else {
             System.out.println("POST");
             response = dbPediaSpotlightClient.annotatePost(text);
         }
@@ -33,7 +33,6 @@ public class TextInfoRetriever {
     }
 
     /**
-     *
      * @param n Number of frequent words desired. Pass 0 to get all words
      * @return A Map of most frequent de.bonn.eis.model.DBPediaResource objects and their count in Integer
      */
@@ -52,11 +51,11 @@ public class TextInfoRetriever {
         }
 
         Map<String, Integer> sortedMap = QGenUtils.sortMap(wordFrequencyPairs);
-        List<Map.Entry<String,Integer>> entryList = new ArrayList<>(sortedMap.entrySet());
+        List<Map.Entry<String, Integer>> entryList = new ArrayList<>(sortedMap.entrySet());
         int size = entryList.size();
         sortedMap.clear();
         int firstIndex = 0;
-        if(n > 0 && n < size) {
+        if (n > 0 && n < size) {
             firstIndex = size - n;
         }
         entryList.subList(firstIndex, size).forEach(entry -> sortedMap.put(entry.getKey(), entry.getValue()));
@@ -68,7 +67,6 @@ public class TextInfoRetriever {
     }
 
     /**
-     *
      * @param n The number of relevant words desired. Pass 0 to get all words
      * @return A List of most relevant de.bonn.eis.model.DBPediaResource objects
      */
@@ -80,19 +78,17 @@ public class TextInfoRetriever {
         Collections.sort(dbPediaResources, comparator);
         int size = dbPediaResources.size();
         int firstIndex = 0;
-        if(n > 0 && n < size) {
+        if (n > 0 && n < size) {
             firstIndex = size - n;
         }
         return dbPediaResources.subList(firstIndex, size);
     }
 
     /**
-     *
      * @param dbPediaResources List of resources returned by DBPediaSpotlight
      * @return An ImmutableListMultimap of lists of DBPediaResources grouped by their types
      */
-    public ImmutableListMultimap<String, DBPediaResource> groupResourcesByType(List<DBPediaResource> dbPediaResources)
-    {
+    public ImmutableListMultimap<String, DBPediaResource> groupResourcesByType(List<DBPediaResource> dbPediaResources) {
         Function<DBPediaResource, String> typesFunction = resource -> resource.getTypes();
         return Multimaps.index(dbPediaResources, typesFunction);
     }
@@ -100,7 +96,7 @@ public class TextInfoRetriever {
     public List<String> getExternalDistractors(DBPediaResource resource) {
         DistractorGenerator generator = new DistractorGenerator();
         List<String> externalDistractors = generator.getExternalDistractors(resource);
-            return externalDistractors;
+        return externalDistractors;
     }
 
     public List<DBPediaResource> getDbPediaResources() {

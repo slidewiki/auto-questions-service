@@ -1,16 +1,13 @@
 package de.bonn.eis.model; /**
  * Created by Ainuddin Faizan on 12/29/16.
  */
+
+import com.fasterxml.jackson.annotation.*;
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 
 import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
 
@@ -26,9 +23,9 @@ import static org.apache.commons.lang.builder.ToStringStyle.MULTI_LINE_STYLE;
         "@similarityScore",
         "@percentageOfSecondRank"
 })
-public class DBPediaResource implements Serializable, Comparable
-{
+public class DBPediaResource implements Serializable, Comparable {
 
+    private final static long serialVersionUID = -6649043481394421196L;
     @JsonProperty("@URI")
     private String uRI;
     @JsonProperty("@support")
@@ -45,17 +42,14 @@ public class DBPediaResource implements Serializable, Comparable
     private String percentageOfSecondRank;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
-    private final static long serialVersionUID = -6649043481394421196L;
 
     /**
      * No args constructor for use in serialization
-     *
      */
     public DBPediaResource() {
     }
 
     /**
-     *
      * @param support
      * @param percentageOfSecondRank
      * @param uRI
@@ -167,7 +161,7 @@ public class DBPediaResource implements Serializable, Comparable
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof DBPediaResource){
+        if (obj instanceof DBPediaResource) {
             DBPediaResource otherObj = (DBPediaResource) obj;
             return otherObj.getURI().equals(this.getURI()) && otherObj.getSurfaceForm().equals(this.getSurfaceForm());
         }

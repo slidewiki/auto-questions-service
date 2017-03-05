@@ -2,12 +2,16 @@ package de.bonn.eis.controller;
 
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.utils.QGenLogger;
-import org.apache.jena.query.*;
-import org.apache.jena.rdf.model.*;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
-import rita.wordnet.jwnl.wndata.Exc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Ainuddin Faizan on 1/7/17.
@@ -20,11 +24,11 @@ public class ARQClient {
     private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
     private static final String PREFIX_RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n";
     private static final String PREFIX_WIKIDATA = "PREFIX wikidata: <http://www.wikidata.org/entity/>\n";
+    private static final String TIMEOUT_VALUE = "5000";
+    private static final String UNION = "UNION\n";
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
-    private static final String TIMEOUT_VALUE = "5000";
-    private static final String UNION = "UNION\n";
 
     // TODO Use QueryBuilder
     // http://stackoverflow.com/questions/7250189/how-to-build-sparql-queries-in-java
@@ -39,9 +43,9 @@ public class ARQClient {
 
         resourceTypeList = getResourceTypes(resource);
         if (resourceTypeList != null && !resourceTypeList.isEmpty()) {
-            if(resourceTypeList.size() == 1){
+            if (resourceTypeList.size() == 1) {
                 String type = resourceTypeList.get(0);
-                if(type.contains("owl:Thing") || type.contains("owl#Thing")){
+                if (type.contains("owl:Thing") || type.contains("owl#Thing")) {
                     return null;
                 }
             }
@@ -90,7 +94,7 @@ public class ARQClient {
                 }
             }
         }
-        if(curlyBraceOpened){
+        if (curlyBraceOpened) {
             queryString += "}\n";
         }
         queryString += "FILTER (langMatches(lang(?name), \"EN\")) .";

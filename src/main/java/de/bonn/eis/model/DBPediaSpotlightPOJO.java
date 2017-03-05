@@ -1,17 +1,14 @@
 package de.bonn.eis.model; /**
  * Created by Ainuddin Faizan on 12/28/16.
  */
+
+import com.fasterxml.jackson.annotation.*;
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 
 //TODO Shorten using Project Lombok
 
@@ -25,9 +22,9 @@ import org.apache.commons.lang.builder.ToStringBuilder;
         "@policy",
         "Resources"
 })
-public class DBPediaSpotlightPOJO implements Serializable
-{
+public class DBPediaSpotlightPOJO implements Serializable {
 
+    private final static long serialVersionUID = -4700003125831217985L;
     @JsonProperty("@text")
     private String text;
     @JsonProperty("@confidence")
@@ -44,17 +41,14 @@ public class DBPediaSpotlightPOJO implements Serializable
     private List<DBPediaResource> DBPediaResources = null;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
-    private final static long serialVersionUID = -4700003125831217985L;
 
     /**
      * No args constructor for use in serialization
-     *
      */
     public DBPediaSpotlightPOJO() {
     }
 
     /**
-     *
      * @param DBPediaResources
      * @param text
      * @param support
