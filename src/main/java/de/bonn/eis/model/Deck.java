@@ -23,7 +23,7 @@ import java.util.Map;
         "id",
         "type",
         "user",
-        "slides"
+        "children"
 })
 public class Deck implements Serializable {
 
@@ -36,7 +36,7 @@ public class Deck implements Serializable {
     private String type;
     @JsonProperty("user")
     private String user;
-    @JsonProperty("slides")
+    @JsonProperty("children")
     private List<Slide> slides = null;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<>();

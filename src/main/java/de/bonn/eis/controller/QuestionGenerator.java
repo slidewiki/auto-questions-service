@@ -3,9 +3,7 @@ package de.bonn.eis.controller;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
-import de.bonn.eis.model.DBPediaResource;
-import de.bonn.eis.model.Question;
-import de.bonn.eis.model.SlideContent;
+import de.bonn.eis.model.*;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
@@ -13,10 +11,10 @@ import rita.RiTa;
 import rita.RiWordNet;
 
 import javax.servlet.ServletContext;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -157,5 +155,18 @@ public class QuestionGenerator {
             questions.add(builder.build());
         }));
         return Response.status(200).entity(questions).build();
+    }
+
+    @Path("/slides/{deckID}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response generateQuestionsForSlides(@PathParam("deckID") String deckID) {
+        Client client = ClientBuilder.newClient();
+        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
+        WebTarget webTarget = client.target(hostIp);
+        Deck deck = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .get(Deck.class);
+        return Response.status(200).entity(deck).build();
     }
 }
