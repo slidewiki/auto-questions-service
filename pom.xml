@@ -58,6 +58,7 @@
         <junit.version>4.12</junit.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <guava.version>21.0</guava.version>
+        <jsoup.version>1.10.2</jsoup.version>
     </properties>
 
     <repositories>
@@ -142,5 +143,12 @@
             <artifactId>rita</artifactId>
             <version>1.0.92-SNAPSHOT</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
+
     </dependencies>
 </project>
