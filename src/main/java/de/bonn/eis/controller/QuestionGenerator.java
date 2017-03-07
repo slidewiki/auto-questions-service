@@ -47,8 +47,14 @@ public class QuestionGenerator {
                 .request(MediaType.APPLICATION_JSON)
                 .get(Deck.class);
         List<Slide> slides = deck.getSlides();
-        String text = "";
+        String text = getTextFromSlides(slides);
+        List<Question> questions = getQuestionsForText(text);
+        return Response.status(200).entity(questions).build();
+    }
+
+    private String getTextFromSlides(List<Slide> slides) {
         Document doc;
+        String text ="";
         for (Slide slide: slides){
             if(slide != null){
                 String content = slide.getContent();
@@ -59,8 +65,22 @@ public class QuestionGenerator {
                 }
             }
         }
-        List<Question> questions = getQuestionsForText(text);
-        return Response.status(200).entity(questions).build();
+        return text;
+    }
+
+    @Path("/deck/text/{deckID}")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getTextForSlides(@PathParam("deckID") String deckID) {
+        Client client = ClientBuilder.newClient();
+        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
+        WebTarget webTarget = client.target(hostIp);
+        Deck deck = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .get(Deck.class);
+        List<Slide> slides = deck.getSlides();
+        String text = getTextFromSlides(slides);
+        return text;
     }
 
     @Path("/text")
