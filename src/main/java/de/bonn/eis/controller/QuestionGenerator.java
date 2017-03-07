@@ -7,6 +7,8 @@ import de.bonn.eis.model.*;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import rita.RiTa;
 import rita.RiWordNet;
 
@@ -31,14 +33,27 @@ import java.util.stream.Collectors;
 public class QuestionGenerator {
 
     private static final String BLANK = "________";
+    @Context
+    private ServletContext servletContext;
 
+    @Path("/generate")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response generate(SlideContent content, @Context ServletContext servletContext) throws FileNotFoundException, UnsupportedEncodingException {
+    public Response generate(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
 
-        List<Question> questions = new ArrayList<>();
+        List<Question> questions;
         String text = content.getText();
+
+        questions = getQuestionsForText(servletContext, text);
+
+        if (questions.isEmpty()) return Response.noContent().build();
+        return Response.status(200).entity(questions).build();
+    }
+
+    private List<Question> getQuestionsForText(ServletContext servletContext, String text) {
+        List<Question> questions = new ArrayList<>();
+
         String env = servletContext.getInitParameter("env");
         boolean envIsDev = env == null || !env.equalsIgnoreCase("prod");
 
@@ -48,7 +63,7 @@ public class QuestionGenerator {
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
         if (dbPediaResources == null || dbPediaResources.size() == 0) {
-            return Response.noContent().build();
+            return questions;
         }
         if (envIsDev) {
             QGenLogger.info("Resources retrieved");
@@ -103,7 +118,7 @@ public class QuestionGenerator {
                 }
             }
         });
-        return Response.status(200).entity(questions).build();
+        return questions;
     }
 
     private List<String> attemptToGetSynonyms(RiWordNet wordnet, String surfaceForm) {
@@ -167,6 +182,20 @@ public class QuestionGenerator {
         Deck deck = webTarget
                 .request(MediaType.APPLICATION_JSON)
                 .get(Deck.class);
-        return Response.status(200).entity(deck).build();
+        List<Slide> slides = deck.getSlides();
+        String text = "";
+        Document doc;
+        for (Slide slide: slides){
+            if(slide != null){
+                String content = slide.getContent();
+                if(content != null && !content.isEmpty()){
+                    doc = Jsoup.parse(content);
+//                    text += slide.getTitle() + " ";
+                    text += doc.body().text() + " ";
+                }
+            }
+        }
+        List<Question> questions = getQuestionsForText(servletContext, text);
+        return Response.status(200).entity(questions).build();
     }
 }

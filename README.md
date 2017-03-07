@@ -6,22 +6,44 @@ This microservice generates questions automatically for slide/deck content
 
 The service makes use of [DBPediaSpotlight](https://github.com/dbpedia-spotlight/dbpedia-spotlight/) to annotate text and find DBPedia resources in it.
 
+#### Running The Service 
 To start the service, simply clone the repo and run the `run.sh` shell script.
 
-This will start a tomcat server at ```http://localhost:8080``` in a docker container and maven will deploy a war file to tomcat. Once the server is running, you can simply POST data to the server at the ```/qgen``` endpoint as shown:
+This will start a tomcat server at ```http://localhost:8080``` in a docker container and maven will deploy a war file to tomcat.
+The username/password for the tomcat server is set in the tomcat-users.xml and the server settings in server.xml. Both are located in the mytomcatdocker folder.
+
+#### REST Endpoints
+
+##### Production
+
+```GET /qgen/slides/{id}```
+
+This endpoint is for getting questions for a deck by passing the deck id.
 
 ```
-curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the FIFA World Cup"}' "http://localhost:8080/qgen/"
+curl -X GET "http://localhost:8080/qgen/slides/997-1"
+
 ```
 
-Another endpoint available is ```/qgen/numbers/```. Its for getting questions related to values/numerals found in the text. This is done using the Stanford CoreNLP tools.
-To get questions for values, simply send a POST request as shown:
+##### Development
+
+The following endpoints are for a development environment only and might be removed in the future
+
+```POST /qgen/generate/```
+
+For testing the system by sending text to it
+
+```
+curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the FIFA World Cup"}' "http://localhost:8080/qgen/generate/"
+```
+
+```POST /qgen/numbers/```
+
+For getting questions related to values/numerals found in the text. This is done using the Stanford CoreNLP tools.
  
 ```
 curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany has won the FIFA World Cup 4 times"}' "http://localhost:8080/qgen/numbers/"
 ```
-
-The username/password for the tomcat server is set in the tomcat-users.xml and the server settings in server.xml. Both are located in the mytomcatdocker folder.
 
 ### Running with the spotlight docker container (Production Environment)
 
