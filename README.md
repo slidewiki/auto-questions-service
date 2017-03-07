@@ -6,7 +6,7 @@ This microservice generates questions automatically for slide/deck content
 
 The service makes use of [DBPediaSpotlight](https://github.com/dbpedia-spotlight/dbpedia-spotlight/) to annotate text and find DBPedia resources in it.
 
-#### Running The Service 
+### Running The Service 
 To start the service, simply clone the repo and run the `run.sh` shell script.
 
 This will start a tomcat server at ```http://localhost:8080``` in a docker container and maven will deploy a war file to tomcat.
@@ -29,20 +29,20 @@ curl -X GET "http://localhost:8080/qgen/slides/997-1"
 
 The following endpoints are for a development environment only and might be removed in the future
 
-```POST /qgen/generate/```
+```POST /qgen/text/```
 
 For testing the system by sending text to it
 
 ```
-curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the FIFA World Cup"}' "http://localhost:8080/qgen/generate/"
+curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the FIFA World Cup"}' "http://localhost:8080/qgen/text/"
 ```
 
-```POST /qgen/numbers/```
+```POST /qgen/text/numbers/```
 
 For getting questions related to values/numerals found in the text. This is done using the Stanford CoreNLP tools.
  
 ```
-curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany has won the FIFA World Cup 4 times"}' "http://localhost:8080/qgen/numbers/"
+curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany has won the FIFA World Cup 4 times"}' "http://localhost:8080/qgen/text/numbers/"
 ```
 
 ### Running with the spotlight docker container (Production Environment)

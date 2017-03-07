@@ -36,22 +36,71 @@ public class QuestionGenerator {
     @Context
     private ServletContext servletContext;
 
-    @Path("/generate")
+    @Path("/deck/{deckID}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response generateQuestionsForSlides(@PathParam("deckID") String deckID) {
+        Client client = ClientBuilder.newClient();
+        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
+        WebTarget webTarget = client.target(hostIp);
+        Deck deck = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .get(Deck.class);
+        List<Slide> slides = deck.getSlides();
+        String text = "";
+        Document doc;
+        for (Slide slide: slides){
+            if(slide != null){
+                String content = slide.getContent();
+                if(content != null && !content.isEmpty()){
+                    doc = Jsoup.parse(content);
+//                    text += slide.getTitle() + " ";
+                    text += doc.body().text() + " ";
+                }
+            }
+        }
+        List<Question> questions = getQuestionsForText(text);
+        return Response.status(200).entity(questions).build();
+    }
+
+    @Path("/text")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response generate(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
+    public Response generateQuestionsForText(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
 
         List<Question> questions;
         String text = content.getText();
 
-        questions = getQuestionsForText(servletContext, text);
+        questions = getQuestionsForText(text);
 
         if (questions.isEmpty()) return Response.noContent().build();
         return Response.status(200).entity(questions).build();
     }
 
-    private List<Question> getQuestionsForText(ServletContext servletContext, String text) {
+    @Path("/text/numbers")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response generateQuestionsForValues(SlideContent slideContent) {
+        String text = slideContent.getText();
+        LanguageProcessor processor = new LanguageProcessor(text);
+        List<Question> questions = new ArrayList<>();
+        Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
+        Set<String> numbers = sentencesWithNumbers.keySet();
+        sentencesWithNumbers.forEach((numberString, sentences) -> sentences.forEach(sentence -> {
+            String questionText = sentence.replaceAll("\\b" + numberString + "\\b", BLANK);
+            Question.QuestionBuilder builder = Question.builder();
+            builder.questionText(questionText).
+                    answer(numberString).
+                    inTextDistractors(numbers.stream().
+                            filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
+            questions.add(builder.build());
+        }));
+        return Response.status(200).entity(questions).build();
+    }
+
+    private List<Question> getQuestionsForText(String text) {
         List<Question> questions = new ArrayList<>();
 
         String env = servletContext.getInitParameter("env");
@@ -148,54 +197,5 @@ public class QuestionGenerator {
             }
         });
         return questions;
-    }
-
-    @Path("/numbers")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response generateQuestionsForValues(SlideContent slideContent) {
-        String text = slideContent.getText();
-        LanguageProcessor processor = new LanguageProcessor(text);
-        List<Question> questions = new ArrayList<>();
-        Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
-        Set<String> numbers = sentencesWithNumbers.keySet();
-        sentencesWithNumbers.forEach((numberString, sentences) -> sentences.forEach(sentence -> {
-            String questionText = sentence.replaceAll("\\b" + numberString + "\\b", BLANK);
-            Question.QuestionBuilder builder = Question.builder();
-            builder.questionText(questionText).
-                    answer(numberString).
-                    inTextDistractors(numbers.stream().
-                            filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
-            questions.add(builder.build());
-        }));
-        return Response.status(200).entity(questions).build();
-    }
-
-    @Path("/deck/{deckID}")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response generateQuestionsForSlides(@PathParam("deckID") String deckID) {
-        Client client = ClientBuilder.newClient();
-        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
-        WebTarget webTarget = client.target(hostIp);
-        Deck deck = webTarget
-                .request(MediaType.APPLICATION_JSON)
-                .get(Deck.class);
-        List<Slide> slides = deck.getSlides();
-        String text = "";
-        Document doc;
-        for (Slide slide: slides){
-            if(slide != null){
-                String content = slide.getContent();
-                if(content != null && !content.isEmpty()){
-                    doc = Jsoup.parse(content);
-//                    text += slide.getTitle() + " ";
-                    text += doc.body().text() + " ";
-                }
-            }
-        }
-        List<Question> questions = getQuestionsForText(servletContext, text);
-        return Response.status(200).entity(questions).build();
     }
 }
