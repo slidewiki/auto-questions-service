@@ -16,7 +16,7 @@ The username/password for the tomcat server is set in the tomcat-users.xml and t
 
 ##### Production
 
-```GET /qgen/slides/{id}```
+```GET /qgen/deck/{id}```
 
 This endpoint is for getting questions for a deck by passing the deck id.
 

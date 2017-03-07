@@ -172,7 +172,7 @@ public class QuestionGenerator {
         return Response.status(200).entity(questions).build();
     }
 
-    @Path("/slides/{deckID}")
+    @Path("/deck/{deckID}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response generateQuestionsForSlides(@PathParam("deckID") String deckID) {
