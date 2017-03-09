@@ -143,7 +143,7 @@
             <artifactId>rita</artifactId>
             <version>1.0.92-SNAPSHOT</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/rita-1.0.92-SNAPSHOT.jar</systemPath>
+            <systemPath>${project.basedir}/web/WEB-INF/lib/rita-1.0.92-SNAPSHOT.jar</systemPath>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
         <dependency>

@@ -5,7 +5,7 @@
 
 # Package Files #
 *.jar
-!src/main/resources/rita-1.0.92-SNAPSHOT.jar
+!web/WEB-INF/lib/rita-1.0.92-SNAPSHOT.jar
 *.war
 *.ear
 
