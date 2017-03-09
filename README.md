@@ -26,7 +26,7 @@ The username/password for the tomcat server is set in the tomcat-users.xml and t
 This endpoint is for getting questions for a deck by passing the deck id.
 
 ```
-curl -X GET "http://localhost:8080/qgen/slides/997-1"
+curl -X GET "http://localhost:8080/qgen/deck/997-1"
 
 ```
 
@@ -34,12 +34,12 @@ curl -X GET "http://localhost:8080/qgen/slides/997-1"
 
 The following endpoints are for a development environment only and might be removed in the future
 
-```POST /qgen/text/```
+```POST /qgen/deck/text/```
 
 For testing the system by sending text to it
 
 ```
-curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the FIFA World Cup"}' "http://localhost:8080/qgen/text/"
+curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the FIFA World Cup"}' "http://localhost:8080/qgen/deck/text/"
 ```
 
 ```POST /qgen/text/numbers/```
