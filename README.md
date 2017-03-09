@@ -6,7 +6,12 @@ This microservice generates questions automatically for slide/deck content
 
 The service makes use of [DBPediaSpotlight](https://github.com/dbpedia-spotlight/dbpedia-spotlight/) to annotate text and find DBPedia resources in it.
 
-### Running The Service 
+### Prerequisites
+
+The service requires [cURL](https://curl.haxx.se/download.html), [docker](https://docs.docker.com/engine/installation/) and [maven](https://maven.apache.org/download.cgi) to run. 
+
+### Running The Service
+
 To start the service, simply clone the repo and run the `run.sh` shell script.
 
 This will start a tomcat server at ```http://localhost:8080``` in a docker container and maven will deploy a war file to tomcat.
