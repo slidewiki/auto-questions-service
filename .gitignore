@@ -5,6 +5,7 @@
 
 # Package Files #
 *.jar
+!src/main/resources/rita.jar
 *.war
 *.ear
 
