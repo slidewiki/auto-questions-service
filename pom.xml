@@ -61,12 +61,12 @@
         <jsoup.version>1.10.2</jsoup.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>my-local-repo</id>
-            <url>file://${project.basedir}/src/main/resources/</url>
-        </repository>
-    </repositories>
+    <!--<repositories>-->
+        <!--<repository>-->
+            <!--<id>my-local-repo</id>-->
+            <!--<url>file://${project.basedir}/src/main/resources/</url>-->
+        <!--</repository>-->
+    <!--</repositories>-->
 
     <dependencies>
         <dependency>
@@ -142,6 +142,8 @@
             <groupId>org.rednoise</groupId>
             <artifactId>rita</artifactId>
             <version>1.0.92-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/rita-1.0.92-SNAPSHOT.jar</systemPath>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
         <dependency>
