@@ -8,13 +8,15 @@ The service makes use of [DBPediaSpotlight](https://github.com/dbpedia-spotlight
 
 ### Prerequisites
 
-The service requires [cURL](https://curl.haxx.se/download.html), [docker](https://docs.docker.com/engine/installation/) and [maven](https://maven.apache.org/download.cgi) to run. 
+The service requires [JDK 8](http://openjdk.java.net/install/), [cURL](https://curl.haxx.se/download.html), [docker](https://docs.docker.com/engine/installation/) and [maven](https://maven.apache.org/download.cgi) to run. 
 
 ### Running The Service
 
 To start the service, simply clone the repo and run the `run.sh` shell script.
 
-This will start a tomcat server at ```http://localhost:8080``` in a docker container and maven will deploy a war file to tomcat.
+The script pulls a pre-built docker image (containing tomcat) from docker hub and runs it.
+This starts a tomcat server at ```http://localhost:8080```. Then maven deploys a war file to tomcat.
+
 The username/password for the tomcat server is set in the tomcat-users.xml and the server settings in server.xml. Both are located in the mytomcatdocker folder.
 
 #### REST Endpoints
