@@ -88,12 +88,12 @@ public class TextInfoRetriever {
      * @param dbPediaResources List of resources returned by DBPediaSpotlight
      * @return An ImmutableListMultimap of lists of DBPediaResources grouped by their types
      */
-    public ImmutableListMultimap<String, DBPediaResource> groupResourcesByType(List<DBPediaResource> dbPediaResources) {
+    public static ImmutableListMultimap<String, DBPediaResource> groupResourcesByType(List<DBPediaResource> dbPediaResources) {
         Function<DBPediaResource, String> typesFunction = resource -> resource.getTypes();
         return Multimaps.index(dbPediaResources, typesFunction);
     }
 
-    public List<String> getExternalDistractors(DBPediaResource resource) {
+    public static List<String> getExternalDistractors(DBPediaResource resource) {
         DistractorGenerator generator = new DistractorGenerator();
         List<String> externalDistractors = generator.getExternalDistractors(resource);
         return externalDistractors;

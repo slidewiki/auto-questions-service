@@ -17,7 +17,7 @@ package de.bonn.eis.model;
 @JsonPropertyOrder({
         "deckId",
         "children",
-        "nlpProcessResults"
+        "nlpProcessResultsForDeck"
 })
 public class NLP {
 
@@ -26,7 +26,7 @@ public class NLP {
     @JsonProperty("children")
     private List<NlpProcessResults> children = null;
     @JsonProperty("nlpProcessResults")
-    private NlpProcessResultsForDeck nlpProcessResults;
+    private NlpProcessResultsForDeck nlpProcessResultsForDeck;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
@@ -51,13 +51,13 @@ public class NLP {
     }
 
     @JsonProperty("nlpProcessResults")
-    public NlpProcessResultsForDeck getNlpProcessResults() {
-        return nlpProcessResults;
+    public NlpProcessResultsForDeck getNlpProcessResultsForDeck() {
+        return nlpProcessResultsForDeck;
     }
 
     @JsonProperty("nlpProcessResults")
-    public void setNlpProcessResults(NlpProcessResultsForDeck nlpProcessResults) {
-        this.nlpProcessResults = nlpProcessResults;
+    public void setNlpProcessResultsForDeck(NlpProcessResultsForDeck nlpProcessResultsForDeck) {
+        this.nlpProcessResultsForDeck = nlpProcessResultsForDeck;
     }
 
     @JsonAnyGetter

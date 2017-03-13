@@ -45,22 +45,23 @@ public class QuestionGenerator {
         NLP nlp = webTarget
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
-//        List<Question> questions = getQuestionsForText(text);
-        return Response.status(200).entity(nlp).build();
-    }
-
-    @Path("/text")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response generateQuestionsForText(String text) throws FileNotFoundException, UnsupportedEncodingException {
-
-        List<Question> questions;
-        questions = getQuestionsForText(text);
-
-        if (questions.isEmpty()) return Response.noContent().build();
+        DBPediaSpotlightPOJO spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
+        List<Question> questions = getQuestionsForText(spotlightResults.getText(), spotlightResults.getDBPediaResources());
         return Response.status(200).entity(questions).build();
     }
+
+//    @Path("/text")
+//    @POST
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Consumes(MediaType.TEXT_PLAIN)
+//    public Response generateQuestionsForText(String text) throws FileNotFoundException, UnsupportedEncodingException {
+//
+//        List<Question> questions;
+//        questions = getQuestionsForText(text);
+//
+//        if (questions.isEmpty()) return Response.noContent().build();
+//        return Response.status(200).entity(questions).build();
+//    }
 
     @Path("/text/numbers")
     @POST
@@ -83,7 +84,7 @@ public class QuestionGenerator {
         return Response.status(200).entity(questions).build();
     }
 
-    private List<Question> getQuestionsForText(String text) {
+    private List<Question> getQuestionsForText(String text, List<DBPediaResource> dbPediaResources) {
         List<Question> questions = new ArrayList<>();
 
         String env = servletContext.getInitParameter("env");
@@ -92,8 +93,9 @@ public class QuestionGenerator {
         String dir = System.getProperty("user.dir");
         RiWordNet wordnet = new RiWordNet(dir + "/wordnet/");
 
-        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
-        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
+//        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
+//        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
+
         if (dbPediaResources == null || dbPediaResources.size() == 0) {
             return questions;
         }
@@ -102,18 +104,19 @@ public class QuestionGenerator {
             dbPediaResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
         }
         // Selecting most relevant occurring words
-        List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.WORDS_COUNT);
-        if (envIsDev) {
-            QGenLogger.info("Relevant resources");
-            topResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
-        }
+//        List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.WORDS_COUNT);
+        List<DBPediaResource> topResources = dbPediaResources;
+//        if (envIsDev) {
+//            QGenLogger.info("Relevant resources");
+//            topResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
+//        }
         LanguageProcessor processor = new LanguageProcessor(text);
         List<String> sentences = processor.getSentences();
 
         //TODO Efficiency?
         //TODO Create distractor cache for resources with same types or create some scheme
 
-        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = retriever.groupResourcesByType(topResources);
+        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(topResources);
         ImmutableSet<String> types = mapOfGroupedResources.keySet();
         types.forEach(type -> {
             ImmutableList<DBPediaResource> groupedResources = mapOfGroupedResources.get(type);
@@ -126,7 +129,7 @@ public class QuestionGenerator {
                     if (envIsDev) {
                         QGenLogger.info(surfaceForm);
                     }
-                    List<String> externalDistractors = retriever.getExternalDistractors(resource);
+                    List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(resource);
                     if (externalDistractors == null) {
                         externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
                     }
@@ -134,7 +137,7 @@ public class QuestionGenerator {
                 }
             } else {
                 DBPediaResource firstResource = groupedResources.get(0);
-                List<String> externalDistractors = retriever.getExternalDistractors(firstResource);
+                List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(firstResource);
                 for (DBPediaResource resource : groupedResources) {
                     String surfaceForm = resource.getSurfaceForm();
                     String plural = RiTa.pluralize(surfaceForm);
