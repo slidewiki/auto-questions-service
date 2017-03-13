@@ -3,4 +3,4 @@ MAINTAINER "Ainuddin Faizan <andyfaizan@gmail.com>"
 
 ADD settings.xml /usr/local/tomcat/conf/
 ADD tomcat-users.xml /usr/local/tomcat/conf/
-ADD wordnet /usr/local/tomcat/wordnet/
+ADD wordnet.tar.gz /usr/local/tomcat/wordnet/
