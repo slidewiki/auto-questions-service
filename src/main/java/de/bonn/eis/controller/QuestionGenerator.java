@@ -41,46 +41,14 @@ public class QuestionGenerator {
     @Produces(MediaType.APPLICATION_JSON)
     public Response generateQuestionsForSlides(@PathParam("deckID") String deckID) {
         Client client = ClientBuilder.newClient();
-        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
+//        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
+        String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
         WebTarget webTarget = client.target(hostIp);
-        Deck deck = webTarget
+        NLP nlp = webTarget
                 .request(MediaType.APPLICATION_JSON)
-                .get(Deck.class);
-        List<Slide> slides = deck.getSlides();
-        String text = getTextFromSlides(slides);
-        List<Question> questions = getQuestionsForText(text);
-        return Response.status(200).entity(questions).build();
-    }
-
-    private String getTextFromSlides(List<Slide> slides) {
-        Document doc;
-        String text ="";
-        for (Slide slide: slides){
-            if(slide != null){
-                String content = slide.getContent();
-                if(content != null && !content.isEmpty()){
-                    doc = Jsoup.parse(content);
-//                    text += slide.getTitle() + " ";
-                    text += doc.body().text() + " ";
-                }
-            }
-        }
-        return text;
-    }
-
-    @Path("/deck/text/{deckID}")
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getTextForSlides(@PathParam("deckID") String deckID) {
-        Client client = ClientBuilder.newClient();
-        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
-        WebTarget webTarget = client.target(hostIp);
-        Deck deck = webTarget
-                .request(MediaType.APPLICATION_JSON)
-                .get(Deck.class);
-        List<Slide> slides = deck.getSlides();
-        String text = getTextFromSlides(slides);
-        return text;
+                .get(NLP.class);
+//        List<Question> questions = getQuestionsForText(text);
+        return Response.status(200).entity(nlp).build();
     }
 
     @Path("/text")
@@ -99,7 +67,7 @@ public class QuestionGenerator {
     @Path("/text/numbers")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response generateQuestionsForValues(String text) {
         LanguageProcessor processor = new LanguageProcessor(text);
         List<Question> questions = new ArrayList<>();
