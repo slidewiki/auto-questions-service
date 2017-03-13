@@ -41,7 +41,7 @@ The following endpoints are for a development environment only and might be remo
 For testing the system by sending text to it
 
 ```
-curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the FIFA World Cup"}' "http://localhost:8080/qgen/deck/text/"
+curl -X POST -H "Content-Type: text/plain" -d 'Germany won the 2014 FIFA World Cup.' "http://localhost:8080/qgen/text"
 ```
 
 ```POST /qgen/text/numbers/```
@@ -49,7 +49,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany won the F
 For getting questions related to values/numerals found in the text. This is done using the Stanford CoreNLP tools.
  
 ```
-curl -X POST -H "Content-Type: application/json" -d '{"text": "Germany has won the FIFA World Cup 4 times"}' "http://localhost:8080/qgen/text/numbers/"
+curl -X POST -H "Content-Type: text/plain" -d 'Germany won the 2014 FIFA World Cup.' "http://localhost:8080/qgen/text/numbers"
 ```
 
 ### Running with the spotlight docker container (Production Environment)

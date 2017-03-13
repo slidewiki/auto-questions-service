@@ -86,12 +86,10 @@ public class QuestionGenerator {
     @Path("/text")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response generateQuestionsForText(SlideContent content) throws FileNotFoundException, UnsupportedEncodingException {
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response generateQuestionsForText(String text) throws FileNotFoundException, UnsupportedEncodingException {
 
         List<Question> questions;
-        String text = content.getText();
-
         questions = getQuestionsForText(text);
 
         if (questions.isEmpty()) return Response.noContent().build();
@@ -101,9 +99,8 @@ public class QuestionGenerator {
     @Path("/text/numbers")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response generateQuestionsForValues(SlideContent slideContent) {
-        String text = slideContent.getText();
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response generateQuestionsForValues(String text) {
         LanguageProcessor processor = new LanguageProcessor(text);
         List<Question> questions = new ArrayList<>();
         Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
