@@ -20,7 +20,7 @@ public class QGenUtils {
                         (e1, e2) -> e1, LinkedHashMap::new));
     }
 
-    public static List<DBPediaResource> removeDuplicatesFromList(List<DBPediaResource> list) {
+    public static List<DBPediaResource> removeDuplicatesFromResourceList(List<DBPediaResource> list) {
         Map<String, DBPediaResource> map = new LinkedHashMap<>();
         for (DBPediaResource obj : list) {
             map.put(obj.getURI(), obj);
@@ -28,6 +28,13 @@ public class QGenUtils {
         list.clear();
         list.addAll(map.values());
         return list;
+    }
+
+    public static void removeDuplicatesFromStringList(List<String> list) {
+        Set<String> hashSet = new LinkedHashSet<>();
+        hashSet.addAll(list);
+        list.clear();
+        list.addAll(hashSet);
     }
 
     public static List<String> getRandomItemsFromList(List<String> list, int n) {

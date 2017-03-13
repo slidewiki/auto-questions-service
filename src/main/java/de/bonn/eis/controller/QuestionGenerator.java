@@ -1,10 +1,10 @@
 package de.bonn.eis.controller;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableSet;
-import de.bonn.eis.model.*;
-import de.bonn.eis.utils.NLPConsts;
+import de.bonn.eis.model.DBPediaResource;
+import de.bonn.eis.model.DBPediaSpotlightPOJO;
+import de.bonn.eis.model.NLP;
+import de.bonn.eis.model.Question;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
 import rita.RiTa;
@@ -18,8 +18,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -105,7 +103,7 @@ public class QuestionGenerator {
         }
         // Selecting most relevant occurring words
 //        List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.WORDS_COUNT);
-        List<DBPediaResource> topResources = dbPediaResources;
+//        List<DBPediaResource> topResources = dbPediaResources;
 //        if (envIsDev) {
 //            QGenLogger.info("Relevant resources");
 //            topResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
@@ -116,43 +114,61 @@ public class QuestionGenerator {
         //TODO Efficiency?
         //TODO Create distractor cache for resources with same types or create some scheme
 
-        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(topResources);
-        ImmutableSet<String> types = mapOfGroupedResources.keySet();
-        types.forEach(type -> {
-            ImmutableList<DBPediaResource> groupedResources = mapOfGroupedResources.get(type);
-            if (envIsDev)
-                QGenLogger.info(type);
-            if (type.isEmpty()) {
-                for (DBPediaResource resource : groupedResources) {
-                    String surfaceForm = resource.getSurfaceForm();
-                    String plural = RiTa.pluralize(surfaceForm);
-                    if (envIsDev) {
-                        QGenLogger.info(surfaceForm);
-                    }
-                    List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(resource);
-                    if (externalDistractors == null) {
-                        externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
-                    }
-                    questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, new ArrayList<>()));
-                }
-            } else {
-                DBPediaResource firstResource = groupedResources.get(0);
-                List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(firstResource);
-                for (DBPediaResource resource : groupedResources) {
-                    String surfaceForm = resource.getSurfaceForm();
-                    String plural = RiTa.pluralize(surfaceForm);
-                    if (envIsDev) {
-                        QGenLogger.info(surfaceForm);
-                    }
-                    if (externalDistractors == null) {
-                        externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
-                    }
-                    List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
-                            .map(res -> surfaceForm).collect(Collectors.toList());
-                    questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
-                }
+        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(dbPediaResources);
+        dbPediaResources.forEach(resource -> {
+            String surfaceForm = resource.getSurfaceForm();
+            String plural = RiTa.pluralize(surfaceForm);
+            if (envIsDev) {
+                QGenLogger.info(surfaceForm);
             }
+            List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(resource);
+            if (externalDistractors == null) {
+                externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
+            }
+            List<String> inTextDistractors = mapOfGroupedResources.get(resource.getTypes()).stream().
+                    filter(res -> (!res.equals(resource) && !res.getSurfaceForm().equalsIgnoreCase(resource.getSurfaceForm())))
+                    .map(DBPediaResource::getSurfaceForm).collect(Collectors.toList());
+            QGenUtils.removeDuplicatesFromStringList(inTextDistractors);
+            questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
         });
+
+//        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(topResources);
+//        ImmutableSet<String> types = mapOfGroupedResources.keySet();
+//        types.forEach(type -> {
+//            ImmutableList<DBPediaResource> groupedResources = mapOfGroupedResources.get(type);
+//            if (envIsDev)
+//                QGenLogger.info(type);
+//            if (type.isEmpty()) {
+//                for (DBPediaResource resource : groupedResources) {
+//                    String surfaceForm = resource.getSurfaceForm();
+//                    String plural = RiTa.pluralize(surfaceForm);
+//                    if (envIsDev) {
+//                        QGenLogger.info(surfaceForm);
+//                    }
+//                    List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(resource);
+//                    if (externalDistractors == null) {
+//                        externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
+//                    }
+//                    questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, new ArrayList<>()));
+//                }
+//            } else {
+//                DBPediaResource firstResource = groupedResources.get(0);
+//                List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(firstResource);
+//                for (DBPediaResource resource : groupedResources) {
+//                    String surfaceForm = resource.getSurfaceForm();
+//                    String plural = RiTa.pluralize(surfaceForm);
+//                    if (envIsDev) {
+//                        QGenLogger.info(surfaceForm);
+//                    }
+//                    if (externalDistractors == null) {
+//                        externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
+//                    }
+//                    List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
+//                            .map(res -> surfaceForm).collect(Collectors.toList());
+//                    questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
+//                }
+//            }
+//        });
         return questions;
     }
 
