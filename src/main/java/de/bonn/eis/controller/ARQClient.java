@@ -126,7 +126,7 @@ public class ARQClient {
 
     private int getGroupSize(int sizeOfList) {
         int maxGroupSize = 2;
-        if (sizeOfList < maxGroupSize) {
+        if (sizeOfList <= maxGroupSize) {
             return sizeOfList - 1;
         }
         return maxGroupSize;
