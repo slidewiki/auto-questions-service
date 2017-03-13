@@ -41,6 +41,29 @@
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>${maven-install-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>install-external</id>
+                        <phase>clean</phase>
+                        <configuration>
+                            <file>${project.basedir}/web/WEB-INF/lib/rita-1.0.92-SNAPSHOT.jar</file>
+                            <repositoryLayout>default</repositoryLayout>
+                            <groupId>org.rednoise</groupId>
+                            <artifactId>rita</artifactId>
+                            <version>1.0.92-SNAPSHOT</version>
+                            <packaging>jar</packaging>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -59,14 +82,8 @@
         <commons-collections.version>3.2.2</commons-collections.version>
         <guava.version>21.0</guava.version>
         <jsoup.version>1.10.2</jsoup.version>
+        <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
     </properties>
-
-    <!--<repositories>-->
-        <!--<repository>-->
-            <!--<id>my-local-repo</id>-->
-            <!--<url>file://${project.basedir}/src/main/resources/</url>-->
-        <!--</repository>-->
-    <!--</repositories>-->
 
     <dependencies>
         <dependency>
@@ -142,8 +159,6 @@
             <groupId>org.rednoise</groupId>
             <artifactId>rita</artifactId>
             <version>1.0.92-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/web/WEB-INF/lib/rita-1.0.92-SNAPSHOT.jar</systemPath>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
         <dependency>
