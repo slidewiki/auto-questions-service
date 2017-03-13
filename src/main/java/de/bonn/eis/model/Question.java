@@ -12,8 +12,8 @@ import java.util.List;
 @Builder
 @Data // Needed for JSON serialization
 public class Question implements Serializable {
-    private String questionText;
     private String answer;
+    private List<String> questions;
     private List<String> externalDistractors;
     private List<String> inTextDistractors;
 }

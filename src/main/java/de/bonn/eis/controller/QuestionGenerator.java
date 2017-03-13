@@ -70,15 +70,20 @@ public class QuestionGenerator {
         List<Question> questions = new ArrayList<>();
         Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
         Set<String> numbers = sentencesWithNumbers.keySet();
-        sentencesWithNumbers.forEach((numberString, sentences) -> sentences.forEach(sentence -> {
-            String questionText = sentence.replaceAll("\\b" + numberString + "\\b", BLANK);
+        sentencesWithNumbers.forEach((numberString, sentences) -> {
             Question.QuestionBuilder builder = Question.builder();
-            builder.questionText(questionText).
+            builder.
                     answer(numberString).
                     inTextDistractors(numbers.stream().
                             filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
+            List<String> questionStrings = new ArrayList<>();
+            sentences.forEach(sentence -> {
+                String questionText = sentence.replaceAll("\\b" + numberString + "\\b", BLANK);
+                questionStrings.add(questionText);
+            });
+            builder.questions(questionStrings);
             questions.add(builder.build());
-        }));
+        });
         return Response.status(200).entity(questions).build();
     }
 
@@ -108,7 +113,9 @@ public class QuestionGenerator {
 //            QGenLogger.info("Relevant resources");
 //            topResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
 //        }
-        LanguageProcessor processor = new LanguageProcessor(text);
+        String cleanText = text.replaceAll("/\\s*(?:[\\dA-Z]+\\.|[a-z]\\)|•)+/gm", ".");
+        System.out.println(cleanText);
+        LanguageProcessor processor = new LanguageProcessor(cleanText);
         List<String> sentences = processor.getSentences();
 
         //TODO Efficiency?
@@ -129,7 +136,7 @@ public class QuestionGenerator {
                     filter(res -> (!res.equals(resource) && !res.getSurfaceForm().equalsIgnoreCase(resource.getSurfaceForm())))
                     .map(DBPediaResource::getSurfaceForm).collect(Collectors.toList());
             QGenUtils.removeDuplicatesFromStringList(inTextDistractors);
-            questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
+            questions.add(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
         });
 
 //        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(topResources);
@@ -179,25 +186,23 @@ public class QuestionGenerator {
         return synList;
     }
 
-    private List<Question> getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
-        List<Question> questions = new ArrayList<>();
-
+    private Question getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
+        List<String> questions = new ArrayList<>();
+        Question.QuestionBuilder builder = Question.builder();
+        String answer = resourceName + ", " + pluralResourceName;
+        builder.answer(answer).
+                externalDistractors(externalDistractors).
+                inTextDistractors(inTextDistractors);
         sentences.forEach(s -> {
             if (QGenUtils.sourceHasWord(s, resourceName)) {
-                Question.QuestionBuilder builder = Question.builder();
                 String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
-                String answer = resourceName;
                 if (QGenUtils.sourceHasWord(s, pluralResourceName)) {
                     questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
-                    answer += "(s)";
                 }
-                builder.questionText(questionText).
-                        answer(answer).
-                        externalDistractors(externalDistractors).
-                        inTextDistractors(inTextDistractors);
-                questions.add(builder.build());
+                questions.add(questionText);
             }
         });
-        return questions;
+        builder.questions(questions);
+        return builder.build();
     }
 }
