@@ -160,12 +160,6 @@
             <artifactId>rita</artifactId>
             <version>1.0.92-SNAPSHOT</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>${jsoup.version}</version>
-        </dependency>
 
     </dependencies>
 </project>

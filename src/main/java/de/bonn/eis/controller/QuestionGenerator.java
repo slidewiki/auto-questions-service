@@ -7,8 +7,6 @@ import de.bonn.eis.model.*;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import rita.RiTa;
 import rita.RiWordNet;
 
