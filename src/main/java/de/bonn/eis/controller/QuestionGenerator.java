@@ -44,7 +44,8 @@ public class QuestionGenerator {
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
         DBPediaSpotlightPOJO spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
-        List<Question> questions = getQuestionsForText(spotlightResults.getText(), spotlightResults.getDBPediaResources());
+        List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
+        List<Question> questions = getQuestionsForText(spotlightResults.getText(), resources);
         return Response.status(200).entity(questions).build();
     }
 
@@ -189,8 +190,7 @@ public class QuestionGenerator {
     private Question getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
         List<String> questions = new ArrayList<>();
         Question.QuestionBuilder builder = Question.builder();
-        String answer = resourceName + ", " + pluralResourceName;
-        builder.answer(answer).
+        builder.answer(resourceName).
                 externalDistractors(externalDistractors).
                 inTextDistractors(inTextDistractors);
         sentences.forEach(s -> {
@@ -198,6 +198,7 @@ public class QuestionGenerator {
                 String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
                 if (QGenUtils.sourceHasWord(s, pluralResourceName)) {
                     questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
+                    builder.answer(resourceName + ", " + pluralResourceName);
                 }
                 questions.add(questionText);
             }

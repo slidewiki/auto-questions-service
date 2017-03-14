@@ -14,6 +14,6 @@ import java.util.List;
 public class Question implements Serializable {
     private String answer;
     private List<String> questions;
-    private List<String> externalDistractors;
     private List<String> inTextDistractors;
+    private List<String> externalDistractors;
 }
