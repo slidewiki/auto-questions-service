@@ -1,6 +1,7 @@
 package de.bonn.eis.controller;
 
 import de.bonn.eis.model.DBPediaResource;
+import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
@@ -11,6 +12,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,37 +28,76 @@ public class ARQClient {
     private static final String PREFIX_WIKIDATA = "PREFIX wikidata: <http://www.wikidata.org/entity/>\n";
     private static final String TIMEOUT_VALUE = "5000";
     private static final String UNION = "UNION\n";
+    private static final int ALLOWED_DEPTH_FOR_MEDIUM = 10;
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
 
     // TODO Use QueryBuilder
     // http://stackoverflow.com/questions/7250189/how-to-build-sparql-queries-in-java
-    public List<String> getSimilarResourceNames(DBPediaResource resource) {
+    public List<String> getSimilarResourceNames(DBPediaResource resource, String level) {
+        List<String> resourceNames = new ArrayList<>();
+        List<String> resourceTypeList = null;
 
-        List<String> resourceTypeList;
+        if(level.equals(NLPConsts.LEVEL_EASY)){
+            String[] types = resource.getTypes().split(",");
+            resourceTypeList = Arrays.asList(types[types.length - 1]);
+        } else if(level.equals(NLPConsts.LEVEL_MEDIUM) || level.equals(NLPConsts.LEVEL_HARD)){
+            resourceTypeList = getResourceTypes(resource);
+            if (resourceTypeList != null && !resourceTypeList.isEmpty()) {
+                if (resourceTypeList.size() == 1) {
+                    String type = resourceTypeList.get(0);
+                    if (type.contains("owl:Thing") || type.contains("owl#Thing")) {
+                        return null;
+                    }
+                }
+                QGenLogger.info("Resource: " + resource.getSurfaceForm());
+                int maxAllowedDepth = Integer.MAX_VALUE;
+                if(level.equals(NLPConsts.LEVEL_MEDIUM)){
+                    maxAllowedDepth = ALLOWED_DEPTH_FOR_MEDIUM;
+                }
+                resourceTypeList = getMostSpecificTypes(resourceTypeList, maxAllowedDepth);
+            }
+        }
+
         String queryString =
                 PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
                         "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
                         "{ ?s foaf:name ?name }\n" + UNION +
                         "{ ?s rdfs:label ?name }\n";
 
-        resourceTypeList = getResourceTypes(resource);
-        if (resourceTypeList != null && !resourceTypeList.isEmpty()) {
-            if (resourceTypeList.size() == 1) {
-                String type = resourceTypeList.get(0);
-                if (type.contains("owl:Thing") || type.contains("owl#Thing")) {
-                    return null;
-                }
-            }
-            QGenLogger.info("Resource: " + resource.getSurfaceForm());
-            resourceTypeList = getMostSpecificTypes(resourceTypeList);
-        }
 
         if (resourceTypeList == null || resourceTypeList.isEmpty()) {
             return null;
         }
 
+        queryString = addTriplePatternsAndUnions(resourceTypeList, queryString);
+        queryString += "FILTER (langMatches(lang(?name), \"EN\")) .";
+        queryString += "}\nORDER BY RAND()\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
+        // TODO Refine Query results
+
+        ResultSet results = null;
+        try {
+            QGenLogger.fine("###########################RESOURCE: " + resource.getSurfaceForm() + "###########################\n" + "SELECT Query:\n" + queryString);
+            results = runSelectQuery(queryString);
+        } catch (Exception e) {
+            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
+        }
+        if (results != null) {
+            while (results.hasNext()) {
+                QuerySolution result = results.next();
+                RDFNode n = result.get("name");
+                String nameLiteral;
+                if (n.isLiteral()) {
+                    nameLiteral = ((Literal) n).getLexicalForm();
+                    resourceNames.add(nameLiteral);
+                }
+            }
+        }
+        return resourceNames;
+    }
+
+    private String addTriplePatternsAndUnions(List<String> resourceTypeList, String queryString) {
         int numberOfTypes = resourceTypeList.size();
         int groupSize = getGroupSize(numberOfTypes);
         int count = 0;
@@ -97,31 +138,7 @@ public class ARQClient {
         if (curlyBraceOpened) {
             queryString += "}\n";
         }
-        queryString += "FILTER (langMatches(lang(?name), \"EN\")) .";
-        queryString += "}\nORDER BY RAND()\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
-        // TODO Refine Query results
-        List<String> resourceNames = new ArrayList<>();
-        resourceNames.add("Distractors queried from DBPedia\n");
-
-        ResultSet results = null;
-        try {
-            QGenLogger.fine("###########################RESOURCE: " + resource.getSurfaceForm() + "###########################\n" + "SELECT Query:\n" + queryString);
-            results = runSelectQuery(queryString);
-        } catch (Exception e) {
-            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
-        }
-        if (results != null) {
-            while (results.hasNext()) {
-                QuerySolution result = results.next();
-                RDFNode n = result.get("name");
-                String nameLiteral;
-                if (n.isLiteral()) {
-                    nameLiteral = ((Literal) n).getLexicalForm();
-                    resourceNames.add(nameLiteral);
-                }
-            }
-        }
-        return resourceNames;
+        return queryString;
     }
 
     private int getGroupSize(int sizeOfList) {
@@ -180,9 +197,10 @@ public class ARQClient {
      * Get the most specific rdf:type i.e. the one that has the most number of super classes
      *
      * @param types
+     * @param maxAllowedDepth
      * @return
      */
-    private List<String> getMostSpecificTypes(List<String> types) {
+    private List<String> getMostSpecificTypes(List<String> types, int maxAllowedDepth) {
 
         if (types.isEmpty()) {
             return null;
@@ -194,8 +212,11 @@ public class ARQClient {
         int maxPathDepth = 0;
 
         for (String type : types) {
-            if (type.contains("dbpedia")) {
-                String queryString =
+            if (type.toLowerCase().contains("dbpedia")) {
+                if (type.toLowerCase().contains("yago") && !type.toLowerCase().contains("wikicat")) {
+                    continue;
+                }
+                    String queryString =
                         PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
                                 "SELECT DISTINCT ?path FROM <http://dbpedia.org> WHERE {\n" +
                                 "<" + type + "> rdfs:subClassOf* ?path . }";
@@ -208,14 +229,16 @@ public class ARQClient {
                         results.next();
                         count++;
                     }
-                    if (count > maxPathDepth) {
-                        if (!mostSpecificTypes.isEmpty()) {
-                            mostSpecificTypes.clear();
+                    if (count <= maxAllowedDepth) {
+                        if (count > maxPathDepth) {
+                            if (!mostSpecificTypes.isEmpty()) {
+                                mostSpecificTypes.clear();
+                            }
+                            maxPathDepth = count;
+                            mostSpecificTypes.add(type);
+                        } else if (count == maxPathDepth) {
+                            mostSpecificTypes.add(type);
                         }
-                        maxPathDepth = count;
-                        mostSpecificTypes.add(type);
-                    } else if (count == maxPathDepth) {
-                        mostSpecificTypes.add(type);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

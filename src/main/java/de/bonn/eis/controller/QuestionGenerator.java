@@ -18,6 +18,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,10 +34,10 @@ public class QuestionGenerator {
     @Context
     private ServletContext servletContext;
 
-    @Path("/deck/{deckID}")
+    @Path("/{level}/{deckID}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response generateQuestionsForSlides(@PathParam("deckID") String deckID) {
+    public Response generateQuestionsForSlides(@PathParam("level") String level, @PathParam("deckID") String deckID) {
         Client client = ClientBuilder.newClient();
 //        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
         String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
@@ -45,22 +47,24 @@ public class QuestionGenerator {
                 .get(NLP.class);
         DBPediaSpotlightPOJO spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
         List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
-        List<Question> questions = getQuestionsForText(spotlightResults.getText(), resources);
+        List<Question> questions = getQuestionsForText(spotlightResults.getText(), resources, level);
         return Response.status(200).entity(questions).build();
     }
 
-//    @Path("/text")
-//    @POST
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @Consumes(MediaType.TEXT_PLAIN)
-//    public Response generateQuestionsForText(String text) throws FileNotFoundException, UnsupportedEncodingException {
-//
-//        List<Question> questions;
-//        questions = getQuestionsForText(text);
-//
-//        if (questions.isEmpty()) return Response.noContent().build();
-//        return Response.status(200).entity(questions).build();
-//    }
+    @Path("/{level}/text")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response generateQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
+
+        List<Question> questions;
+        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
+        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
+        questions = getQuestionsForText(text, dbPediaResources, level);
+
+        if (questions.isEmpty()) return Response.noContent().build();
+        return Response.status(200).entity(questions).build();
+    }
 
     @Path("/text/numbers")
     @POST
@@ -88,7 +92,7 @@ public class QuestionGenerator {
         return Response.status(200).entity(questions).build();
     }
 
-    private List<Question> getQuestionsForText(String text, List<DBPediaResource> dbPediaResources) {
+    private List<Question> getQuestionsForText(String text, List<DBPediaResource> dbPediaResources, String level) {
         List<Question> questions = new ArrayList<>();
 
         String env = servletContext.getInitParameter("env");
@@ -129,7 +133,7 @@ public class QuestionGenerator {
             if (envIsDev) {
                 QGenLogger.info(surfaceForm);
             }
-            List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(resource);
+            List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(resource, level);
             if (externalDistractors == null) {
                 externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
             }

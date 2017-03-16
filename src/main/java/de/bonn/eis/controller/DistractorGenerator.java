@@ -8,8 +8,8 @@ import java.util.List;
  * Created by Ainuddin Faizan on 1/3/17.
  */
 public class DistractorGenerator {
-    public List<String> getExternalDistractors(DBPediaResource answer) {
+    public List<String> getExternalDistractors(DBPediaResource answer, String level) {
         ARQClient arqClient = new ARQClient();
-        return arqClient.getSimilarResourceNames(answer);
+        return arqClient.getSimilarResourceNames(answer, level);
     }
 }

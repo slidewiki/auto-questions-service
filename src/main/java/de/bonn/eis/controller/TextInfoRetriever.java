@@ -93,9 +93,9 @@ public class TextInfoRetriever {
         return Multimaps.index(dbPediaResources, typesFunction);
     }
 
-    public static List<String> getExternalDistractors(DBPediaResource resource) {
+    public static List<String> getExternalDistractors(DBPediaResource resource, String level) {
         DistractorGenerator generator = new DistractorGenerator();
-        List<String> externalDistractors = generator.getExternalDistractors(resource);
+        List<String> externalDistractors = generator.getExternalDistractors(resource, level);
         return externalDistractors;
     }
 

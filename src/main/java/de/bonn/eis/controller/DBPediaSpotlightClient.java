@@ -17,7 +17,7 @@ import javax.ws.rs.core.MediaType;
 public class DBPediaSpotlightClient {
     private final static String API_URL = "http://spotlight.sztaki.hu:2222/"; // TODO Update spotlight api URL
     private final static String LOCAL_API_URL = "http://spotlight/";
-    private static final double CONFIDENCE = 0.35;
+    private static final double CONFIDENCE = 0.6;
     private static final int SUPPORT = 0;
     private WebTarget webTarget;
 

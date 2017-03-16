@@ -5,4 +5,7 @@ package de.bonn.eis.utils;
  */
 public class NLPConsts {
     public static int WORDS_COUNT = 20;
+    public static String LEVEL_EASY = "easy";
+    public static String LEVEL_MEDIUM = "medium";
+    public static String LEVEL_HARD = "hard";
 }

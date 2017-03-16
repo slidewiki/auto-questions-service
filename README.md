@@ -23,12 +23,13 @@ The username/password for the tomcat server is set in the tomcat-users.xml and t
 
 ##### Production
 
-```GET /qgen/deck/{id}```
+```GET /qgen/{level}/{id}```
 
-This endpoint is for getting questions for a deck by passing the deck id.
+This endpoint is for getting questions for a deck by passing the difficulty level and deck id.
+The difficulty level can be either "easy", "medium" or "hard" (without quotes).
 
 ```
-curl -X GET "http://localhost:8080/qgen/deck/997-1"
+curl -X GET "http://localhost:8080/qgen/easy/997-1"
 
 ```
 
@@ -36,7 +37,7 @@ curl -X GET "http://localhost:8080/qgen/deck/997-1"
 
 The following endpoints are for a development environment only and might be removed in the future
 
-```POST /qgen/deck/text/```
+```POST /qgen/{level}/text/```
 
 For testing the system by sending text to it
 
