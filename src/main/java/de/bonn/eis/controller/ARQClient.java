@@ -28,7 +28,7 @@ public class ARQClient {
     private static final String PREFIX_WIKIDATA = "PREFIX wikidata: <http://www.wikidata.org/entity/>\n";
     private static final String TIMEOUT_VALUE = "5000";
     private static final String UNION = "UNION\n";
-    private static final int ALLOWED_DEPTH_FOR_MEDIUM = 10;
+    private static final int ALLOWED_DEPTH_FOR_MEDIUM = 8;
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
@@ -213,9 +213,9 @@ public class ARQClient {
 
         for (String type : types) {
             if (type.toLowerCase().contains("dbpedia")) {
-                if (type.toLowerCase().contains("yago") && !type.toLowerCase().contains("wikicat")) {
-                    continue;
-                }
+//                if (type.toLowerCase().contains("yago") && !type.toLowerCase().contains("wikicat")) {
+//                    continue;
+//                }
                     String queryString =
                         PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
                                 "SELECT DISTINCT ?path FROM <http://dbpedia.org> WHERE {\n" +

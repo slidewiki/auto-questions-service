@@ -28,12 +28,12 @@
 //    @Test
 //    public void testQGen() {
 //        QuestionGenerator questionGenerator = new QuestionGenerator();
-////        when(questionGenerator.generate(contentMock, contextMock)).thenReturn()
+////        when(questionGenerator.generateQuestionsForText(contentMock, contextMock)).thenReturn()
 //        try {
 //            if(questionGenerator == null){
 //                System.out.println("Null object");
 //            } else{
-//                Response questions = questionGenerator.generate(contentMock, contextMock);
+//                Response questions = questionGenerator.generateQuestionsForText(contentMock, contextMock);
 //                assert (questions.getStatus() == 200);
 //            }
 //        } catch (FileNotFoundException e) {
