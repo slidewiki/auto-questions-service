@@ -33,8 +33,11 @@ public class ARQClient {
     private static final String PREFIX_WIKIDATA = "PREFIX wikidata: <http://www.wikidata.org/entity/>\n";
     private static final String TIMEOUT_VALUE = "10000";
     private static final String UNION = "UNION\n";
-    private static final int ALLOWED_DEPTH_FOR_MEDIUM = 8;
+    private static final String MINUS = "MINUS\n";
+    private static final int ALLOWED_DEPTH_FOR_MEDIUM = 6;
+//    private static final int ALLOWED_DEPTH_FOR_HARD = 12;
     private static final String DBPEDIA = "dbpedia";
+    private static final int NO_OF_SPECIFIC_TYPES = 10;
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
@@ -58,7 +61,8 @@ public class ARQClient {
                     }
                 }
                 QGenLogger.info("Resource: " + resource.getSurfaceForm());
-                int maxAllowedDepth = Integer.MAX_VALUE;
+//                int maxAllowedDepth = ALLOWED_DEPTH_FOR_HARD;
+                int maxAllowedDepth = -1;
                 if (level.equals(NLPConsts.LEVEL_MEDIUM)) {
                     maxAllowedDepth = ALLOWED_DEPTH_FOR_MEDIUM;
                 }
@@ -78,6 +82,7 @@ public class ARQClient {
         }
 
         queryString = addTriplePatternsAndUnions(resourceTypeList, queryString);
+//        queryString = addTriplePatternsAndMinus(resourceTypeList, queryString);
         queryString += "FILTER (langMatches(lang(?name), \"EN\")) .";
         queryString += "}\nORDER BY RAND()\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
         // TODO Refine Query results
@@ -109,33 +114,21 @@ public class ARQClient {
         int count = 0;
         boolean curlyBraceOpened = false;
         for (int i = 0; i < numberOfTypes; i++) {
-            String nsAndType = resourceTypeList.get(i);
             if (groupSize > 0 && count == 0) {
                 queryString += "{\n";
                 curlyBraceOpened = true;
             }
-            if (nsAndType.contains("Http://") || nsAndType.contains("http://")) { // TODO Something more flexible?
-                nsAndType = nsAndType.replace("Http://", "http://");
-                nsAndType = "<" + nsAndType + ">";
-            } else {
-                if (nsAndType.indexOf(":") > 0) {
-                    String[] nsTypePair = nsAndType.split(":");
-                    String namespace = nsTypePair[0].trim();
-                    String type = nsTypePair[1];
-                    queryString = addPrefix(queryString, namespace);
-                    nsAndType = getNamespace(namespace) + ":" + type;
-                } else if (nsAndType.contains("@")) {
-                    nsAndType = nsAndType.substring(0, nsAndType.indexOf("@")).trim();
-                }
-            }
-            queryString += "?s a " + nsAndType + " .\n";
+            String nsAndType = resourceTypeList.get(i);
+            queryString = addTriple(queryString, nsAndType);
             if (groupSize > 0) {
                 count++;
                 if (groupSize == count) {
                     queryString += "}\n";
                     curlyBraceOpened = false;
-                    if (i < numberOfTypes - 1) {
+                    if (i < numberOfTypes - 2) {
                         queryString += UNION;
+                    } else if( i == numberOfTypes - 2){
+                        queryString += MINUS;
                     }
                     count = 0;
                 }
@@ -143,6 +136,39 @@ public class ARQClient {
         }
         if (curlyBraceOpened) {
             queryString += "}\n";
+        }
+        return queryString;
+    }
+
+    private String addTriple(String queryString, String nsAndType) {
+        if (nsAndType.contains("Http://") || nsAndType.contains("http://")) { // TODO Something more flexible?
+            nsAndType = nsAndType.replace("Http://", "http://");
+            nsAndType = "<" + nsAndType + ">";
+        } else {
+            if (nsAndType.indexOf(":") > 0) {
+                String[] nsTypePair = nsAndType.split(":");
+                String namespace = nsTypePair[0].trim();
+                String type = nsTypePair[1];
+                queryString = addPrefix(queryString, namespace);
+                nsAndType = getNamespace(namespace) + ":" + type;
+            } else if (nsAndType.contains("@")) {
+                nsAndType = nsAndType.substring(0, nsAndType.indexOf("@")).trim();
+            }
+        }
+        queryString += "?s a " + nsAndType + " .\n";
+        return queryString;
+    }
+
+    private String addTriplePatternsAndMinus(List<String> resourceTypeList, String queryString){
+        int size = resourceTypeList.size();
+        for (int i = 0; i < size; i++) {
+            if(i < size -2) {
+                queryString = addTriple(queryString, resourceTypeList.get(i));
+            } else {
+                queryString += MINUS + "{\n";
+                queryString = addTriple(queryString, resourceTypeList.get(i));
+                queryString += "}\n";
+            }
         }
         return queryString;
     }
@@ -217,12 +243,12 @@ public class ARQClient {
 
         ImmutableListMultimap<Integer, String> map = Multimaps.index(types, typeDepthFunction::apply);
         ImmutableSet<Integer> keySet = map.keySet();
-        Integer maxDepth = Collections.max(keySet);
-        if (maxAllowedDepth != Integer.MAX_VALUE) {
+        Integer maxDepth = Collections.max(keySet) - 1;
+        if (maxAllowedDepth > 0) {
             maxDepth = maxAllowedDepth;
         }
-        while (mostSpecificTypes.size() < 10) {
-            mostSpecificTypes.addAll(map.get(maxDepth));
+        while (mostSpecificTypes.size() < NO_OF_SPECIFIC_TYPES) {
+            mostSpecificTypes.addAll(0, map.get(maxDepth));
             maxDepth--;
         }
 
