@@ -365,6 +365,9 @@ public class ARQClient {
             mostSpecificTypes.addAll(0, map.get(maxDepth));
             maxDepth--;
         }
+        if(mostSpecificTypes.size() > NO_OF_SPECIFIC_TYPES){
+            mostSpecificTypes.subList(0, NO_OF_SPECIFIC_TYPES + 1);
+        }
 
         // If env is dev
         for (Integer key : keySet) {
