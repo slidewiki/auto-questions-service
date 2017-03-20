@@ -26,7 +26,7 @@ import java.util.function.Function;
 public class ARQClient {
 
     private static final String SPARQL_SERVICE = "http://dbpedia.org/sparql";
-    private static final int QUERY_LIMIT = 20;
+    private static final int QUERY_LIMIT = 10;
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
     private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
     private static final String PREFIX_RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n";
@@ -72,6 +72,7 @@ public class ARQClient {
 
         String queryString =
                 PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
+//                        "SELECT DISTINCT ?name (COUNT(*) AS ?count) FROM <http://dbpedia.org> WHERE {\n" +
                         "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
                         "{ ?s foaf:name ?name }\n" + UNION +
                         "{ ?s rdfs:label ?name }\n";
@@ -85,6 +86,7 @@ public class ARQClient {
 //        queryString = addTriplePatternsAndMinus(resourceTypeList, queryString);
         queryString += "FILTER (langMatches(lang(?name), \"EN\")) .";
         queryString += "}\nORDER BY RAND()\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
+//        queryString += "}\nGROUP BY ?name\nORDER BY DESC(?count)\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
         // TODO Refine Query results
 
         ResultSet results = null;
@@ -113,10 +115,17 @@ public class ARQClient {
         int groupSize = getGroupSize(numberOfTypes);
         int count = 0;
         boolean curlyBraceOpened = false;
+//        boolean groupIsOdd = true;
         for (int i = 0; i < numberOfTypes; i++) {
             if (groupSize > 0 && count == 0) {
                 queryString += "{\n";
                 curlyBraceOpened = true;
+//                if(groupIsOdd){
+//                    queryString += "?res ?p ?s .\n";
+//                } else {
+//                    queryString += "?s ?p ?res .\n";
+//                }
+//                groupIsOdd = !groupIsOdd;
             }
             String nsAndType = resourceTypeList.get(i);
             queryString = addTriple(queryString, nsAndType);
@@ -125,11 +134,12 @@ public class ARQClient {
                 if (groupSize == count) {
                     queryString += "}\n";
                     curlyBraceOpened = false;
-                    if (i < numberOfTypes - 2) {
+                    if (i < numberOfTypes - 1) {
                         queryString += UNION;
-                    } else if( i == numberOfTypes - 2){
-                        queryString += MINUS;
                     }
+//                    else if( i == numberOfTypes - 2){
+//                        queryString += MINUS;
+//                    }
                     count = 0;
                 }
             }
@@ -261,9 +271,13 @@ public class ARQClient {
     }
 
     private int getTypeDepth(String type) {
-        if (!type.toLowerCase().contains(DBPEDIA)) {
+        String typeInLowerCase = type.toLowerCase();
+        if (!typeInLowerCase.contains(DBPEDIA)) {
             return 0;
         }
+//        if(typeInLowerCase.contains("yago") && !typeInLowerCase.contains("wikicat")){
+//            return 0;
+//        }
         String queryString =
                 PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
                         "SELECT DISTINCT ?path FROM <http://dbpedia.org> WHERE {\n" +
