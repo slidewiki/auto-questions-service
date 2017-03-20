@@ -13,6 +13,7 @@ import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
+import rita.RiTa;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +26,8 @@ import java.util.function.Function;
  */
 public class ARQClient {
 
-    private static final String SPARQL_SERVICE = "http://dbpedia.org/sparql";
+    private static final String DBPEDIA_SPARQL_SERVICE = "http://dbpedia.org/sparql";
+    private static final String WORDNET_SPARQL_SERVICE = "http://wordnet-rdf.princeton.edu/sparql/";
     private static final int QUERY_LIMIT = 10;
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
     private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
@@ -38,6 +40,7 @@ public class ARQClient {
 //    private static final int ALLOWED_DEPTH_FOR_HARD = 12;
     private static final String DBPEDIA = "dbpedia";
     private static final int NO_OF_SPECIFIC_TYPES = 10;
+    private static final String NNP_POS_TAG = "nnp";
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
@@ -49,6 +52,12 @@ public class ARQClient {
         List<String> resourceTypeList = null;
 
         if (level.equals(NLPConsts.LEVEL_EASY)) {
+            resourceNames = getDistractorsFromWordnet(resource.getSurfaceForm()); // surface form as in text or label of the resource disambiguated?
+            if(resourceNames.size() > 3){
+                return resourceNames;
+            } else {
+                resourceNames.clear();
+            }
             String[] types = resource.getTypes().split(",");
             resourceTypeList = Arrays.asList(types[types.length - 1]);
         } else if (level.equals(NLPConsts.LEVEL_MEDIUM) || level.equals(NLPConsts.LEVEL_HARD)) {
@@ -92,7 +101,7 @@ public class ARQClient {
         ResultSet results = null;
         try {
             QGenLogger.fine("###########################RESOURCE: " + resource.getSurfaceForm() + "###########################\n" + "SELECT Query:\n" + queryString);
-            results = runSelectQuery(queryString);
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
@@ -108,6 +117,101 @@ public class ARQClient {
             }
         }
         return resourceNames;
+    }
+
+    private List<String> getDistractorsFromWordnet(String resourceName) {
+        List<String> distractors = new ArrayList<>();
+        List<String> lexicalDomains = getWordnetLexicalDomains(resourceName);
+        if(lexicalDomains.isEmpty()){
+            // wordnet sometimes gives results for last names (in the case of people)
+            resourceName = resourceName.substring(resourceName.lastIndexOf(" ")).trim();
+            String[] tags = RiTa.getPosTags(resourceName);
+            for (String tag: tags){
+                if(tag.equals(NNP_POS_TAG)){
+                    lexicalDomains = getWordnetLexicalDomains(resourceName);
+                    break;
+                }
+            }
+        }
+        for (String lexicalDomain : lexicalDomains) {
+            distractors.addAll(getWordnetHypernyms(resourceName, lexicalDomain));
+        }
+        return distractors;
+    }
+
+    private List<String> getWordnetHypernyms(String resourceName, String lexicalDomain) {
+        String queryString = "PREFIX lemon: <http://lemon-model.net/lemon#> \n" +
+                "PREFIX wordnet: <http://wordnet-rdf.princeton.edu/> \n" +
+                "PREFIX wordnet-ontology: <http://wordnet-rdf.princeton.edu/ontology#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "\n" +
+                "select ?name where {\n" +
+                " ?s rdfs:label \"" + resourceName + "\"@eng .\n" +
+                " ?s wordnet-ontology:lexical_domain <" + lexicalDomain + "> ." +
+                " {\n" +
+                " ?s wordnet-ontology:instance_hypernym ?p .\n" +
+                " ?res wordnet-ontology:instance_hypernym ?p .\n" +
+                " ?res rdfs:label ?name .\n" +
+                " }\n" +
+                " UNION\n" +
+                " {\n" +
+                "  ?s wordnet-ontology:hypernym ?p .\n" +
+                "  ?res wordnet-ontology:hypernym ?p .\n" +
+                " ?res rdfs:label ?name .\n" +
+                " }\n" +
+                " FILTER (?s != ?res)\n" +
+                "} ORDER BY RAND() LIMIT 4";
+        ResultSet results = null;
+        List<String> resources = new ArrayList<>();
+        try {
+            results = runSelectQuery(queryString, WORDNET_SPARQL_SERVICE);
+        } catch (Exception e) {
+            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
+        }
+        if (results != null) {
+            while (results.hasNext()) {
+                QuerySolution result = results.next();
+                if (result != null) {
+                    RDFNode n = result.get("name");
+                    String nameLiteral;
+                    if (n.isLiteral()) {
+                        nameLiteral = ((Literal) n).getLexicalForm();
+                        resources.add(nameLiteral);
+                    }
+                }
+            }
+        }
+        return resources;
+    }
+
+    private List<String> getWordnetLexicalDomains(String resourceName) {
+        String queryString = "PREFIX lemon: <http://lemon-model.net/lemon#> \n" +
+                "PREFIX wordnet: <http://wordnet-rdf.princeton.edu/> \n" +
+                "PREFIX wordnet-ontology: <http://wordnet-rdf.princeton.edu/ontology#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "\n" +
+                "select distinct ?d where {\n" +
+                " ?s rdfs:label \"" + resourceName + "\"@eng .\n" +
+                " ?s wordnet-ontology:lexical_domain ?d .\n" +
+                " filter( regex(str(?d), \"noun\" ))\n" +
+                "} ORDER BY DESC (?d)";
+        ResultSet results = null;
+        List<String> domains = new ArrayList<>();
+        try {
+            results = runSelectQuery(queryString, WORDNET_SPARQL_SERVICE);
+        } catch (Exception e) {
+            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
+        }
+        if (results != null) {
+            while (results.hasNext()) {
+                QuerySolution result = results.next();
+                if (result != null) {
+                    RDFNode node = result.get("d");
+                    domains.add(node.toString());
+                }
+            }
+        }
+        return domains;
     }
 
     private String addTriplePatternsAndUnions(List<String> resourceTypeList, String queryString) {
@@ -202,7 +306,7 @@ public class ARQClient {
 
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString);
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
@@ -218,8 +322,8 @@ public class ARQClient {
         return resourceTypes;
     }
 
-    private ResultSet runSelectQuery(String queryString) throws Exception {
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQL_SERVICE, queryString);
+    private ResultSet runSelectQuery(String queryString, String service) throws Exception {
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(service, queryString);
         qExec.addParam("timeout", TIMEOUT_VALUE); //1 sec
         ResultSet set = null;
         try {
@@ -286,7 +390,7 @@ public class ARQClient {
         ResultSet results;
         int count = 0;
         try {
-            results = runSelectQuery(queryString);
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
             while (results.hasNext()) {
                 results.next();
                 count++;
