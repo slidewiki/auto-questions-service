@@ -1,10 +1,7 @@
 package de.bonn.eis.controller;
 
 import com.google.common.collect.ImmutableListMultimap;
-import de.bonn.eis.model.DBPediaResource;
-import de.bonn.eis.model.DBPediaSpotlightPOJO;
-import de.bonn.eis.model.NLP;
-import de.bonn.eis.model.Question;
+import de.bonn.eis.model.*;
 import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.QGenUtils;
 import rita.RiTa;
@@ -31,6 +28,7 @@ import java.util.stream.Collectors;
 public class QuestionGenerator {
 
     private static final String BLANK = "________";
+    private static final String SELECT_QUESTION_TEXT = " is a: ";
     @Context
     private ServletContext servletContext;
 
@@ -69,11 +67,12 @@ public class QuestionGenerator {
     @Path("/text/numbers")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
     public Response generateQuestionsForValues(String text) {
         LanguageProcessor processor = new LanguageProcessor(text);
         List<Question> questions = new ArrayList<>();
         Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
+        System.out.println(sentencesWithNumbers);
         Set<String> numbers = sentencesWithNumbers.keySet();
         sentencesWithNumbers.forEach((numberString, sentences) -> {
             Question.QuestionBuilder builder = Question.builder();
@@ -90,6 +89,47 @@ public class QuestionGenerator {
             questions.add(builder.build());
         });
         return Response.status(200).entity(questions).build();
+    }
+
+    @Path("/select/{level}/{deckID}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response generateSelectQuestions(@PathParam("level") String level, @PathParam("deckID") String deckID) {
+        Client client = ClientBuilder.newClient();
+        String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
+        WebTarget webTarget = client.target(hostIp);
+        NLP nlp = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .get(NLP.class);
+        DBPediaSpotlightPOJO spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
+        List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
+        List<SelectQuestion> questions = getSelectQuestions(resources, level);
+        return Response.status(200).entity(questions).build();
+    }
+
+    @Path("/select/{level}/text")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response generateSelectQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
+        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
+        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
+        dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
+        List<SelectQuestion> questions = getSelectQuestions(dbPediaResources, level);
+        return Response.status(200).entity(questions).build();
+    }
+
+    private List<SelectQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {
+        List<SelectQuestion> selectQuestions = new ArrayList<>();
+        resources.forEach(resource -> {
+            SelectQuestion.SelectQuestionBuilder questionBuilder = SelectQuestion.builder();
+            List<String> answerAndDistractors = DistractorGenerator.getSelectQuestionDistractors(resource, level);
+            questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
+                    .answer(answerAndDistractors.get(0))
+                    .distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
+            selectQuestions.add(questionBuilder.build());
+        });
+        return selectQuestions;
     }
 
     private List<Question> getQuestionsForText(String text, List<DBPediaResource> dbPediaResources, String level) {

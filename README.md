@@ -53,6 +53,12 @@ For getting questions related to values/numerals found in the text. This is done
 curl -X POST -H "Content-Type: text/plain" -d 'Germany won the 2014 FIFA World Cup.' "http://localhost:8080/qgen/text/numbers"
 ```
 
+```POST /qgen/select/{level}/text/```
+
+For select multiple choice questions
+```
+curl -X POST -H "Content-Type: text/plain" -d 'Mount Rushmore has faces carved onto it.' "http://localhost:8080/qgen/select/easy/text"
+```
 ### Running with the spotlight docker container (Production Environment)
 
 One can also run a container of DBPediaSpotlight on the same host as this one and communicate with it.

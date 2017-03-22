@@ -94,8 +94,7 @@ public class TextInfoRetriever {
     }
 
     public static List<String> getExternalDistractors(DBPediaResource resource, String level) {
-        DistractorGenerator generator = new DistractorGenerator();
-        List<String> externalDistractors = generator.getExternalDistractors(resource, level);
+        List<String> externalDistractors = DistractorGenerator.getExternalDistractors(resource, level);
         return externalDistractors;
     }
 

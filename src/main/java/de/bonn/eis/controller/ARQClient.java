@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Ainuddin Faizan on 1/7/17.
@@ -33,6 +34,7 @@ public class ARQClient {
     private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
     private static final String PREFIX_RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n";
     private static final String PREFIX_WIKIDATA = "PREFIX wikidata: <http://www.wikidata.org/entity/>\n";
+    private static final String PREFIX_OWL = "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n";
     private static final String TIMEOUT_VALUE = "10000";
     private static final String UNION = "UNION\n";
     private static final String MINUS = "MINUS\n";
@@ -41,6 +43,7 @@ public class ARQClient {
     private static final String DBPEDIA = "dbpedia";
     private static final int NO_OF_SPECIFIC_TYPES = 10;
     private static final String NNP_POS_TAG = "nnp";
+    private static final int NO_OF_SPECIFIC_TYPES_EASY = 3;
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
@@ -75,7 +78,7 @@ public class ARQClient {
                 if (level.equals(NLPConsts.LEVEL_MEDIUM)) {
                     maxAllowedDepth = ALLOWED_DEPTH_FOR_MEDIUM;
                 }
-                resourceTypeList = getMostSpecificTypes(resourceTypeList, maxAllowedDepth);
+                resourceTypeList = getMostSpecificTypes(resourceTypeList, level);
             }
         }
 
@@ -168,6 +171,11 @@ public class ARQClient {
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
+        addResultsToList(results, resources);
+        return resources;
+    }
+
+    private void addResultsToList(ResultSet results, List<String> resources) {
         if (results != null) {
             while (results.hasNext()) {
                 QuerySolution result = results.next();
@@ -181,7 +189,6 @@ public class ARQClient {
                 }
             }
         }
-        return resources;
     }
 
     private List<String> getWordnetLexicalDomains(String resourceName) {
@@ -232,7 +239,7 @@ public class ARQClient {
 //                groupIsOdd = !groupIsOdd;
             }
             String nsAndType = resourceTypeList.get(i);
-            queryString = addTriple(queryString, nsAndType);
+            queryString = addNsAndType(queryString, nsAndType, true);
             if (groupSize > 0) {
                 count++;
                 if (groupSize == count) {
@@ -254,7 +261,7 @@ public class ARQClient {
         return queryString;
     }
 
-    private String addTriple(String queryString, String nsAndType) {
+    private String addNsAndType(String queryString, String nsAndType, boolean shouldAddTriple) {
         if (nsAndType.contains("Http://") || nsAndType.contains("http://")) { // TODO Something more flexible?
             nsAndType = nsAndType.replace("Http://", "http://");
             nsAndType = "<" + nsAndType + ">";
@@ -263,13 +270,15 @@ public class ARQClient {
                 String[] nsTypePair = nsAndType.split(":");
                 String namespace = nsTypePair[0].trim();
                 String type = nsTypePair[1];
-                queryString = addPrefix(queryString, namespace);
                 nsAndType = getNamespace(namespace) + ":" + type;
+                queryString = addPrefix(queryString, namespace);
             } else if (nsAndType.contains("@")) {
                 nsAndType = nsAndType.substring(0, nsAndType.indexOf("@")).trim();
             }
         }
-        queryString += "?s a " + nsAndType + " .\n";
+        if(shouldAddTriple){
+            queryString += "?s a " + nsAndType + " .\n";
+        }
         return queryString;
     }
 
@@ -277,10 +286,10 @@ public class ARQClient {
         int size = resourceTypeList.size();
         for (int i = 0; i < size; i++) {
             if(i < size -2) {
-                queryString = addTriple(queryString, resourceTypeList.get(i));
+                queryString = addNsAndType(queryString, resourceTypeList.get(i), true);
             } else {
                 queryString += MINUS + "{\n";
-                queryString = addTriple(queryString, resourceTypeList.get(i));
+                queryString = addNsAndType(queryString, resourceTypeList.get(i), true);
                 queryString += "}\n";
             }
         }
@@ -341,10 +350,10 @@ public class ARQClient {
      * Get the most specific rdf:type i.e. the one that has the most number of super classes
      *
      * @param types
-     * @param maxAllowedDepth
+     * @param level
      * @return
      */
-    private List<String> getMostSpecificTypes(List<String> types, int maxAllowedDepth) {
+    private List<String> getMostSpecificTypes(List<String> types, String level) {
 
         if (types.isEmpty()) {
             return null;
@@ -357,16 +366,25 @@ public class ARQClient {
 
         ImmutableListMultimap<Integer, String> map = Multimaps.index(types, typeDepthFunction::apply);
         ImmutableSet<Integer> keySet = map.keySet();
-        Integer maxDepth = Collections.max(keySet) - 1;
-        if (maxAllowedDepth > 0) {
-            maxDepth = maxAllowedDepth;
+        Integer maxDepth = Collections.max(keySet); // as it is for easy
+
+        if (level.equalsIgnoreCase(NLPConsts.LEVEL_MEDIUM)) {
+            maxDepth = ALLOWED_DEPTH_FOR_MEDIUM;
+        } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
+            maxDepth--; // the second most specific
         }
-        while (mostSpecificTypes.size() < NO_OF_SPECIFIC_TYPES) {
+
+        int noOfTypes = NO_OF_SPECIFIC_TYPES;
+        if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
+            noOfTypes = NO_OF_SPECIFIC_TYPES_EASY;
+        }
+
+        while (mostSpecificTypes.size() < noOfTypes) {
             mostSpecificTypes.addAll(0, map.get(maxDepth));
             maxDepth--;
         }
         if(mostSpecificTypes.size() > NO_OF_SPECIFIC_TYPES){
-            mostSpecificTypes.subList(0, NO_OF_SPECIFIC_TYPES + 1);
+            mostSpecificTypes = mostSpecificTypes.subList(0, NO_OF_SPECIFIC_TYPES + 1);
         }
 
         // If env is dev
@@ -434,5 +452,90 @@ public class ARQClient {
                 return "wikidata";
         }
         return "";
+    }
+
+    public List<String> getSisterTypes(DBPediaResource answer, String level) {
+        List<String> sisterTypes = new ArrayList<>();
+        List<String> resourceTypeList = null;
+        if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
+            String types = answer.getTypes();
+            if(types.isEmpty()){
+                sisterTypes.add("Empty types");
+                return sisterTypes;
+            } else {
+                String[] typesArray = types.split(",");
+                resourceTypeList = Arrays.asList(typesArray);
+                resourceTypeList = resourceTypeList.stream().filter(type -> type.toLowerCase().contains(DBPEDIA)).collect(Collectors.toList());
+            }
+//            resourceTypeList = getMostSpecificTypes(resourceTypeList, level);
+            if (resourceTypeList != null) {
+                int size = resourceTypeList.size();
+                sisterTypes.add(getLabelOfType(resourceTypeList.get(size - 1)));
+                for (int i = size - 1; i > 0; i--) {
+                    String type = resourceTypeList.get(i);
+                    String superType = resourceTypeList.get(i-1);
+                    String queryString =
+                            PREFIX_RDF + PREFIX_RDFS + PREFIX_OWL;
+                    queryString = addNsAndType(queryString, type, false);
+                    queryString = addNsAndType(queryString, superType, false);
+                    type = getNsAndTypeForSpotlightType(type);
+                    superType = getNsAndTypeForSpotlightType(superType);
+
+                    queryString += "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
+//                            "<" + answer.getURI() + "> a " + type + " .\n" +
+                            " ?t a owl:Class .\n" +
+                            " ?t rdfs:subClassOf " + superType + " .\n" +
+                            " ?t rdfs:label ?name .\n" +
+                            " filter (?t != " + type  + ") .\n" +
+                            " filter (langMatches(lang(?name), \"EN\")) ." +
+                            " filter not exists {<" + answer.getURI() + "> a ?t } ." +
+                            "} order by rand() limit 3";
+                    System.out.println(queryString);
+                    ResultSet results = null;
+                    try {
+                        results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    addResultsToList(results, sisterTypes);
+                    if(sisterTypes.size() == 4){
+                        break;
+                    } else if (sisterTypes.size() > 4) {
+                        sisterTypes = sisterTypes.subList(0, 4);
+                    }
+                }
+            }
+
+
+        } if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
+
+        }
+
+        return sisterTypes;
+    }
+
+    private String getLabelOfType(String type) {
+        String nsAndType = getNsAndTypeForSpotlightType(type);
+        String queryString = PREFIX_RDFS + PREFIX_DBRES;
+        queryString += "SELECT ?name FROM <http://dbpedia.org> WHERE {\n" +
+                nsAndType + " rdfs:label ?name .\n" +
+                " filter (langMatches(lang(?name), \"EN\")) ." +
+                "}";
+        ResultSet results = null;
+        try {
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        List<String> resultList = new ArrayList<>();
+        addResultsToList(results, resultList);
+        return resultList.get(0);
+    }
+
+    private String getNsAndTypeForSpotlightType(String nsAndType) {
+        String[] nsTypePair = nsAndType.split(":");
+        String namespace = nsTypePair[0].trim();
+        String type = nsTypePair[1];
+        return getNamespace(namespace) + ":" + type;
     }
 }
