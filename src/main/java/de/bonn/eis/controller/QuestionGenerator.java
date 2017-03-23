@@ -124,10 +124,14 @@ public class QuestionGenerator {
         resources.forEach(resource -> {
             SelectQuestion.SelectQuestionBuilder questionBuilder = SelectQuestion.builder();
             List<String> answerAndDistractors = DistractorGenerator.getSelectQuestionDistractors(resource, level);
-            questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
-                    .answer(answerAndDistractors.get(0))
-                    .distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
-            selectQuestions.add(questionBuilder.build());
+            if(!answerAndDistractors.isEmpty()){
+                questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
+                        .answer(answerAndDistractors.get(0));
+            if(answerAndDistractors.size() > 1){
+                questionBuilder.distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
+            }
+                selectQuestions.add(questionBuilder.build());
+            }
         });
         return selectQuestions;
     }

@@ -171,16 +171,16 @@ public class ARQClient {
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
-        addResultsToList(results, resources);
+        addResultsToList(results, resources, "name");
         return resources;
     }
 
-    private void addResultsToList(ResultSet results, List<String> resources) {
+    private void addResultsToList(ResultSet results, List<String> resources, String var) {
         if (results != null) {
             while (results.hasNext()) {
                 QuerySolution result = results.next();
                 if (result != null) {
-                    RDFNode n = result.get("name");
+                    RDFNode n = result.get(var);
                     String nameLiteral;
                     if (n.isLiteral()) {
                         nameLiteral = ((Literal) n).getLexicalForm();
@@ -456,62 +456,104 @@ public class ARQClient {
 
     public List<String> getSisterTypes(DBPediaResource answer, String level) {
         List<String> sisterTypes = new ArrayList<>();
-        List<String> resourceTypeList = null;
         if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
             String types = answer.getTypes();
-            if(types.isEmpty()){
-                sisterTypes.add("Empty types");
-                return sisterTypes;
-            } else {
+            if (!types.isEmpty()) {
                 String[] typesArray = types.split(",");
-                resourceTypeList = Arrays.asList(typesArray);
+                List<String> resourceTypeList = Arrays.asList(typesArray);
                 resourceTypeList = resourceTypeList.stream().filter(type -> type.toLowerCase().contains(DBPEDIA)).collect(Collectors.toList());
-            }
-//            resourceTypeList = getMostSpecificTypes(resourceTypeList, level);
-            if (resourceTypeList != null) {
-                int size = resourceTypeList.size();
-                sisterTypes.add(getLabelOfType(resourceTypeList.get(size - 1)));
-                for (int i = size - 1; i > 0; i--) {
-                    String type = resourceTypeList.get(i);
-                    String superType = resourceTypeList.get(i-1);
-                    String queryString =
-                            PREFIX_RDF + PREFIX_RDFS + PREFIX_OWL;
-                    queryString = addNsAndType(queryString, type, false);
-                    queryString = addNsAndType(queryString, superType, false);
-                    type = getNsAndTypeForSpotlightType(type);
-                    superType = getNsAndTypeForSpotlightType(superType);
+                if (resourceTypeList != null) {
+                    int size = resourceTypeList.size();
+                    sisterTypes.add(getLabelOfType(resourceTypeList.get(size - 1)));
+                    for (int i = size - 1; i > 0; i--) {
+                        String type = resourceTypeList.get(i);
+                        String superType = resourceTypeList.get(i - 1);
+                        String queryString =
+                                PREFIX_RDF + PREFIX_RDFS + PREFIX_OWL;
+                        queryString = addNsAndType(queryString, type, false);
+                        queryString = addNsAndType(queryString, superType, false);
+                        type = getNsAndTypeForSpotlightType(type);
+                        superType = getNsAndTypeForSpotlightType(superType);
 
-                    queryString += "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
-//                            "<" + answer.getURI() + "> a " + type + " .\n" +
-                            " ?t a owl:Class .\n" +
-                            " ?t rdfs:subClassOf " + superType + " .\n" +
-                            " ?t rdfs:label ?name .\n" +
-                            " filter (?t != " + type  + ") .\n" +
-                            " filter (langMatches(lang(?name), \"EN\")) ." +
-                            " filter not exists {<" + answer.getURI() + "> a ?t } ." +
-                            "} order by rand() limit 3";
-                    System.out.println(queryString);
-                    ResultSet results = null;
-                    try {
-                        results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                        queryString += "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
+                                //                            "<" + answer.getURI() + "> a " + type + " .\n" +
+                                " ?t a owl:Class .\n" +
+                                " ?t rdfs:subClassOf " + superType + " .\n" +
+                                " ?t rdfs:label ?name .\n" +
+                                " filter (?t != " + type + ") .\n" +
+                                " filter (langMatches(lang(?name), \"EN\")) ." +
+                                " filter not exists {<" + answer.getURI() + "> a ?t } ." +
+                                "} order by rand() limit 3";
+                        ResultSet results = null;
+                        try {
+                            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        addResultsToList(results, sisterTypes, "name");
+                        if (sisterTypes.size() == 4) {
+                            break;
+                        } else if (sisterTypes.size() > 4) {
+                            sisterTypes = sisterTypes.subList(0, 4);
+                        }
                     }
-                    addResultsToList(results, sisterTypes);
-                    if(sisterTypes.size() == 4){
-                        break;
-                    } else if (sisterTypes.size() > 4) {
-                        sisterTypes = sisterTypes.subList(0, 4);
+                }
+            } else {
+                String queryString = PREFIX_RDFS + PREFIX_OWL;
+                String resource = "<" + answer.getURI() + ">";
+                queryString += "SELECT DISTINCT ?dName ?aName WHERE {\n" +
+                        resource + " a ?t .\n" +
+                        resource + " a ?a .\n" +
+                        " ?t a owl:Class .\n" +
+                        " ?a a owl:Class .\n" +
+                        " ?d a owl:Class .\n" +
+                        " ?d rdfs:label ?dName .\n" +
+                        " ?a rdfs:label ?aName .\n" +
+                        " ?d rdfs:subClassOf ?t .\n" +
+                        " filter (langMatches(lang(?aName), \"EN\")) .\n" +
+                        " filter (langMatches(lang(?dName), \"EN\")) .\n" +
+                        " filter not exists{?s rdfs:subClassOf ?a}\n" +
+                        " filter not exists{" + resource +" a ?d .}\n" +
+                        "} order by rand() limit 3";
+
+                ResultSet resultSet = null;
+                try {
+                    resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                RDFNode answerType = null;
+                if (resultSet != null) {
+                    while (resultSet.hasNext()) {
+                        QuerySolution result = resultSet.next();
+                        if (result != null) {
+                            answerType = result.get("aName");
+                            RDFNode distractor = result.get("dName");
+                            String literal = getLiteral(distractor);
+                            if(literal != null){
+                                sisterTypes.add(literal);
+                            }
+                        }
+                    }
+                    String literal = getLiteral(answerType);
+                    if(literal != null){
+                        sisterTypes.add(0, literal);
                     }
                 }
             }
+            if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
 
-
-        } if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
-
+            }
         }
-
         return sisterTypes;
+    }
+
+    private String getLiteral(RDFNode node) {
+        String dNameLiteral = null;
+        if (node != null && node.isLiteral()) {
+            dNameLiteral = ((Literal) node).getLexicalForm();
+        }
+        return dNameLiteral;
     }
 
     private String getLabelOfType(String type) {
@@ -528,7 +570,7 @@ public class ARQClient {
             e.printStackTrace();
         }
         List<String> resultList = new ArrayList<>();
-        addResultsToList(results, resultList);
+        addResultsToList(results, resultList, "name");
         return resultList.get(0);
     }
 
