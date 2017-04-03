@@ -620,7 +620,11 @@ public class ARQClient {
                 }
             }
         }
-        return sisterTypes;
+        ArrayList<String> singleTypes = new ArrayList<>();
+        for (String sisterType : sisterTypes) {
+            singleTypes.add(RiTa.singularize(sisterType));
+        }
+        return singleTypes;
     }
 
     private String getWikicatYAGOTypeName(String type) {
