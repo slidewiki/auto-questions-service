@@ -83,6 +83,7 @@
         <guava.version>21.0</guava.version>
         <jsoup.version>1.10.2</jsoup.version>
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
+        <inflector.version>0.7.0</inflector.version>
     </properties>
 
     <dependencies>

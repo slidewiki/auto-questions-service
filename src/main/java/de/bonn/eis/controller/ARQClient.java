@@ -621,7 +621,18 @@ public class ARQClient {
         }
         ArrayList<String> singleTypes = new ArrayList<>();
         for (String sisterType : sisterTypes) {
-            singleTypes.add(RiTa.singularize(sisterType));
+            String[] typeArray = sisterType.split(" ");
+            StringBuilder result = new StringBuilder();
+            for (String s : typeArray) {
+                String singular = RiTa.singularize(s);
+                String plural = RiTa.pluralize(singular);
+                if(plural.equalsIgnoreCase(s)){
+                    result.append(singular).append(" ");
+                } else{
+                    result.append(s).append(" ");
+                }
+            }
+            singleTypes.add(result.toString().trim());
         }
         return singleTypes;
     }
@@ -631,7 +642,8 @@ public class ARQClient {
         boolean containsYago = type.toLowerCase().contains(YAGO);
         String[] typeArray = type.split("/");
         type = typeArray[typeArray.length - 1];
-        String[] array = StringUtils.splitByCharacterTypeCamelCase(type);
+        // Split camel case or title case
+        String[] array = type.split("(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=[0-9])(?=[A-Z][a-z])|(?<=[a-zA-Z])(?=[0-9])");
         int synsetIDLength = 8;
         String prefixOne = "1";
         for (int i = 0; i < array.length; i++) {
