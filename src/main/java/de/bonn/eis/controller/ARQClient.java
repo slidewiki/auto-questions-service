@@ -127,12 +127,15 @@ public class ARQClient {
         List<String> lexicalDomains = getWordnetLexicalDomains(resourceName);
         if(lexicalDomains.isEmpty()){
             // wordnet sometimes gives results for last names (in the case of people)
-            resourceName = resourceName.substring(resourceName.lastIndexOf(" ")).trim();
-            String[] tags = RiTa.getPosTags(resourceName);
-            for (String tag: tags){
-                if(tag.equals(NNP_POS_TAG)){
-                    lexicalDomains = getWordnetLexicalDomains(resourceName);
-                    break;
+            int index = resourceName.trim().lastIndexOf(" ");
+            if(index > 0){
+                resourceName = resourceName.substring(index).trim();
+                String[] tags = RiTa.getPosTags(resourceName);
+                for (String tag: tags){
+                    if(tag.equals(NNP_POS_TAG)){
+                        lexicalDomains = getWordnetLexicalDomains(resourceName);
+                        break;
+                    }
                 }
             }
         }
@@ -541,9 +544,8 @@ public class ARQClient {
                     }
                 }
             }
-            if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
+        }else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
 
-            }
         }
         return sisterTypes;
     }
