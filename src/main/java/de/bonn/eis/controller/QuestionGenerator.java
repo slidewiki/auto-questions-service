@@ -37,7 +37,6 @@ public class QuestionGenerator {
     @Produces(MediaType.APPLICATION_JSON)
     public Response generateQuestionsForSlides(@PathParam("level") String level, @PathParam("deckID") String deckID) {
         Client client = ClientBuilder.newClient();
-//        String hostIp = "https://deckservice.experimental.slidewiki.org/deck/" + deckID + "/slides";
         String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
         WebTarget webTarget = client.target(hostIp);
         NLP nlp = webTarget
@@ -125,12 +124,15 @@ public class QuestionGenerator {
             SelectQuestion.SelectQuestionBuilder questionBuilder = SelectQuestion.builder();
             List<String> answerAndDistractors = DistractorGenerator.getSelectQuestionDistractors(resource, level);
             if(!answerAndDistractors.isEmpty()){
-                questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
-                        .answer(answerAndDistractors.get(0));
-            if(answerAndDistractors.size() > 1){
-                questionBuilder.distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
-            }
-                selectQuestions.add(questionBuilder.build());
+                String answer = answerAndDistractors.get(0);
+                if(!answer.trim().isEmpty()){
+                    questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
+                            .answer(answer);
+                    if(answerAndDistractors.size() > 1){
+                        questionBuilder.distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
+                    }
+                    selectQuestions.add(questionBuilder.build());
+                }
             }
         });
         return selectQuestions;
