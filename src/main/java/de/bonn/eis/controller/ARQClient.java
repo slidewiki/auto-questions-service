@@ -40,7 +40,7 @@ public class ARQClient {
     private static final String UNION = "UNION\n";
     private static final String MINUS = "MINUS\n";
     private static final int ALLOWED_DEPTH_FOR_MEDIUM = 6;
-//    private static final int ALLOWED_DEPTH_FOR_HARD = 12;
+    //    private static final int ALLOWED_DEPTH_FOR_HARD = 12;
     private static final String DBPEDIA = "dbpedia";
     private static final int NO_OF_SPECIFIC_TYPES = 10;
     private static final String NNP_POS_TAG = "nnp";
@@ -59,7 +59,7 @@ public class ARQClient {
 
         if (level.equals(NLPConsts.LEVEL_EASY)) {
             resourceNames = getDistractorsFromWordnet(resource.getSurfaceForm()); // surface form as in text or label of the resource disambiguated?
-            if(resourceNames.size() > 3){
+            if (resourceNames.size() > 3) {
                 return resourceNames;
             } else {
                 resourceNames.clear();
@@ -128,14 +128,14 @@ public class ARQClient {
     private List<String> getDistractorsFromWordnet(String resourceName) {
         List<String> distractors = new ArrayList<>();
         List<String> lexicalDomains = getWordnetLexicalDomains(resourceName);
-        if(lexicalDomains.isEmpty()){
+        if (lexicalDomains.isEmpty()) {
             // wordnet sometimes gives results for last names (in the case of people)
             int index = resourceName.trim().lastIndexOf(" ");
-            if(index > 0){
+            if (index > 0) {
                 resourceName = resourceName.substring(index).trim();
                 String[] tags = RiTa.getPosTags(resourceName);
-                for (String tag: tags){
-                    if(tag.equals(NNP_POS_TAG)){
+                for (String tag : tags) {
+                    if (tag.equals(NNP_POS_TAG)) {
                         lexicalDomains = getWordnetLexicalDomains(resourceName);
                         break;
                     }
@@ -282,16 +282,16 @@ public class ARQClient {
                 nsAndType = nsAndType.substring(0, nsAndType.indexOf("@")).trim();
             }
         }
-        if(shouldAddTriple){
+        if (shouldAddTriple) {
             queryString += "?s a " + nsAndType + " .\n";
         }
         return queryString;
     }
 
-    private String addTriplePatternsAndMinus(List<String> resourceTypeList, String queryString){
+    private String addTriplePatternsAndMinus(List<String> resourceTypeList, String queryString) {
         int size = resourceTypeList.size();
         for (int i = 0; i < size; i++) {
-            if(i < size -2) {
+            if (i < size - 2) {
                 queryString = addNsAndType(queryString, resourceTypeList.get(i), true);
             } else {
                 queryString += MINUS + "{\n";
@@ -376,12 +376,12 @@ public class ARQClient {
 
         if (level.equalsIgnoreCase(NLPConsts.LEVEL_MEDIUM)) {
             maxDepth = ALLOWED_DEPTH_FOR_MEDIUM;
-        } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
+        } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
             maxDepth--; // the second most specific
         }
 
         int noOfTypes = NO_OF_SPECIFIC_TYPES;
-        if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
+        if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
             noOfTypes = NO_OF_SPECIFIC_TYPES_EASY;
         }
 
@@ -389,7 +389,7 @@ public class ARQClient {
             mostSpecificTypes.addAll(0, map.get(maxDepth));
             maxDepth--;
         }
-        if(mostSpecificTypes.size() > NO_OF_SPECIFIC_TYPES){
+        if (mostSpecificTypes.size() > NO_OF_SPECIFIC_TYPES) {
             mostSpecificTypes = mostSpecificTypes.subList(0, NO_OF_SPECIFIC_TYPES + 1);
         }
 
@@ -462,7 +462,7 @@ public class ARQClient {
 
     public List<String> getSisterTypes(DBPediaResource answer, String level) {
         List<String> sisterTypes = new ArrayList<>();
-        if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
+        if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
             String types = answer.getTypes();
             if (!types.isEmpty()) {
                 String[] typesArray = types.split(",");
@@ -519,7 +519,7 @@ public class ARQClient {
                         " filter (langMatches(lang(?aName), \"EN\")) .\n" +
                         " filter (langMatches(lang(?dName), \"EN\")) .\n" +
                         " filter not exists{?s rdfs:subClassOf ?a}\n" +
-                        " filter not exists{" + resource +" a ?d .}\n" +
+                        " filter not exists{" + resource + " a ?d .}\n" +
                         "} order by rand() limit 3";
 
                 ResultSet resultSet = null;
@@ -536,18 +536,18 @@ public class ARQClient {
                             answerType = result.get("aName");
                             RDFNode distractor = result.get("dName");
                             String literal = getLiteral(distractor);
-                            if(literal != null){
+                            if (literal != null) {
                                 sisterTypes.add(literal);
                             }
                         }
                     }
                     String literal = getLiteral(answerType);
-                    if(literal != null){
+                    if (literal != null) {
                         sisterTypes.add(0, literal);
                     }
                 }
             }
-        }else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
+        } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
             String queryString = PREFIX_RDFS;
             String resource = "<" + answer.getURI() + ">";
             String var = "type";
@@ -559,7 +559,6 @@ public class ARQClient {
                     " }\n" +
                     " ?" + var + " rdfs:subClassOf* ?path .\n" +
                     " } group by (?" + var + ") order by desc (?count) limit 1\n";
-            System.out.println(queryString);
 
             ResultSet resultSet = null;
             try {
@@ -588,7 +587,7 @@ public class ARQClient {
                     " optional {?d foaf:name ?dName . filter (langMatches(lang(?dName), \"EN\"))}\n" +
                     " filter not exists{" + resource + " a ?d .}\n" +
                     "} order by rand() limit 3";
-            System.out.println(queryString);
+
             resultSet = null;
             try {
                 resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
@@ -603,9 +602,9 @@ public class ARQClient {
                         answerType = result.get("aName");
                         RDFNode distractor = result.get("dName");
                         String literal = getLiteral(distractor);
-                        if(literal != null){
+                        if (literal != null) {
                             sisterTypes.add(literal);
-                        } else{
+                        } else {
                             RDFNode distractorNode = result.get("d");
                             String distractorString = distractorNode.toString();
                             sisterTypes.add(getWikicatYAGOTypeName(distractorString));
@@ -613,7 +612,7 @@ public class ARQClient {
                     }
                 }
                 String literal = getLiteral(answerType);
-                if(literal != null){
+                if (literal != null) {
                     sisterTypes.add(0, literal);
                 } else {
                     sisterTypes.add(0, getWikicatYAGOTypeName(typeString));
@@ -629,14 +628,26 @@ public class ARQClient {
 
     private String getWikicatYAGOTypeName(String type) {
         StringBuilder stringBuilder = new StringBuilder();
+        boolean containsYago = type.toLowerCase().contains(YAGO);
         String[] typeArray = type.split("/");
         type = typeArray[typeArray.length - 1];
         String[] array = StringUtils.splitByCharacterTypeCamelCase(type);
-        for (String s : array) {
-            if(!s.equalsIgnoreCase(WIKICAT) &&
-                    !s.equalsIgnoreCase(YAGO)){
-                stringBuilder.append(s).append(" ");
+        int synsetIDLength = 8;
+        String prefixOne = "1";
+        for (int i = 0; i < array.length; i++) {
+            String s = array[i];
+            if (s.equalsIgnoreCase(WIKICAT)) {
+                continue;
             }
+            if (s.equalsIgnoreCase(YAGO)) {
+                containsYago = true;
+                continue;
+            }
+            if (containsYago && i == array.length - 1 &&
+                    s.startsWith(prefixOne) && s.length() == synsetIDLength + 1) {
+                continue;
+            }
+            stringBuilder.append(s).append(" ");
         }
         return stringBuilder.toString().trim();
     }
