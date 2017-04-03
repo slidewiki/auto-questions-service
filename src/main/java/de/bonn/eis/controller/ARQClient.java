@@ -6,6 +6,7 @@ import com.google.common.collect.Multimaps;
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -44,6 +45,8 @@ public class ARQClient {
     private static final int NO_OF_SPECIFIC_TYPES = 10;
     private static final String NNP_POS_TAG = "nnp";
     private static final int NO_OF_SPECIFIC_TYPES_EASY = 3;
+    private static final String WIKICAT = "wikicat";
+    private static final String YAGO = "yago";
     private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
@@ -545,9 +548,93 @@ public class ARQClient {
                 }
             }
         }else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
+            String queryString = PREFIX_RDFS;
+            String resource = "<" + answer.getURI() + ">";
+            String var = "type";
+            queryString += "SELECT DISTINCT ?" + var + " (COUNT(*) as ?count) FROM <http://dbpedia.org> WHERE {\n" +
+                    " {\n" +
+                    " select distinct ?" + var + " where {\n" +
+                    resource + " a ?" + var + " .\n" +
+                    " }\n" +
+                    " }\n" +
+                    " ?" + var + " rdfs:subClassOf* ?path .\n" +
+                    " } group by (?" + var + ") order by desc (?count) limit 1\n";
+            System.out.println(queryString);
 
+            ResultSet resultSet = null;
+            try {
+                resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            RDFNode specificType;
+            String typeString = "";
+            if (resultSet != null) {
+                while (resultSet.hasNext()) {
+                    QuerySolution result = resultSet.next();
+                    if (result != null) {
+                        specificType = result.get(var);
+                        typeString = specificType.toString();
+                    }
+                }
+            }
+            queryString = PREFIX_RDFS + PREFIX_FOAF;
+            queryString += "SELECT DISTINCT ?dName ?aName ?d FROM <http://dbpedia.org> WHERE {\n" +
+                    "<" + typeString + "> rdfs:subClassOf ?st .\n" +
+                    " optional { <" + typeString + "> rdfs:label ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
+                    " optional { <" + typeString + "> foaf:name ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
+                    " ?d rdfs:subClassOf ?st .\n" +
+                    " optional {?d rdfs:label ?dName . filter (langMatches(lang(?dName), \"EN\"))}\n" +
+                    " optional {?d foaf:name ?dName . filter (langMatches(lang(?dName), \"EN\"))}\n" +
+                    " filter not exists{" + resource + " a ?d .}\n" +
+                    "} order by rand() limit 3";
+            System.out.println(queryString);
+            resultSet = null;
+            try {
+                resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            RDFNode answerType = null;
+            if (resultSet != null) {
+                while (resultSet.hasNext()) {
+                    QuerySolution result = resultSet.next();
+                    if (result != null) {
+                        answerType = result.get("aName");
+                        RDFNode distractor = result.get("dName");
+                        String literal = getLiteral(distractor);
+                        if(literal != null){
+                            sisterTypes.add(literal);
+                        } else{
+                            RDFNode distractorNode = result.get("d");
+                            String distractorString = distractorNode.toString();
+                            sisterTypes.add(getWikicatYAGOTypeName(distractorString));
+                        }
+                    }
+                }
+                String literal = getLiteral(answerType);
+                if(literal != null){
+                    sisterTypes.add(0, literal);
+                } else {
+                    sisterTypes.add(0, getWikicatYAGOTypeName(typeString));
+                }
+            }
         }
         return sisterTypes;
+    }
+
+    private String getWikicatYAGOTypeName(String type) {
+        StringBuilder stringBuilder = new StringBuilder();
+        String[] typeArray = type.split("/");
+        type = typeArray[typeArray.length - 1];
+        String[] array = StringUtils.splitByCharacterTypeCamelCase(type);
+        for (String s : array) {
+            if(!s.equalsIgnoreCase(WIKICAT) &&
+                    !s.equalsIgnoreCase(YAGO)){
+                stringBuilder.append(s).append(" ");
+            }
+        }
+        return stringBuilder.toString().trim();
     }
 
     private String getLiteral(RDFNode node) {
