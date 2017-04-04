@@ -548,35 +548,10 @@ public class ARQClient {
                 }
             }
         } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
-            String queryString = PREFIX_RDFS;
             String resource = "<" + answer.getURI() + ">";
-            String var = "type";
-            queryString += "SELECT DISTINCT ?" + var + " (COUNT(*) as ?count) FROM <http://dbpedia.org> WHERE {\n" +
-                    " {\n" +
-                    " select distinct ?" + var + " where {\n" +
-                    resource + " a ?" + var + " .\n" +
-                    " }\n" +
-                    " }\n" +
-                    " ?" + var + " rdfs:subClassOf* ?path .\n" +
-                    " } group by (?" + var + ") order by desc (?count) limit 1\n";
-
-            ResultSet resultSet = null;
-            try {
-                resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            RDFNode specificType;
-            String typeString = "";
-            if (resultSet != null) {
-                while (resultSet.hasNext()) {
-                    QuerySolution result = resultSet.next();
-                    if (result != null) {
-                        specificType = result.get(var);
-                        typeString = specificType.toString();
-                    }
-                }
-            }
+            String typeString = getMostSpecificType(resource);
+            String queryString;
+            ResultSet resultSet;
             queryString = PREFIX_RDFS + PREFIX_FOAF;
             queryString += "SELECT DISTINCT ?dName ?aName ?d FROM <http://dbpedia.org> WHERE {\n" +
                     "<" + typeString + "> rdfs:subClassOf ?st .\n" +
@@ -635,6 +610,38 @@ public class ARQClient {
             singleTypes.add(result.toString().trim());
         }
         return singleTypes;
+    }
+
+    private String getMostSpecificType(String resource) {
+        String queryString = PREFIX_RDFS;
+        String var = "type";
+        queryString += "SELECT DISTINCT ?" + var + " (COUNT(*) as ?count) FROM <http://dbpedia.org> WHERE {\n" +
+                " {\n" +
+                " select distinct ?" + var + " where {\n" +
+                resource + " a ?" + var + " .\n" +
+                " }\n" +
+                " }\n" +
+                " ?" + var + " rdfs:subClassOf* ?path .\n" +
+                " } group by (?" + var + ") order by desc (?count) limit 1\n";
+
+        ResultSet resultSet = null;
+        try {
+            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        RDFNode specificType;
+        String typeString = "";
+        if (resultSet != null) {
+            while (resultSet.hasNext()) {
+                QuerySolution result = resultSet.next();
+                if (result != null) {
+                    specificType = result.get(var);
+                    typeString = specificType.toString();
+                }
+            }
+        }
+        return typeString;
     }
 
     private String getWikicatYAGOTypeName(String type) {
