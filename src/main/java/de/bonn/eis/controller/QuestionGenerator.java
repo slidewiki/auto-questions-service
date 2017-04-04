@@ -123,7 +123,7 @@ public class QuestionGenerator {
         resources.forEach(resource -> {
             SelectQuestion.SelectQuestionBuilder questionBuilder = SelectQuestion.builder();
             List<String> answerAndDistractors = DistractorGenerator.getSelectQuestionDistractors(resource, level);
-            if(!answerAndDistractors.isEmpty()){
+            if(answerAndDistractors != null && !answerAndDistractors.isEmpty()){
                 String answer = answerAndDistractors.get(0);
                 if(!answer.trim().isEmpty()){
                     questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)

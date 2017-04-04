@@ -16,6 +16,7 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import rita.RiTa;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -545,7 +546,13 @@ public class ARQClient {
             }
         } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
             String resource = "<" + answer.getURI() + ">";
-            List<String> typeStrings = getNMostSpecificTypes(resource, 3);
+//            List<String> typeStrings = getNMostSpecificTypes(resource, 3);
+            //TODO Decide whether to use many types = distractors are of different types
+            //TODO one type = distractors are of the same type e.g. all are rivers
+            List<String> typeStrings = getNMostUniqueTypes(resource, 1);
+            if(typeStrings == null || typeStrings.isEmpty()){
+                return null;
+            }
             String queryString;
             ResultSet resultSet;
             queryString = PREFIX_RDFS + PREFIX_FOAF;
@@ -595,7 +602,7 @@ public class ARQClient {
                 if (literal != null) {
                     sisterTypes.add(0, literal);
                 } else {
-                    int randomIndex = new Random().nextInt(typeStrings.size());
+                    int randomIndex = ThreadLocalRandom.current().nextInt(typeStrings.size());
                     sisterTypes.add(0, getWikicatYAGOTypeName(typeStrings.get(randomIndex)));
                 }
             }
@@ -618,13 +625,31 @@ public class ARQClient {
         return singleTypes;
     }
 
-    private List<String> getNMostSpecificTypes(String resource, int n) {
+    private List<String> getNMostUniqueTypes(String resourceURI, int n) {
+        String queryString = PREFIX_RDFS;
+        String variableName = "category";
+        queryString += "SELECT ?" + variableName + " (COUNT(?member) as ?memberCount) FROM <http://dbpedia.org> WHERE {\n" +
+                "    ?member a ?" + variableName + ".\n" +
+                "    { SELECT ?" + variableName + " WHERE { " + resourceURI + " a ?" + variableName + ". } }\n" +
+                "}\n" +
+                "group by (?" + variableName + ") ORDER BY ?memberCount limit " + n + "\n";
+
+        ResultSet resultSet = null;
+        try {
+            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return getResultSetAsStringList(resultSet, variableName);
+    }
+
+    private List<String> getNMostSpecificTypes(String resourceURI, int n) {
         String queryString = PREFIX_RDFS;
         String variableName = "type";
         queryString += "SELECT DISTINCT ?" + variableName + " (COUNT(*) as ?count) FROM <http://dbpedia.org> WHERE {\n" +
                 " {\n" +
                 " select distinct ?" + variableName + " where {\n" +
-                resource + " a ?" + variableName + " .\n" +
+                resourceURI + " a ?" + variableName + " .\n" +
                 " }\n" +
                 " }\n" +
                 " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
