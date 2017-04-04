@@ -6,7 +6,6 @@ import com.google.common.collect.Multimaps;
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
-import org.apache.commons.lang.StringUtils;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -16,10 +15,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import rita.RiTa;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -549,19 +545,28 @@ public class ARQClient {
             }
         } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
             String resource = "<" + answer.getURI() + ">";
-            String typeString = getMostSpecificType(resource);
+            List<String> typeStrings = getNMostSpecificTypes(resource, 3);
             String queryString;
             ResultSet resultSet;
             queryString = PREFIX_RDFS + PREFIX_FOAF;
-            queryString += "SELECT DISTINCT ?dName ?aName ?d FROM <http://dbpedia.org> WHERE {\n" +
-                    "<" + typeString + "> rdfs:subClassOf ?st .\n" +
-                    " optional { <" + typeString + "> rdfs:label ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
-                    " optional { <" + typeString + "> foaf:name ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
-                    " ?d rdfs:subClassOf ?st .\n" +
+            queryString += "SELECT DISTINCT ?dName ?aName ?d FROM <http://dbpedia.org> WHERE {\n";
+            for (String typeString : typeStrings) {
+                queryString += "{\n <" + typeString + "> rdfs:subClassOf ?st .\n" +
+                        " optional { <" + typeString + "> rdfs:label ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
+                        " optional { <" + typeString + "> foaf:name ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
+                        "}\n";
+                if (typeStrings.indexOf(typeString) != typeStrings.size() - 1) {
+                    queryString += UNION;
+                }
+            }
+
+            queryString += " ?d rdfs:subClassOf ?st .\n" +
                     " optional {?d rdfs:label ?dName . filter (langMatches(lang(?dName), \"EN\"))}\n" +
                     " optional {?d foaf:name ?dName . filter (langMatches(lang(?dName), \"EN\"))}\n" +
                     " filter not exists{" + resource + " a ?d .}\n" +
                     "} order by rand() limit 3";
+
+            System.out.println(queryString);
 
             resultSet = null;
             try {
@@ -590,7 +595,8 @@ public class ARQClient {
                 if (literal != null) {
                     sisterTypes.add(0, literal);
                 } else {
-                    sisterTypes.add(0, getWikicatYAGOTypeName(typeString));
+                    int randomIndex = new Random().nextInt(typeStrings.size());
+                    sisterTypes.add(0, getWikicatYAGOTypeName(typeStrings.get(randomIndex)));
                 }
             }
         }
@@ -601,9 +607,9 @@ public class ARQClient {
             for (String s : typeArray) {
                 String singular = RiTa.singularize(s);
                 String plural = RiTa.pluralize(singular);
-                if(plural.equalsIgnoreCase(s)){
+                if (plural.equalsIgnoreCase(s)) {
                     result.append(singular).append(" ");
-                } else{
+                } else {
                     result.append(s).append(" ");
                 }
             }
@@ -612,17 +618,17 @@ public class ARQClient {
         return singleTypes;
     }
 
-    private String getMostSpecificType(String resource) {
+    private List<String> getNMostSpecificTypes(String resource, int n) {
         String queryString = PREFIX_RDFS;
-        String var = "type";
-        queryString += "SELECT DISTINCT ?" + var + " (COUNT(*) as ?count) FROM <http://dbpedia.org> WHERE {\n" +
+        String variableName = "type";
+        queryString += "SELECT DISTINCT ?" + variableName + " (COUNT(*) as ?count) FROM <http://dbpedia.org> WHERE {\n" +
                 " {\n" +
-                " select distinct ?" + var + " where {\n" +
-                resource + " a ?" + var + " .\n" +
+                " select distinct ?" + variableName + " where {\n" +
+                resource + " a ?" + variableName + " .\n" +
                 " }\n" +
                 " }\n" +
-                " ?" + var + " rdfs:subClassOf* ?path .\n" +
-                " } group by (?" + var + ") order by desc (?count) limit 1\n";
+                " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
+                " } group by (?" + variableName + ") order by desc (?count) limit " + n + "\n";
 
         ResultSet resultSet = null;
         try {
@@ -630,18 +636,22 @@ public class ARQClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return getResultSetAsStringList(resultSet, variableName);
+    }
+
+    private List<String> getResultSetAsStringList(ResultSet resultSet, String variableName) {
+        List<String> typeStrings = new ArrayList<>();
         RDFNode specificType;
-        String typeString = "";
         if (resultSet != null) {
             while (resultSet.hasNext()) {
                 QuerySolution result = resultSet.next();
                 if (result != null) {
-                    specificType = result.get(var);
-                    typeString = specificType.toString();
+                    specificType = result.get(variableName);
+                    typeStrings.add(specificType.toString());
                 }
             }
         }
-        return typeString;
+        return typeStrings;
     }
 
     private String getWikicatYAGOTypeName(String type) {
