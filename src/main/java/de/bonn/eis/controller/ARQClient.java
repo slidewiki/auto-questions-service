@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
  */
 public class ARQClient {
 
-    private static final String DBPEDIA_SPARQL_SERVICE = "http://dbpedia.org/sparql";
+    private static final String DBPEDIA_URL = "http://dbpedia.org/";
+    private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "sparql";
     private static final String WORDNET_SPARQL_SERVICE = "http://wordnet-rdf.princeton.edu/sparql/";
     private static final int QUERY_LIMIT = 10;
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
@@ -44,7 +45,7 @@ public class ARQClient {
     private static final int NO_OF_SPECIFIC_TYPES_EASY = 3;
     private static final String WIKICAT = "wikicat";
     private static final String YAGO = "yago";
-    private final String PREFIX_DBRES = "PREFIX dbres: <http://dbpedia.org/ontology/>\n";
+    private final String PREFIX_DBRES = "PREFIX dbres: <" + DBPEDIA_URL + "ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
 
@@ -546,10 +547,10 @@ public class ARQClient {
             }
         } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
             String resource = "<" + answer.getURI() + ">";
-//            List<String> typeStrings = getNMostSpecificTypes(resource, 3);
+            List<String> typeStrings = getNMostSpecificTypes(resource, 10);
             //TODO Decide whether to use many types = distractors are of different types
             //TODO one type = distractors are of the same type e.g. all are rivers
-            List<String> typeStrings = getNMostUniqueTypes(resource, 1);
+//            List<String> typeStrings = getNMostUniqueTypes(resource, 10);
             if(typeStrings == null || typeStrings.isEmpty()){
                 return null;
             }
@@ -572,8 +573,6 @@ public class ARQClient {
                     " optional {?d foaf:name ?dName . filter (langMatches(lang(?dName), \"EN\"))}\n" +
                     " filter not exists{" + resource + " a ?d .}\n" +
                     "} order by rand() limit 3";
-
-            System.out.println(queryString);
 
             resultSet = null;
             try {
@@ -629,8 +628,10 @@ public class ARQClient {
         String queryString = PREFIX_RDFS;
         String variableName = "category";
         queryString += "SELECT ?" + variableName + " (COUNT(?member) as ?memberCount) FROM <http://dbpedia.org> WHERE {\n" +
-                "    ?member a ?" + variableName + ".\n" +
-                "    { SELECT ?" + variableName + " WHERE { " + resourceURI + " a ?" + variableName + ". } }\n" +
+                "?member a ?" + variableName + ".\n" +
+                "{ SELECT ?" + variableName + " WHERE { " + resourceURI + " a ?" + variableName + ". " +
+                "FILTER (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))" +
+                "} }\n" +
                 "}\n" +
                 "group by (?" + variableName + ") ORDER BY ?memberCount limit " + n + "\n";
 
@@ -650,6 +651,7 @@ public class ARQClient {
                 " {\n" +
                 " select distinct ?" + variableName + " where {\n" +
                 resourceURI + " a ?" + variableName + " .\n" +
+                "FILTER (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))" +
                 " }\n" +
                 " }\n" +
                 " ?" + variableName + " rdfs:subClassOf* ?path .\n" +

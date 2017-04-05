@@ -113,9 +113,12 @@ public class QuestionGenerator {
     public Response generateSelectQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
-        List<SelectQuestion> questions = getSelectQuestions(dbPediaResources, level);
-        return Response.status(200).entity(questions).build();
+        if(dbPediaResources != null && !dbPediaResources.isEmpty()){
+            dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
+            List<SelectQuestion> questions = getSelectQuestions(dbPediaResources, level);
+            return Response.status(200).entity(questions).build();
+        }
+        return Response.noContent().build();
     }
 
     private List<SelectQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {
