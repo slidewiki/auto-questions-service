@@ -740,4 +740,8 @@ public class ARQClient {
         String type = nsTypePair[1];
         return getNamespace(namespace) + ":" + type;
     }
+
+    public List<String> getWhoAmIQuestion(DBPediaResource resource, String level) {
+        return null;
+    }
 }

@@ -17,4 +17,9 @@ public class DistractorGenerator {
         ARQClient arqClient = new ARQClient();
         return arqClient.getSisterTypes(answer, level);
     }
+
+    public static List<String> getWhoAmIQuestionAndDistractors(DBPediaResource resource, String level) {
+        ARQClient arqClient = new ARQClient();
+        return arqClient.getWhoAmIQuestion(resource, level);
+    }
 }
