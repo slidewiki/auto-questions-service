@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "slideTitleAndText",
         "detectedLanguage",
         "tokens",
-        "DBPediaSpotlight"
+        "DBPediaSpotlightResult"
 })
 public class NlpProcessResults {
 
@@ -31,8 +31,8 @@ public class NlpProcessResults {
     private String detectedLanguage;
     @JsonProperty("tokens")
     private List<String> tokens = null;
-    @JsonProperty("DBPediaSpotlight")
-    private DBPediaSpotlightPOJO dBPediaSpotlight;
+    @JsonProperty("DBPediaSpotlightResult")
+    private DBPediaSpotlightResult dBPediaSpotlightResult;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
@@ -76,14 +76,14 @@ public class NlpProcessResults {
         this.tokens = tokens;
     }
 
-    @JsonProperty("DBPediaSpotlight")
-    public DBPediaSpotlightPOJO getDBPediaSpotlight() {
-        return dBPediaSpotlight;
+    @JsonProperty("DBPediaSpotlightResult")
+    public DBPediaSpotlightResult getDBPediaSpotlight() {
+        return dBPediaSpotlightResult;
     }
 
-    @JsonProperty("DBPediaSpotlight")
-    public void setDBPediaSpotlight(DBPediaSpotlightPOJO dBPediaSpotlight) {
-        this.dBPediaSpotlight = dBPediaSpotlight;
+    @JsonProperty("DBPediaSpotlightResult")
+    public void setDBPediaSpotlight(DBPediaSpotlightResult dBPediaSpotlightResult) {
+        this.dBPediaSpotlightResult = dBPediaSpotlightResult;
     }
 
     @JsonAnyGetter

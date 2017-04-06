@@ -4,7 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
 import de.bonn.eis.model.DBPediaResource;
-import de.bonn.eis.model.DBPediaSpotlightPOJO;
+import de.bonn.eis.model.DBPediaSpotlightResult;
 import de.bonn.eis.utils.QGenUtils;
 
 import javax.servlet.ServletContext;
@@ -20,7 +20,7 @@ public class TextInfoRetriever {
     public TextInfoRetriever(String text, ServletContext servletContext) {
         DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
         dbPediaSpotlightClient.init(servletContext);
-        DBPediaSpotlightPOJO response;
+        DBPediaSpotlightResult response;
         //TODO Check for text length limit
         if (text.length() < 200) {
             System.out.println("GET");
@@ -28,6 +28,18 @@ public class TextInfoRetriever {
         } else {
             System.out.println("POST");
             response = dbPediaSpotlightClient.annotatePost(text);
+        }
+        dbPediaResources = response.getDBPediaResources();
+    }
+
+    public TextInfoRetriever(String text, String filterType, ServletContext servletContext) {
+        DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
+        dbPediaSpotlightClient.init(servletContext);
+        DBPediaSpotlightResult response;
+        if (text.length() < 200) {
+            response = dbPediaSpotlightClient.annotateGet(text, filterType);
+        } else {
+            response = dbPediaSpotlightClient.annotatePost(text, filterType);
         }
         dbPediaResources = response.getDBPediaResources();
     }
@@ -85,7 +97,7 @@ public class TextInfoRetriever {
     }
 
     /**
-     * @param dbPediaResources List of resources returned by DBPediaSpotlight
+     * @param dbPediaResources List of resources returned by DBPediaSpotlightResult
      * @return An ImmutableListMultimap of lists of DBPediaResources grouped by their types
      */
     public static ImmutableListMultimap<String, DBPediaResource> groupResourcesByType(List<DBPediaResource> dbPediaResources) {

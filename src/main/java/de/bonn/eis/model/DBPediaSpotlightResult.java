@@ -28,7 +28,7 @@ import java.util.Map;
         "@policy",
         "Resources"
 })
-public class DBPediaSpotlightPOJO implements Serializable {
+public class DBPediaSpotlightResult implements Serializable {
 
     private final static long serialVersionUID = -4700003125831217985L;
     @JsonProperty("@text")

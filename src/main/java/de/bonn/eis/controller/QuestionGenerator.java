@@ -29,6 +29,7 @@ public class QuestionGenerator {
 
     private static final String BLANK = "________";
     private static final String SELECT_QUESTION_TEXT = " is a: ";
+    private static final String DBPEDIA_PERSON = "DBPedia:Person";
     @Context
     private ServletContext servletContext;
 
@@ -42,7 +43,7 @@ public class QuestionGenerator {
         NLP nlp = webTarget
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
-        DBPediaSpotlightPOJO spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
+        DBPediaSpotlightResult spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
         List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
         List<Question> questions = getQuestionsForText(spotlightResults.getText(), resources, level);
         return Response.status(200).entity(questions).build();
@@ -100,7 +101,7 @@ public class QuestionGenerator {
         NLP nlp = webTarget
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
-        DBPediaSpotlightPOJO spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
+        DBPediaSpotlightResult spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
         if(spotlightResults != null){
             List<DBPediaResource> dbPediaResources = spotlightResults.getDBPediaResources();
             List<SelectQuestion> questions = getSelectQuestions(dbPediaResources, level);
@@ -123,6 +124,28 @@ public class QuestionGenerator {
             return Response.status(200).entity(questions).build();
         }
         return Response.noContent().build();
+    }
+
+    @Path("/whoami/{level}/text")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response generateWhoAmIQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
+        TextInfoRetriever retriever = new TextInfoRetriever(text, DBPEDIA_PERSON, servletContext);
+        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
+        List<SelectQuestion> questions = getWhoamIQuestions(dbPediaResources, level);
+        if(questions != null) {
+            return Response.status(200).entity(questions).build();
+        }
+        return Response.noContent().build();
+    }
+
+    private List<SelectQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
+        if(dbPediaResources != null && !dbPediaResources.isEmpty()){
+            List<SelectQuestion> whoAmIQuestions = new ArrayList<>();
+            return whoAmIQuestions;
+        }
+        return null;
     }
 
     private List<SelectQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {

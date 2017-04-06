@@ -23,7 +23,7 @@ public class NlpProcessResultsForDeck {
     @JsonProperty("languageDetectedWholeDeck")
     private String languageDetectedWholeDeck;
     @JsonProperty("DBPediaSpotlight_perDeck")
-    private DBPediaSpotlightPOJO dBPediaSpotlightPerDeck;
+    private DBPediaSpotlightResult dBPediaSpotlightResultPerDeck;
     @JsonProperty("TFIDF")
     private TFIDF tFIDF;
     @JsonIgnore
@@ -40,13 +40,13 @@ public class NlpProcessResultsForDeck {
     }
 
     @JsonProperty("DBPediaSpotlight_perDeck")
-    public DBPediaSpotlightPOJO getDBPediaSpotlightPerDeck() {
-        return dBPediaSpotlightPerDeck;
+    public DBPediaSpotlightResult getDBPediaSpotlightPerDeck() {
+        return dBPediaSpotlightResultPerDeck;
     }
 
     @JsonProperty("DBPediaSpotlight_perDeck")
-    public void setDBPediaSpotlightPerDeck(DBPediaSpotlightPOJO dBPediaSpotlightPerDeck) {
-        this.dBPediaSpotlightPerDeck = dBPediaSpotlightPerDeck;
+    public void setDBPediaSpotlightPerDeck(DBPediaSpotlightResult dBPediaSpotlightResultPerDeck) {
+        this.dBPediaSpotlightResultPerDeck = dBPediaSpotlightResultPerDeck;
     }
 
     @JsonProperty("TFIDF")
