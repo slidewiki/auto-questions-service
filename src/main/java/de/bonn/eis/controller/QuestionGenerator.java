@@ -101,9 +101,14 @@ public class QuestionGenerator {
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
         DBPediaSpotlightPOJO spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
-        List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
-        List<SelectQuestion> questions = getSelectQuestions(resources, level);
-        return Response.status(200).entity(questions).build();
+        if(spotlightResults != null){
+            List<DBPediaResource> dbPediaResources = spotlightResults.getDBPediaResources();
+            List<SelectQuestion> questions = getSelectQuestions(dbPediaResources, level);
+            if(questions != null){
+                return Response.status(200).entity(questions).build();
+            }
+        }
+        return Response.noContent().build();
     }
 
     @Path("/select/{level}/text")
@@ -113,32 +118,35 @@ public class QuestionGenerator {
     public Response generateSelectQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        if(dbPediaResources != null && !dbPediaResources.isEmpty()){
-            dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
-            List<SelectQuestion> questions = getSelectQuestions(dbPediaResources, level);
+        List<SelectQuestion> questions = getSelectQuestions(dbPediaResources, level);
+        if(questions != null){
             return Response.status(200).entity(questions).build();
         }
         return Response.noContent().build();
     }
 
     private List<SelectQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {
-        List<SelectQuestion> selectQuestions = new ArrayList<>();
-        resources.forEach(resource -> {
-            SelectQuestion.SelectQuestionBuilder questionBuilder = SelectQuestion.builder();
-            List<String> answerAndDistractors = DistractorGenerator.getSelectQuestionDistractors(resource, level);
-            if(answerAndDistractors != null && !answerAndDistractors.isEmpty()){
-                String answer = answerAndDistractors.get(0);
-                if(!answer.trim().isEmpty()){
-                    questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
-                            .answer(answer);
-                    if(answerAndDistractors.size() > 1){
-                        questionBuilder.distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
+        if(resources!= null && !resources.isEmpty()) {
+            resources = QGenUtils.removeDuplicatesFromResourceList(resources);
+            List<SelectQuestion> selectQuestions = new ArrayList<>();
+            resources.forEach(resource -> {
+                SelectQuestion.SelectQuestionBuilder questionBuilder = SelectQuestion.builder();
+                List<String> answerAndDistractors = DistractorGenerator.getSelectQuestionDistractors(resource, level);
+                if (answerAndDistractors != null && !answerAndDistractors.isEmpty()) {
+                    String answer = answerAndDistractors.get(0);
+                    if (!answer.trim().isEmpty()) {
+                        questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
+                                .answer(answer);
+                        if (answerAndDistractors.size() > 1) {
+                            questionBuilder.distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
+                        }
+                        selectQuestions.add(questionBuilder.build());
                     }
-                    selectQuestions.add(questionBuilder.build());
                 }
-            }
-        });
-        return selectQuestions;
+            });
+            return selectQuestions;
+        }
+        return null;
     }
 
     private List<Question> getQuestionsForText(String text, List<DBPediaResource> dbPediaResources, String level) {
