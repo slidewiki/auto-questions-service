@@ -133,31 +133,31 @@ public class QuestionGenerator {
     public Response generateWhoAmIQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
         TextInfoRetriever retriever = new TextInfoRetriever(text, DBPEDIA_PERSON, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        List<Question> questions = getWhoamIQuestions(dbPediaResources, level);
+        List<WhoAmIQuestion> questions = getWhoamIQuestions(dbPediaResources, level);
         if(questions != null) {
             return Response.status(200).entity(questions).build();
         }
         return Response.noContent().build();
     }
 
-    private List<Question> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
+    private List<WhoAmIQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
         if(dbPediaResources != null && !dbPediaResources.isEmpty()){
             dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
-            List<Question> whoAmIQuestions = new ArrayList<>();
+            List<WhoAmIQuestion> whoAmIQuestions = new ArrayList<>();
             dbPediaResources.forEach(resource -> {
-                Question.QuestionBuilder questionBuilder = Question.builder();
-                List<String> whoAmIQuestionAndAnswers = DistractorGenerator.getWhoAmIQuestionAndDistractors(resource, level);
-                if (whoAmIQuestionAndAnswers != null && !whoAmIQuestionAndAnswers.isEmpty()) {
-                    String questionText = whoAmIQuestionAndAnswers.get(0);
-                    String answer = whoAmIQuestionAndAnswers.get(1);
-                    if (!answer.trim().isEmpty()) {
-                        questionBuilder.questionText(questionText)
-                                .answer(answer);
-                        if (whoAmIQuestionAndAnswers.size() > 2) {
-                            questionBuilder.distractors(whoAmIQuestionAndAnswers.subList(2, whoAmIQuestionAndAnswers.size()));
-                        }
-                        whoAmIQuestions.add(questionBuilder.build());
-                    }
+                WhoAmIQuestion whoAmIQuestionAndAnswers = DistractorGenerator.getWhoAmIQuestionAndDistractors(resource, level);
+                if (whoAmIQuestionAndAnswers != null) {
+//                    String questionText = whoAmIQuestionAndAnswers.get(0);
+//                    String answer = whoAmIQuestionAndAnswers.get(1);
+//                    if (!answer.trim().isEmpty()) {
+//                        questionBuilder.questionText(questionText)
+//                                .answer(answer);
+//                        if (whoAmIQuestionAndAnswers.size() > 2) {
+//                            questionBuilder.distractors(whoAmIQuestionAndAnswers.subList(2, whoAmIQuestionAndAnswers.size()));
+//                        }
+//                        whoAmIQuestions.add(questionBuilder.build());
+//                    }
+                    whoAmIQuestions.add(whoAmIQuestionAndAnswers);
                 }
             });
             return whoAmIQuestions;

@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.LinkSUMResultRow;
+import de.bonn.eis.model.WhoAmIQuestion;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -28,7 +29,7 @@ public class ARQClient {
 
     private static final String DBPEDIA_URL = "http://dbpedia.org/";
     private static final String DBPEDIA_LIVE_SPARQL_SERVICE = "http://dbpedia-live.openlinksw.com/sparql/";
-    private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "/sparql/";
+    private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "sparql/";
     private static final String WORDNET_SPARQL_SERVICE = "http://wordnet-rdf.princeton.edu/sparql/";
     private static final int QUERY_LIMIT = 10;
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
@@ -345,7 +346,8 @@ public class ARQClient {
 
     private ResultSet runSelectQuery(String queryString, String service) throws Exception {
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(service, queryString);
-        qExec.addParam("timeout", TIMEOUT_VALUE); //1 sec
+        qExec.addDefaultGraph(DBPEDIA_URL);
+//        qExec.addParam("timeout", TIMEOUT_VALUE); //1 sec
         ResultSet set = null;
         try {
             set = qExec.execSelect();
@@ -825,12 +827,35 @@ public class ARQClient {
                 "\t}\n" +
                 "} group by ?v order by desc (?v)";
 
+//        ResultSet resultSet = null;
+//        try {
+//            resultSet = runSelectQuery(query, DBPEDIA_SPARQL_SERVICE);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+//        String DBPEDIA_SPARQL_SERVICE = "http://dbpedia.org/sparql/";
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_SPARQL_SERVICE , queryString);
+        qExec.addDefaultGraph("http://dbpedia.org");
         ResultSet resultSet = null;
         try {
-            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            resultSet = qExec.execSelect();
+            resultSet = ResultSetFactory.copyResults(resultSet);
         } catch (Exception e) {
-            e.printStackTrace();
+            // Report exception
+        } finally {
+            qExec.close();
         }
+
+//        if (resultSet != null) {
+//            while (resultSet.hasNext()) {
+//                QuerySolution result = resultSet.next();
+//                if (result != null) {
+//                    System.out.println(result);
+//                }
+//            }
+//        }
+
         return getResultSetAsObjectList(resultSet);
     }
 
@@ -846,14 +871,14 @@ public class ARQClient {
                 QuerySolution result = resultSet.next();
                 LinkSUMResultRow.LinkSUMResultRowBuilder builder = LinkSUMResultRow.builder();
                 if (result != null) {
-                    System.out.println(subLabel);
-                    System.out.println(predLabel);
-                    System.out.println(obLabel);
-                    System.out.println(vRank);
                     builder.subject(getLiteral(result.get(subLabel)))
                             .predicate(getLiteral(result.get(predLabel)))
-                            .object(getLiteral(result.get(obLabel)))
-                            .vRank(Float.parseFloat(result.get(vRank).toString()));
+                            .object(getLiteral(result.get(obLabel)));
+                    RDFNode vRankNode = result.get(vRank);
+                    if(vRankNode != null && vRankNode.isLiteral()){
+                        Literal literal = (Literal) vRankNode;
+                        builder.vRank(literal.getFloat());
+                    }
                     rows.add(builder.build());
                 }
             }
@@ -861,7 +886,7 @@ public class ARQClient {
         return rows;
     }
 
-    public List<String> getWhoAmIQuestion(DBPediaResource resource, String level) {
+    public WhoAmIQuestion getWhoAmIQuestion(DBPediaResource resource, String level) {
         String uri = resource.getURI();
         List<String> mostSpecificTypes = getNMostSpecificTypes(uri, 1, true);
         String baseType = "";
@@ -873,21 +898,62 @@ public class ARQClient {
             int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
             baseType = yagoTypes.get(randomIndex);
         }
-        System.out.println(baseType);
+//        System.out.println(baseType);
+        WhoAmIQuestion.WhoAmIQuestionBuilder builder = WhoAmIQuestion.builder();
+        String resourceName = resource.getSurfaceForm();
+
+        builder.baseType(baseType);
+        builder.answer(resourceName);
 
         List<LinkSUMResultRow> linkSUMResults = getLinkSUMForResource(uri);
         if(!linkSUMResults.isEmpty()){
-            System.out.println(linkSUMResults);
             if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
                 int size = linkSUMResults.size();
                 int randomIndex = ThreadLocalRandom.current().nextInt(size /5);
-                System.out.println(linkSUMResults.get(randomIndex));
+
+                LinkSUMResultRow linkSUMResultRow = linkSUMResults.get(randomIndex);
+                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
+
                 randomIndex = ThreadLocalRandom.current().nextInt(size /5, 2*size/5);
-                System.out.println(linkSUMResults.get(randomIndex));
+                linkSUMResultRow = linkSUMResults.get(randomIndex);
+                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 2);
+
+                return builder.build();
+
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
 
             }
         }
         return null;
+    }
+
+    private WhoAmIQuestion.WhoAmIQuestionBuilder getWhoAmIFromLinkSUMRow(WhoAmIQuestion.WhoAmIQuestionBuilder builder, String resourceName, LinkSUMResultRow linkSUMResultRow, int propNo) {
+        switch (propNo){
+            case 1:
+                if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubject())
+                        || linkSUMResultRow.getSubject().contains(resourceName))
+                {
+                    builder.firstProp(linkSUMResultRow.getPredicate())
+                            .firstHint(linkSUMResultRow.getObject());
+                }
+                else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObject()))
+                {
+                    builder.firstProp(linkSUMResultRow.getPredicate())
+                            .firstHint(linkSUMResultRow.getSubject());
+                }
+                break;
+            case 2:
+                if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubject())
+                        || linkSUMResultRow.getSubject().contains(resourceName))
+                {
+                    builder.secondProp(linkSUMResultRow.getPredicate())
+                            .secondHint(linkSUMResultRow.getObject());
+                } else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObject()))
+                {
+                    builder.secondProp(linkSUMResultRow.getPredicate())
+                            .secondHint(linkSUMResultRow.getSubject());
+                }
+        }
+        return builder;
     }
 }
