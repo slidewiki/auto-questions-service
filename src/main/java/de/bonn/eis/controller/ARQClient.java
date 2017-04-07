@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class ARQClient {
 
     private static final String DBPEDIA_URL = "http://dbpedia.org/";
-    private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "sparql";
+    private static final String DBPEDIA_SPARQL_SERVICE = "http://dbpedia-live.openlinksw.com/sparql/";
     private static final String WORDNET_SPARQL_SERVICE = "http://wordnet-rdf.princeton.edu/sparql/";
     private static final int QUERY_LIMIT = 10;
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
@@ -45,6 +45,7 @@ public class ARQClient {
     private static final int NO_OF_SPECIFIC_TYPES_EASY = 3;
     private static final String WIKICAT = "wikicat";
     private static final String YAGO = "yago";
+    private static final String OWL_PERSON = "http://dbpedia.org/ontology/Person";
     private final String PREFIX_DBRES = "PREFIX dbres: <" + DBPEDIA_URL + "ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
@@ -547,7 +548,7 @@ public class ARQClient {
             }
         } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
             String resource = "<" + answer.getURI() + ">";
-            List<String> typeStrings = getNMostSpecificTypes(resource, 10);
+            List<String> typeStrings = getNMostSpecificTypes(resource, 10, false);
             //TODO Decide whether to use many types = distractors are of different types
             //TODO one type = distractors are of the same type e.g. all are rivers
 //            List<String> typeStrings = getNMostUniqueTypes(resource, 10);
@@ -624,16 +625,24 @@ public class ARQClient {
         return singleTypes;
     }
 
-    private List<String> getNMostUniqueTypes(String resourceURI, int n) {
+    private List<String> getNMostUniqueTypes(String resourceURI, int n, boolean owlClassOnly) {
         String queryString = PREFIX_RDFS;
         String variableName = "category";
         queryString += "SELECT ?" + variableName + " (COUNT(?member) as ?memberCount) FROM <http://dbpedia.org> WHERE {\n" +
                 "?member a ?" + variableName + ".\n" +
-                "{ SELECT ?" + variableName + " WHERE { " + resourceURI + " a ?" + variableName + ". " +
-                "FILTER (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))" +
-                "} }\n" +
+                "{ SELECT ?" + variableName + " WHERE { " + resourceURI + " a ?" + variableName + ". ";
+        if(owlClassOnly){
+            queryString = PREFIX_OWL + queryString;
+            queryString += variableName + "a owl:Class";
+        } else{
+            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))";
+        }
+        queryString += "} }\n" +
                 "}\n" +
-                "group by (?" + variableName + ") ORDER BY ?memberCount limit " + n + "\n";
+                "group by (?" + variableName + ") ORDER BY ?memberCount \n";
+        if(n != -1){
+            queryString += "limit " + n + "\n";
+        }
 
         ResultSet resultSet = null;
         try {
@@ -644,18 +653,23 @@ public class ARQClient {
         return getResultSetAsStringList(resultSet, variableName);
     }
 
-    private List<String> getNMostSpecificTypes(String resourceURI, int n) {
+    private List<String> getNMostSpecificTypes(String resourceURI, int n, boolean owlClassOnly) {
         String queryString = PREFIX_RDFS;
         String variableName = "type";
         queryString += "SELECT DISTINCT ?" + variableName + " (COUNT(*) as ?count) FROM <http://dbpedia.org> WHERE {\n" +
                 " {\n" +
                 " select distinct ?" + variableName + " where {\n" +
-                resourceURI + " a ?" + variableName + " .\n" +
-                "FILTER (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))" +
-                " }\n" +
-                " }\n" +
-                " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
-                " } group by (?" + variableName + ") order by desc (?count) limit " + n + "\n";
+                resourceURI + " a ?" + variableName + " .\n";
+        if(owlClassOnly){
+            queryString = PREFIX_OWL + queryString;
+            queryString += variableName + "a owl:Class";
+        } else{
+            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))";
+        }
+        queryString += " }\n" +
+        " }\n" +
+        " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
+        " } group by (?" + variableName + ") order by desc (?count) limit " + n + "\n";
 
         ResultSet resultSet = null;
         try {
@@ -665,6 +679,10 @@ public class ARQClient {
         }
         return getResultSetAsStringList(resultSet, variableName);
     }
+
+//    private String getMostSpecificType (String resourceURI, boolean owlClassOnly) {
+//        return getNMostSpecificTypes(resourceURI, 1, owlClassOnly).get(0);
+//    }
 
     private List<String> getResultSetAsStringList(ResultSet resultSet, String variableName) {
         List<String> typeStrings = new ArrayList<>();
@@ -742,6 +760,15 @@ public class ARQClient {
     }
 
     public List<String> getWhoAmIQuestion(DBPediaResource resource, String level) {
+        String mostSpecificType = getNMostSpecificTypes(resource.getURI(), 1, true).get(0);
+        if(mostSpecificType.equalsIgnoreCase(OWL_PERSON)){
+
+        }
+        if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
+
+        } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
+
+        }
         return null;
     }
 }
