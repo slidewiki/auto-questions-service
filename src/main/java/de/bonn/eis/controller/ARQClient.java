@@ -478,7 +478,7 @@ public class ARQClient {
                 resourceTypeList = resourceTypeList.stream().filter(type -> type.toLowerCase().contains(DBPEDIA)).collect(Collectors.toList());
                 if (resourceTypeList != null) {
                     int size = resourceTypeList.size();
-                    sisterTypes.add(getLabelOfType(resourceTypeList.get(size - 1)));
+                    sisterTypes.add(getLabelOfSpotlightType(resourceTypeList.get(size - 1)));
                     for (int i = size - 1; i > 0; i--) {
                         String type = resourceTypeList.get(i);
                         String superType = resourceTypeList.get(i - 1);
@@ -705,19 +705,31 @@ public class ARQClient {
                 "   filter (!strstarts(str(?" + variableName + "), \"" + DBPEDIA_CLASS_YAGO_WIKICAT + "\"))\n" +
                 "  }\n" +
                 " }\n" +
-                " ?t rdfs:subClassOf* ?path .\n" +
-                "} order by desc  (?count)\n" +
+                " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
+                "} group by ?" + variableName + " order by desc  (?count)\n" +
                 "}\n";
         if(n != -1){
-            queryString += "filter (?count < " + n + ")\n";
+            queryString += "filter (?count < 14 && ?count > 11)\n";
         }
-        queryString += "}";
+        queryString += "} limit " + n;
 
+//        ResultSet resultSet = null;
+//        try {
+//            resultSet = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_SPARQL_SERVICE , queryString);
+        qExec.addDefaultGraph("http://dbpedia.org");
         ResultSet resultSet = null;
         try {
-            resultSet = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            resultSet = qExec.execSelect();
+            resultSet = ResultSetFactory.copyResults(resultSet);
         } catch (Exception e) {
-            e.printStackTrace();
+            // Report exception
+        } finally {
+            qExec.close();
         }
         return getResultSetAsStringList(resultSet, variableName);
     }
@@ -776,7 +788,7 @@ public class ARQClient {
         return literal;
     }
 
-    private String getLabelOfType(String type) {
+    private String getLabelOfSpotlightType(String type) {
         String nsAndType = getNsAndTypeForSpotlightType(type);
         String queryString = PREFIX_RDFS + PREFIX_DBRES;
         queryString += "SELECT ?name FROM <http://dbpedia.org> WHERE {\n" +
@@ -792,6 +804,31 @@ public class ARQClient {
         List<String> resultList = new ArrayList<>();
         addResultsToList(results, resultList, "name");
         return resultList.get(0);
+    }
+
+    private String getLabelOfType(String type) {
+        type = "<" + type + ">";
+        String queryString = PREFIX_RDFS + PREFIX_FOAF;
+        String variable = "name";
+        queryString += "SELECT ?" + variable + " FROM <http://dbpedia.org> WHERE {\n" +
+                "{" + type + " rdfs:label ?name .}\n" +
+                UNION +
+                "{" + type + " foaf:name ?name .}\n" +
+                " filter (langMatches(lang(?name), \"EN\")) ." +
+                "}";
+        ResultSet results = null;
+        try {
+            results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if(results != null){
+            if (results.hasNext()){
+                QuerySolution result = results.next();
+                return getLiteral(result.get(variable));
+            }
+        }
+        return null;
     }
 
     private String getNsAndTypeForSpotlightType(String nsAndType) {
@@ -895,8 +932,15 @@ public class ARQClient {
         }
         if(baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON)){
             List<String> yagoTypes = getNMostSpecificYAGOTypesForDepthLimit(uri, 10);
-            int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
-            baseType = yagoTypes.get(randomIndex);
+            if(!yagoTypes.isEmpty()){
+                int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
+                baseType = getWikicatYAGOTypeName(yagoTypes.get(randomIndex));
+            }
+        } else{
+            baseType = getLabelOfType(baseType);
+        }
+        if(baseType.isEmpty()){
+            return null;
         }
 //        System.out.println(baseType);
         WhoAmIQuestion.WhoAmIQuestionBuilder builder = WhoAmIQuestion.builder();
