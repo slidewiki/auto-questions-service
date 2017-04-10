@@ -950,12 +950,13 @@ public class ARQClient {
         builder.answer(resourceName);
 
         List<LinkSUMResultRow> linkSUMResults = getLinkSUMForResource(uri);
+        int size = linkSUMResults.size();
+        int randomIndex;
+        LinkSUMResultRow linkSUMResultRow;
         if(!linkSUMResults.isEmpty()){
             if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
-                int size = linkSUMResults.size();
-                int randomIndex = ThreadLocalRandom.current().nextInt(size /5);
-
-                LinkSUMResultRow linkSUMResultRow = linkSUMResults.get(randomIndex);
+                randomIndex = ThreadLocalRandom.current().nextInt(size /5);
+                linkSUMResultRow = linkSUMResults.get(randomIndex);
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
                 randomIndex = ThreadLocalRandom.current().nextInt(size /5, 2*size/5);
@@ -965,10 +966,49 @@ public class ARQClient {
                 return builder.build();
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
+                linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
+                LinkSUMResultRow secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                while (linkSUMResultRow == secondLinkSUMResultRow){
+                    secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                }
+                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
+                return builder.build();
             }
         }
         return null;
+    }
+
+    private LinkSUMResultRow getHardPropertyForWhoAmI(List<LinkSUMResultRow> linkSUMResults) {
+        LinkSUMResultRow linkSUMResultRow;
+        float lowerBound = 0.2f;
+        float upperBound = 0.5f;
+        float maxVRank = linkSUMResults.get(0).getVRank();
+        linkSUMResultRow = getLinkSUMResultRowForVRankRange(linkSUMResults, lowerBound, upperBound);
+        float j = 1.0f;
+        while (linkSUMResultRow == null && upperBound <= maxVRank){
+            lowerBound = upperBound;
+            upperBound += 0.2f * j;
+            linkSUMResultRow = getLinkSUMResultRowForVRankRange(linkSUMResults, lowerBound, upperBound);
+            j += 2.0f;
+        }
+        return linkSUMResultRow;
+    }
+
+    private LinkSUMResultRow getLinkSUMResultRowForVRankRange(List<LinkSUMResultRow> linkSUMResults, float lowerBound, float upperBound) {
+        int randomIndex;
+        int size = linkSUMResults.size();
+        LinkSUMResultRow linkSUMResultRow = null;
+        for (int i = size - 1; i >= 0; i--) {
+            randomIndex = ThreadLocalRandom.current().nextInt(size);
+            linkSUMResultRow = linkSUMResults.get(randomIndex);
+            if(linkSUMResultRow.getVRank() > lowerBound && linkSUMResultRow.getVRank() < upperBound){
+                System.out.println("low vrank row: " + linkSUMResultRow);
+                break;
+            }
+        }
+        return linkSUMResultRow;
     }
 
     private WhoAmIQuestion.WhoAmIQuestionBuilder getWhoAmIFromLinkSUMRow(WhoAmIQuestion.WhoAmIQuestionBuilder builder, String resourceName, LinkSUMResultRow linkSUMResultRow, int propNo) {
