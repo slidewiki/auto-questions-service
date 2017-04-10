@@ -952,32 +952,64 @@ public class ARQClient {
         List<LinkSUMResultRow> linkSUMResults = getLinkSUMForResource(uri);
         int size = linkSUMResults.size();
         int randomIndex;
+        int tries;
         LinkSUMResultRow linkSUMResultRow;
         if(!linkSUMResults.isEmpty()){
             if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
                 randomIndex = ThreadLocalRandom.current().nextInt(size /5);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
+                tries = 0;
+                while (isIdentityRevealed(linkSUMResultRow, resourceName) && tries < 10){
+                    randomIndex = ThreadLocalRandom.current().nextInt(size /5);
+                    linkSUMResultRow = linkSUMResults.get(randomIndex);
+                    tries++;
+                }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
                 randomIndex = ThreadLocalRandom.current().nextInt(size /5, 2*size/5);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
+                tries = 0;
+                while (isIdentityRevealed(linkSUMResultRow, resourceName) && tries < 10){
+                    randomIndex = ThreadLocalRandom.current().nextInt(size /5, 2*size/5);
+                    linkSUMResultRow = linkSUMResults.get(randomIndex);
+                    tries++;
+                }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 2);
-
                 return builder.build();
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
                 linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                tries = 0;
+                while (isIdentityRevealed(linkSUMResultRow, resourceName) && tries < 10){
+                    System.out.println(linkSUMResultRow);
+                    linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                    tries++;
+                }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
                 LinkSUMResultRow secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
-                while (linkSUMResultRow == secondLinkSUMResultRow){
+                tries = 0;
+                while (linkSUMResultRow == secondLinkSUMResultRow || (isIdentityRevealed(secondLinkSUMResultRow, resourceName) && tries < 10)){
+                    System.out.println(secondLinkSUMResultRow);
                     secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                    tries++;
                 }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
                 return builder.build();
             }
         }
         return null;
+    }
+
+    private boolean isIdentityRevealed(LinkSUMResultRow linkSUMResultRow, String resourceName) {
+        String[] nameParts = resourceName.split(" ");
+        for (String namePart : nameParts) {
+            if(linkSUMResultRow.getSubject().contains(namePart)
+                    && linkSUMResultRow.getObject().contains(namePart)){
+                return true;
+            }
+        }
+        return false;
     }
 
     private LinkSUMResultRow getHardPropertyForWhoAmI(List<LinkSUMResultRow> linkSUMResults) {
