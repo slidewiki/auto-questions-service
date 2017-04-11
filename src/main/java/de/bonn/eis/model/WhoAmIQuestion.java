@@ -8,11 +8,13 @@ import lombok.Data;
  */
 @Data
 @Builder
-public class WhoAmIQuestion {
+public class WhoAmIQuestion implements Question {
     private String baseType;
-    private String firstProp;
-    private String firstHint;
-    private String secondProp;
-    private String secondHint;
     private String answer;
+    private String firstSubject;
+    private String firstPredicate;
+    private String firstObject;
+    private String secondSubject;
+    private String secondPredicate;
+    private String secondObject;
 }

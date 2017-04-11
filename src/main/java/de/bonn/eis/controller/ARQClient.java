@@ -939,10 +939,10 @@ public class ARQClient {
         } else{
             baseType = getLabelOfType(baseType);
         }
-        if(baseType.isEmpty()){
+        if(baseType == null || baseType.isEmpty()){
             return null;
         }
-//        System.out.println(baseType);
+
         WhoAmIQuestion.WhoAmIQuestionBuilder builder = WhoAmIQuestion.builder();
         String resourceName = resource.getSurfaceForm();
 
@@ -952,47 +952,38 @@ public class ARQClient {
         List<LinkSUMResultRow> linkSUMResults = getLinkSUMForResource(uri);
         int size = linkSUMResults.size();
         int randomIndex;
-        int tries;
         LinkSUMResultRow linkSUMResultRow;
+        List<LinkSUMResultRow> tempResults = new ArrayList<>();
         if(!linkSUMResults.isEmpty()){
+            linkSUMResults.forEach(resultRow -> {
+                if (resultRow != null) {
+                    if (resultRow.getObject() != null && resultRow.getSubject() != null
+                            && resultRow.getPredicate() != null) {
+                        if (!isIdentityRevealed(resultRow, resourceName)) {
+                            tempResults.add(resultRow);
+                        }
+                    }
+                }
+            });
+            linkSUMResults = tempResults;
             if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
                 randomIndex = ThreadLocalRandom.current().nextInt(size /5);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
-                tries = 0;
-                while (isIdentityRevealed(linkSUMResultRow, resourceName) && tries < 10){
-                    randomIndex = ThreadLocalRandom.current().nextInt(size /5);
-                    linkSUMResultRow = linkSUMResults.get(randomIndex);
-                    tries++;
-                }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
                 randomIndex = ThreadLocalRandom.current().nextInt(size /5, 2*size/5);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
-                tries = 0;
-                while (isIdentityRevealed(linkSUMResultRow, resourceName) && tries < 10){
-                    randomIndex = ThreadLocalRandom.current().nextInt(size /5, 2*size/5);
-                    linkSUMResultRow = linkSUMResults.get(randomIndex);
-                    tries++;
-                }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 2);
                 return builder.build();
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
                 linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
-                tries = 0;
-                while (isIdentityRevealed(linkSUMResultRow, resourceName) && tries < 10){
-                    System.out.println(linkSUMResultRow);
-                    linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
-                    tries++;
-                }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
                 LinkSUMResultRow secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
-                tries = 0;
-                while (linkSUMResultRow == secondLinkSUMResultRow || (isIdentityRevealed(secondLinkSUMResultRow, resourceName) && tries < 10)){
-                    System.out.println(secondLinkSUMResultRow);
+                while (linkSUMResultRow == secondLinkSUMResultRow ||
+                        linkSUMResultRow.getPredicate().equalsIgnoreCase(secondLinkSUMResultRow.getPredicate())){
                     secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
-                    tries++;
                 }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
                 return builder.build();
@@ -1004,8 +995,9 @@ public class ARQClient {
     private boolean isIdentityRevealed(LinkSUMResultRow linkSUMResultRow, String resourceName) {
         String[] nameParts = resourceName.split(" ");
         for (String namePart : nameParts) {
-            if(linkSUMResultRow.getSubject().contains(namePart)
-                    && linkSUMResultRow.getObject().contains(namePart)){
+            String subject = linkSUMResultRow.getSubject();
+            String object = linkSUMResultRow.getObject();
+            if(subject.contains(namePart) && object.contains(namePart)){
                 return true;
             }
         }
@@ -1036,7 +1028,6 @@ public class ARQClient {
             randomIndex = ThreadLocalRandom.current().nextInt(size);
             linkSUMResultRow = linkSUMResults.get(randomIndex);
             if(linkSUMResultRow.getVRank() > lowerBound && linkSUMResultRow.getVRank() < upperBound){
-                System.out.println("low vrank row: " + linkSUMResultRow);
                 break;
             }
         }
@@ -1049,25 +1040,26 @@ public class ARQClient {
                 if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubject())
                         || linkSUMResultRow.getSubject().contains(resourceName))
                 {
-                    builder.firstProp(linkSUMResultRow.getPredicate())
-                            .firstHint(linkSUMResultRow.getObject());
+                    builder.firstPredicate(linkSUMResultRow.getPredicate())
+                            .firstObject(linkSUMResultRow.getObject());
                 }
-                else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObject()))
+                else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObject())
+                        || linkSUMResultRow.getObject().contains(resourceName))
                 {
-                    builder.firstProp(linkSUMResultRow.getPredicate())
-                            .firstHint(linkSUMResultRow.getSubject());
+                    builder.firstPredicate(linkSUMResultRow.getPredicate())
+                            .firstSubject(linkSUMResultRow.getSubject());
                 }
                 break;
             case 2:
                 if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubject())
                         || linkSUMResultRow.getSubject().contains(resourceName))
                 {
-                    builder.secondProp(linkSUMResultRow.getPredicate())
-                            .secondHint(linkSUMResultRow.getObject());
+                    builder.secondPredicate(linkSUMResultRow.getPredicate())
+                            .secondObject(linkSUMResultRow.getObject());
                 } else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObject()))
                 {
-                    builder.secondProp(linkSUMResultRow.getPredicate())
-                            .secondHint(linkSUMResultRow.getSubject());
+                    builder.secondPredicate(linkSUMResultRow.getPredicate())
+                            .secondSubject(linkSUMResultRow.getSubject());
                 }
         }
         return builder;

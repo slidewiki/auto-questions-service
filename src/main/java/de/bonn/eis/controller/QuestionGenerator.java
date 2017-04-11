@@ -45,8 +45,8 @@ public class QuestionGenerator {
                 .get(NLP.class);
         DBPediaSpotlightResult spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
         List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
-        List<QuestionSet> questionSets = getQuestionsForText(spotlightResults.getText(), resources, level);
-        return Response.status(200).entity(questionSets).build();
+        List<GapFillQuestionSet> gapFillQuestionSets = getQuestionsForText(spotlightResults.getText(), resources, level);
+        return Response.status(200).entity(gapFillQuestionSets).build();
     }
 
     @Path("/{level}/text")
@@ -55,13 +55,13 @@ public class QuestionGenerator {
     @Consumes(MediaType.TEXT_PLAIN)
     public Response generateQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
 
-        List<QuestionSet> questionSets;
+        List<GapFillQuestionSet> gapFillQuestionSets;
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        questionSets = getQuestionsForText(text, dbPediaResources, level);
+        gapFillQuestionSets = getQuestionsForText(text, dbPediaResources, level);
 
-        if (questionSets.isEmpty()) return Response.noContent().build();
-        return Response.status(200).entity(questionSets).build();
+        if (gapFillQuestionSets.isEmpty()) return Response.noContent().build();
+        return Response.status(200).entity(gapFillQuestionSets).build();
     }
 
     @Path("/text/numbers")
@@ -70,12 +70,12 @@ public class QuestionGenerator {
     @Consumes(MediaType.TEXT_PLAIN)
     public Response generateQuestionsForValues(String text) {
         LanguageProcessor processor = new LanguageProcessor(text);
-        List<QuestionSet> questionSets = new ArrayList<>();
+        List<GapFillQuestionSet> gapFillQuestionSets = new ArrayList<>();
         Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
         System.out.println(sentencesWithNumbers);
         Set<String> numbers = sentencesWithNumbers.keySet();
         sentencesWithNumbers.forEach((numberString, sentences) -> {
-            QuestionSet.QuestionSetBuilder builder = QuestionSet.builder();
+            GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
             builder.
                     answer(numberString).
                     inTextDistractors(numbers.stream().
@@ -86,9 +86,9 @@ public class QuestionGenerator {
                 questionStrings.add(questionText);
             });
             builder.questions(questionStrings);
-            questionSets.add(builder.build());
+            gapFillQuestionSets.add(builder.build());
         });
-        return Response.status(200).entity(questionSets).build();
+        return Response.status(200).entity(gapFillQuestionSets).build();
     }
 
     @Path("/select/{level}/{deckID}")
@@ -104,9 +104,9 @@ public class QuestionGenerator {
         DBPediaSpotlightResult spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
         if(spotlightResults != null){
             List<DBPediaResource> dbPediaResources = spotlightResults.getDBPediaResources();
-            List<Question> questions = getSelectQuestions(dbPediaResources, level);
-            if(questions != null){
-                return Response.status(200).entity(questions).build();
+            List<SelectQuestion> selectQuestions = getSelectQuestions(dbPediaResources, level);
+            if(selectQuestions != null){
+                return Response.status(200).entity(selectQuestions).build();
             }
         }
         return Response.noContent().build();
@@ -119,9 +119,9 @@ public class QuestionGenerator {
     public Response generateSelectQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        List<Question> questions = getSelectQuestions(dbPediaResources, level);
-        if(questions != null){
-            return Response.status(200).entity(questions).build();
+        List<SelectQuestion> selectQuestions = getSelectQuestions(dbPediaResources, level);
+        if(selectQuestions != null){
+            return Response.status(200).entity(selectQuestions).build();
         }
         return Response.noContent().build();
     }
@@ -165,12 +165,12 @@ public class QuestionGenerator {
         return null;
     }
 
-    private List<Question> getSelectQuestions(List<DBPediaResource> resources, String level) {
+    private List<SelectQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {
         if(resources!= null && !resources.isEmpty()) {
             resources = QGenUtils.removeDuplicatesFromResourceList(resources);
-            List<Question> questions = new ArrayList<>();
+            List<SelectQuestion> selectQuestions = new ArrayList<>();
             resources.forEach(resource -> {
-                Question.QuestionBuilder questionBuilder = Question.builder();
+                SelectQuestion.SelectQuestionBuilder questionBuilder = SelectQuestion.builder();
                 List<String> answerAndDistractors = DistractorGenerator.getSelectQuestionDistractors(resource, level);
                 if (answerAndDistractors != null && !answerAndDistractors.isEmpty()) {
                     String answer = answerAndDistractors.get(0);
@@ -180,17 +180,17 @@ public class QuestionGenerator {
                         if (answerAndDistractors.size() > 1) {
                             questionBuilder.distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
                         }
-                        questions.add(questionBuilder.build());
+                        selectQuestions.add(questionBuilder.build());
                     }
                 }
             });
-            return questions;
+            return selectQuestions;
         }
         return null;
     }
 
-    private List<QuestionSet> getQuestionsForText(String text, List<DBPediaResource> dbPediaResources, String level) {
-        List<QuestionSet> questionSets = new ArrayList<>();
+    private List<GapFillQuestionSet> getQuestionsForText(String text, List<DBPediaResource> dbPediaResources, String level) {
+        List<GapFillQuestionSet> gapFillQuestionSets = new ArrayList<>();
 
         String env = servletContext.getInitParameter("env");
         boolean envIsDev = env == null || !env.equalsIgnoreCase("prod");
@@ -202,7 +202,7 @@ public class QuestionGenerator {
 //        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
 
         if (dbPediaResources == null || dbPediaResources.size() == 0) {
-            return questionSets;
+            return gapFillQuestionSets;
         }
         if (envIsDev) {
             QGenLogger.info("Resources retrieved");
@@ -238,7 +238,7 @@ public class QuestionGenerator {
                     filter(res -> (!res.equals(resource) && !res.getSurfaceForm().equalsIgnoreCase(resource.getSurfaceForm())))
                     .map(DBPediaResource::getSurfaceForm).collect(Collectors.toList());
             QGenUtils.removeDuplicatesFromStringList(inTextDistractors);
-            questionSets.add(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
+            gapFillQuestionSets.add(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
         });
 
 //        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(topResources);
@@ -278,7 +278,7 @@ public class QuestionGenerator {
 //                }
 //            }
 //        });
-        return questionSets;
+        return gapFillQuestionSets;
     }
 
     private List<String> attemptToGetSynonyms(RiWordNet wordnet, String surfaceForm) {
@@ -288,9 +288,9 @@ public class QuestionGenerator {
         return synList;
     }
 
-    private QuestionSet getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
+    private GapFillQuestionSet getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
         List<String> questions = new ArrayList<>();
-        QuestionSet.QuestionSetBuilder builder = QuestionSet.builder();
+        GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
         builder.answer(resourceName).
                 externalDistractors(externalDistractors).
                 inTextDistractors(inTextDistractors);

@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Builder
 @Data // Needed for JSON serialization
-public class QuestionSet implements Serializable {
+public class GapFillQuestionSet implements Serializable, Question {
     private String answer;
     private List<String> questions;
     private List<String> inTextDistractors;
