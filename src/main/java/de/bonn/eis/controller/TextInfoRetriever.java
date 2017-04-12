@@ -1,6 +1,5 @@
 package de.bonn.eis.controller;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
 import de.bonn.eis.model.DBPediaResource;
@@ -9,6 +8,7 @@ import de.bonn.eis.utils.QGenUtils;
 
 import javax.servlet.ServletContext;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Created by Ainuddin Faizan on 1/2/17.
@@ -101,8 +101,8 @@ public class TextInfoRetriever {
      * @return An ImmutableListMultimap of lists of DBPediaResources grouped by their types
      */
     public static ImmutableListMultimap<String, DBPediaResource> groupResourcesByType(List<DBPediaResource> dbPediaResources) {
-        Function<DBPediaResource, String> typesFunction = resource -> resource.getTypes();
-        return Multimaps.index(dbPediaResources, typesFunction);
+        Function<DBPediaResource, String> typesFunction = DBPediaResource::getTypes;
+        return Multimaps.index(dbPediaResources, typesFunction::apply);
     }
 
     public static List<String> getExternalDistractors(DBPediaResource resource, String level) {
