@@ -847,7 +847,9 @@ public class ARQClient {
                 "WHERE {\n" +
                 "\t{\t" + resourceURI + " ?p ?o.\n" +
                 "\t\tFILTER regex(str(?o),\"http://dbpedia.org/resource\",\"i\").\n" +
-                "\t\tFILTER (?p != dbp-ont:wikiPageWikiLink && ?p != <http://purl.org/dc/terms/subject> && ?p != dbp-prop:wikiPageUsesTemplate && ?p != rdfs:seeAlso && ?p != <http://www.w3.org/2002/07/owl#differentFrom> && ?p != <http://dbpedia.org/ontology/wikiPageDisambiguates> && ?p != <http://dbpedia.org/ontology/wikiPageRedirects> ).\n" +
+                "\t\tFILTER (?p != dbp-ont:wikiPageWikiLink && ?p != <http://purl.org/dc/terms/subject> " +
+                "&& ?p != dbp-prop:wikiPageUsesTemplate && ?p != rdfs:seeAlso && ?p != <http://www.w3.org/2002/07/owl#differentFrom> " +
+                "&& ?p != dbp-ont:wikiPageDisambiguates && ?p != dbp-ont:wikiPageRedirects && ?p != dbp-ont:wikiPageExternalLink).\n" +
                 "\t\tOPTIONAL {?o rdfs:label ?olabel. FILTER langmatches( lang(?olabel), \"EN\" ). }.\n" +
                 "\t\tOPTIONAL {?p rdfs:label ?plabel. FILTER langmatches( lang(?plabel), \"EN\" ).}.\n" +
                 "\t\tOPTIONAL {" + resourceURI + " rdfs:label ?slabel. FILTER langmatches( lang(?slabel), \"EN\" ).}.\n" +
@@ -856,7 +858,9 @@ public class ARQClient {
                 "UNION\n" +
                 "\t{\t?s ?p " + resourceURI + ".\n" +
                 "\t\tFILTER regex(str(?s),\"http://dbpedia.org/resource\",\"i\").\n" +
-                "\t\tFILTER (?p != dbp-ont:wikiPageWikiLink && ?p != <http://purl.org/dc/terms/subject> && ?p != dbp-prop:wikiPageUsesTemplate && ?p != rdfs:seeAlso && ?p != <http://www.w3.org/2002/07/owl#differentFrom> && ?p != <http://dbpedia.org/ontology/wikiPageDisambiguates> && ?p != <http://dbpedia.org/ontology/wikiPageRedirects> ).\n" +
+                "\t\tFILTER (?p != dbp-ont:wikiPageWikiLink && ?p != <http://purl.org/dc/terms/subject> " +
+                "&& ?p != dbp-prop:wikiPageUsesTemplate && ?p != rdfs:seeAlso && ?p != <http://www.w3.org/2002/07/owl#differentFrom> " +
+                "&& ?p != dbp-ont:wikiPageDisambiguates && ?p != dbp-ont:wikiPageRedirects && ?p != dbp-ont:wikiPageExternalLink).\n" +
                 "\t\tOPTIONAL {?s rdfs:label ?slabel.   FILTER langmatches( lang(?slabel), \"EN\" ). }.\n" +
                 "\t\tOPTIONAL {?p rdfs:label ?plabel.  FILTER langmatches( lang(?plabel), \"EN\" ).}.\n" +
                 "\t\tOPTIONAL {" + resourceURI + " rdfs:label ?olabel. FILTER langmatches( lang(?olabel), \"EN\" ).}.\n" +
@@ -950,9 +954,8 @@ public class ARQClient {
         builder.answer(resourceName);
 
         List<LinkSUMResultRow> linkSUMResults = getLinkSUMForResource(uri);
-        int size = linkSUMResults.size();
         int randomIndex;
-        LinkSUMResultRow linkSUMResultRow;
+        LinkSUMResultRow linkSUMResultRow, secondLinkSUMResultRow;
         List<LinkSUMResultRow> tempResults = new ArrayList<>();
         if(!linkSUMResults.isEmpty()){
             linkSUMResults.forEach(resultRow -> {
@@ -966,24 +969,37 @@ public class ARQClient {
                 }
             });
             linkSUMResults = tempResults;
+            int size = linkSUMResults.size();
             if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
-                randomIndex = ThreadLocalRandom.current().nextInt(size /5);
+                int bound = size <= 10 ? size : 10;
+                randomIndex = ThreadLocalRandom.current().nextInt(bound);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
-                randomIndex = ThreadLocalRandom.current().nextInt(size /5, 2*size/5);
-                linkSUMResultRow = linkSUMResults.get(randomIndex);
-                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 2);
+                randomIndex = ThreadLocalRandom.current().nextInt(bound);
+                secondLinkSUMResultRow = linkSUMResults.get(randomIndex);
+                int i = bound;
+                while (linkSUMResultRow == secondLinkSUMResultRow ||
+                        linkSUMResultRow.getPredicate().equalsIgnoreCase(secondLinkSUMResultRow.getPredicate())
+                        && i >= 0){
+                    randomIndex = ThreadLocalRandom.current().nextInt(bound);
+                    secondLinkSUMResultRow = linkSUMResults.get(randomIndex);
+                    i--;
+                }
+                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
                 return builder.build();
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
                 linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
-                LinkSUMResultRow secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                int i = size;
                 while (linkSUMResultRow == secondLinkSUMResultRow ||
-                        linkSUMResultRow.getPredicate().equalsIgnoreCase(secondLinkSUMResultRow.getPredicate())){
+                        linkSUMResultRow.getPredicate().equalsIgnoreCase(secondLinkSUMResultRow.getPredicate())
+                        && i >= 0){
                     secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
+                    i--;
                 }
                 builder = getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
                 return builder.build();

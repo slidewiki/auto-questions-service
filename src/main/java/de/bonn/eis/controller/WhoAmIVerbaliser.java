@@ -3,6 +3,7 @@ package de.bonn.eis.controller;
 import de.bonn.eis.model.Question;
 import de.bonn.eis.model.WhoAmIQuestion;
 import de.bonn.eis.utils.QGenUtils;
+import rita.RiTa;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,6 +47,8 @@ public class WhoAmIVerbaliser implements Verbaliser{
         predicateToPhraseMap.put("clubs", "I played for ");
         predicateToPhraseMap.put("residence", "I live in ");
         predicateToPhraseMap.put("currentclub", "I play for ");
+        predicateToPhraseMap.put("alma mater", "I studied at ");
+        predicateToPhraseMap.put("award", "I won the ");
         return predicateToPhraseMap;
     }
 
@@ -90,6 +93,7 @@ public class WhoAmIVerbaliser implements Verbaliser{
             questionText.append(predicateString).
                     append(subject == null ? object : subject);
         } else {
+            predicate = RiTa.singularize(predicate);
             if(subject == null) {
                 if(QGenUtils.sourceHasWord(predicate, "by")){
                     questionText.append(I_WAS).
@@ -160,10 +164,10 @@ public class WhoAmIVerbaliser implements Verbaliser{
                             append(predicate).
                             append(ME);
                 } else {
-                    String my = isFirstPart ? MY : MY.toLowerCase();
-                    questionText.append(my).
+                    questionText.append(I_WAS).
+                            append(THE).
                             append(predicate).
-                            append(IS).
+                            append(OF).
                             append(subject);
                 }
             }
