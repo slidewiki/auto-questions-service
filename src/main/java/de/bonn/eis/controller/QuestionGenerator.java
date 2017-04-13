@@ -134,7 +134,11 @@ public class QuestionGenerator {
         TextInfoRetriever retriever = new TextInfoRetriever(text, DBPEDIA_PERSON, servletContext);
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
         List<WhoAmIQuestion> questions = getWhoamIQuestions(dbPediaResources, level);
-        if(questions != null) {
+        if(questions != null){
+            WhoAmIVerbaliser whoAmIVerbaliser = new WhoAmIVerbaliser();
+            for (WhoAmIQuestion question : questions) {
+                System.out.println(whoAmIVerbaliser.verbalise(question));
+            }
             return Response.status(200).entity(questions).build();
         }
         return Response.noContent().build();
