@@ -13,5 +13,8 @@ public class LinkSUMResultRow {
     private String subject;
     private String predicate;
     private String object;
+    private String subjectLabel;
+    private String predicateLabel;
+    private String objectLabel;
     private float vRank;
 }

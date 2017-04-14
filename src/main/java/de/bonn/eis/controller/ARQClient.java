@@ -903,6 +903,9 @@ public class ARQClient {
 
     private List<LinkSUMResultRow> getResultSetAsObjectList(ResultSet resultSet) {
         List<LinkSUMResultRow> rows = new ArrayList<>();
+        String subject = "subject";
+        String predicate = "pred";
+        String object = "object";
         String subLabel = "sublabel";
         String predLabel = "predlabel";
         String obLabel = "oblabel";
@@ -913,9 +916,16 @@ public class ARQClient {
                 QuerySolution result = resultSet.next();
                 LinkSUMResultRow.LinkSUMResultRowBuilder builder = LinkSUMResultRow.builder();
                 if (result != null) {
-                    builder.subject(getLiteral(result.get(subLabel)))
-                            .predicate(getLiteral(result.get(predLabel)))
-                            .object(getLiteral(result.get(obLabel)));
+                    RDFNode subjectNode = result.get(subject);
+                    RDFNode predicateNode = result.get(predicate);
+                    RDFNode objectNode = result.get(object);
+                    builder
+                            .subject(subjectNode != null ? subjectNode.toString() : null)
+                            .predicate(predicateNode != null ? predicateNode.toString() : null)
+                            .object(objectNode != null ? objectNode.toString() : null)
+                            .subjectLabel(getLiteral(result.get(subLabel)))
+                            .predicateLabel(getLiteral(result.get(predLabel)))
+                            .objectLabel(getLiteral(result.get(obLabel)));
                     RDFNode vRankNode = result.get(vRank);
                     if(vRankNode != null && vRankNode.isLiteral()){
                         Literal literal = (Literal) vRankNode;
@@ -961,8 +971,8 @@ public class ARQClient {
         if(!linkSUMResults.isEmpty()){
             linkSUMResults.forEach(resultRow -> {
                 if (resultRow != null) {
-                    if (resultRow.getObject() != null && resultRow.getSubject() != null
-                            && resultRow.getPredicate() != null) {
+                    if (resultRow.getObjectLabel() != null && resultRow.getSubjectLabel() != null
+                            && resultRow.getPredicateLabel() != null) {
                         if (!isIdentityRevealed(resultRow, resourceName)) {
                             tempResults.add(resultRow);
                         }
@@ -981,7 +991,7 @@ public class ARQClient {
                 secondLinkSUMResultRow = linkSUMResults.get(randomIndex);
                 int i = bound;
                 while (linkSUMResultRow == secondLinkSUMResultRow ||
-                        linkSUMResultRow.getPredicate().equalsIgnoreCase(secondLinkSUMResultRow.getPredicate())
+                        linkSUMResultRow.getPredicateLabel().equalsIgnoreCase(secondLinkSUMResultRow.getPredicateLabel())
                         && i >= 0){
                     randomIndex = ThreadLocalRandom.current().nextInt(bound);
                     secondLinkSUMResultRow = linkSUMResults.get(randomIndex);
@@ -997,7 +1007,7 @@ public class ARQClient {
                 secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
                 int i = size;
                 while (linkSUMResultRow == secondLinkSUMResultRow ||
-                        linkSUMResultRow.getPredicate().equalsIgnoreCase(secondLinkSUMResultRow.getPredicate())
+                        linkSUMResultRow.getPredicateLabel().equalsIgnoreCase(secondLinkSUMResultRow.getPredicateLabel())
                         && i >= 0){
                     secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
                     i--;
@@ -1012,8 +1022,8 @@ public class ARQClient {
     private boolean isIdentityRevealed(LinkSUMResultRow linkSUMResultRow, String resourceName) {
         String[] nameParts = resourceName.split(" ");
         for (String namePart : nameParts) {
-            String subject = linkSUMResultRow.getSubject();
-            String object = linkSUMResultRow.getObject();
+            String subject = linkSUMResultRow.getSubjectLabel();
+            String object = linkSUMResultRow.getObjectLabel();
             if(subject.contains(namePart) && object.contains(namePart)){
                 return true;
             }
@@ -1054,29 +1064,29 @@ public class ARQClient {
     private WhoAmIQuestion.WhoAmIQuestionBuilder getWhoAmIFromLinkSUMRow(WhoAmIQuestion.WhoAmIQuestionBuilder builder, String resourceName, LinkSUMResultRow linkSUMResultRow, int propNo) {
         switch (propNo){
             case 1:
-                if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubject())
-                        || linkSUMResultRow.getSubject().contains(resourceName))
+                if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubjectLabel())
+                        || linkSUMResultRow.getSubjectLabel().contains(resourceName))
                 {
-                    builder.firstPredicate(linkSUMResultRow.getPredicate())
-                            .firstObject(linkSUMResultRow.getObject());
+                    builder.firstPredicate(linkSUMResultRow.getPredicateLabel())
+                            .firstObject(linkSUMResultRow.getObjectLabel());
                 }
-                else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObject())
-                        || linkSUMResultRow.getObject().contains(resourceName))
+                else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObjectLabel())
+                        || linkSUMResultRow.getObjectLabel().contains(resourceName))
                 {
-                    builder.firstPredicate(linkSUMResultRow.getPredicate())
-                            .firstSubject(linkSUMResultRow.getSubject());
+                    builder.firstPredicate(linkSUMResultRow.getPredicateLabel())
+                            .firstSubject(linkSUMResultRow.getSubjectLabel());
                 }
                 break;
             case 2:
-                if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubject())
-                        || linkSUMResultRow.getSubject().contains(resourceName))
+                if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubjectLabel())
+                        || linkSUMResultRow.getSubjectLabel().contains(resourceName))
                 {
-                    builder.secondPredicate(linkSUMResultRow.getPredicate())
-                            .secondObject(linkSUMResultRow.getObject());
-                } else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObject()))
+                    builder.secondPredicate(linkSUMResultRow.getPredicateLabel())
+                            .secondObject(linkSUMResultRow.getObjectLabel());
+                } else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObjectLabel()))
                 {
-                    builder.secondPredicate(linkSUMResultRow.getPredicate())
-                            .secondSubject(linkSUMResultRow.getSubject());
+                    builder.secondPredicate(linkSUMResultRow.getPredicateLabel())
+                            .secondSubject(linkSUMResultRow.getSubjectLabel());
                 }
         }
         return builder;
