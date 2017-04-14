@@ -841,7 +841,8 @@ public class ARQClient {
     private List<LinkSUMResultRow> getLinkSUMForResource(String resourceURI) {
         resourceURI = "<" + resourceURI + ">";
         String queryString = PREFIX_RDFS + PREFIX_VRANK + PREFIX_DBPEDIA_ONTOLOGY + PREFIX_DBPEDIA_PROPERTY +
-                "SELECT distinct (SAMPLE(?slabel) AS ?sublabel) (SAMPLE (?plabel) AS ?predlabel) (SAMPLE(?olabel) AS ?oblabel) ?v \n" +
+                "SELECT distinct (SAMPLE (?s) AS ?subject) (SAMPLE (?p) AS ?pred) (SAMPLE(?o) AS ?object) " +
+                "(SAMPLE(?slabel) AS ?sublabel) (SAMPLE (?plabel) AS ?predlabel) (SAMPLE(?olabel) AS ?oblabel) ?v \n" +
                 "FROM <" + DBPEDIA_URL + "> \n" +
                 "FROM <" + DBPEDIA_PAGE_RANK + "> \n" +
                 "WHERE {\n" +
