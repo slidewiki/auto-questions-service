@@ -720,7 +720,7 @@ public class ARQClient {
 //            e.printStackTrace();
 //        }
 
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_SPARQL_SERVICE , queryString);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_LIVE_SPARQL_SERVICE , queryString);
         qExec.addDefaultGraph("http://dbpedia.org");
         ResultSet resultSet = null;
         try {
@@ -961,7 +961,7 @@ public class ARQClient {
         WhoAmIQuestion.WhoAmIQuestionBuilder builder = WhoAmIQuestion.builder();
         String resourceName = resource.getSurfaceForm();
 
-        builder.baseType(baseType);
+        builder.baseType(RiTa.singularize(baseType));
         builder.answer(resourceName);
 
         List<LinkSUMResultRow> linkSUMResults = getLinkSUMForResource(uri);
@@ -985,7 +985,7 @@ public class ARQClient {
                 int bound = size <= 10 ? size : 10;
                 randomIndex = ThreadLocalRandom.current().nextInt(bound);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
-                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
+                getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
                 randomIndex = ThreadLocalRandom.current().nextInt(bound);
                 secondLinkSUMResultRow = linkSUMResults.get(randomIndex);
@@ -997,12 +997,12 @@ public class ARQClient {
                     secondLinkSUMResultRow = linkSUMResults.get(randomIndex);
                     i--;
                 }
-                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
+                getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
                 return builder.build();
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
                 linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
-                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
+                getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
                 secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
                 int i = size;
@@ -1012,7 +1012,7 @@ public class ARQClient {
                     secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
                     i--;
                 }
-                builder = getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
+                getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
                 return builder.build();
             }
         }
@@ -1061,7 +1061,7 @@ public class ARQClient {
         return linkSUMResultRow;
     }
 
-    private WhoAmIQuestion.WhoAmIQuestionBuilder getWhoAmIFromLinkSUMRow(WhoAmIQuestion.WhoAmIQuestionBuilder builder, String resourceName, LinkSUMResultRow linkSUMResultRow, int propNo) {
+    private void getWhoAmIFromLinkSUMRow(WhoAmIQuestion.WhoAmIQuestionBuilder builder, String resourceName, LinkSUMResultRow linkSUMResultRow, int propNo) {
         switch (propNo){
             case 1:
                 if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubjectLabel())
@@ -1089,6 +1089,5 @@ public class ARQClient {
                             .secondSubject(linkSUMResultRow.getSubjectLabel());
                 }
         }
-        return builder;
     }
 }
