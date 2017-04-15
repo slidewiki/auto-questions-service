@@ -54,6 +54,7 @@ public class ARQClient {
     private static final String PREFIX_DBPEDIA_ONTOLOGY = "PREFIX dbp-ont:<http://dbpedia.org/ontology/>";
     private static final String PREFIX_DBPEDIA_PROPERTY = "PREFIX dbp-prop:<http://dbpedia.org/property/>";
     private static final String DBPEDIA_PAGE_RANK = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
+    private static final String PAGE_RANK_GRAPH = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
     private final String PREFIX_DBRES = "PREFIX dbres: <" + DBPEDIA_URL + "/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
@@ -344,9 +345,14 @@ public class ARQClient {
         return resourceTypes;
     }
 
-    private ResultSet runSelectQuery(String queryString, String service) throws Exception {
+    private ResultSet runSelectQuery(String queryString, String service, String... defaultGraphs) throws Exception {
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(service, queryString);
         qExec.addDefaultGraph(DBPEDIA_URL);
+        if(defaultGraphs != null ){
+            for (String defaultGraph : defaultGraphs) {
+                qExec.addDefaultGraph(defaultGraph);
+            }
+        }
 //        qExec.addParam("timeout", TIMEOUT_VALUE); //1 sec
         ResultSet set = null;
         try {
@@ -1041,33 +1047,31 @@ public class ARQClient {
 
     private List<String> getNPopularDistractorsForBaseType(String uri, String baseType, int n) {
         List<String> distractors = new ArrayList<>();
-        int answerPop = getPopularityOfResource(uri);
+        float answerPop = getVRankOfResource(uri);
         uri = "<" + uri + ">";
         baseType = "<" + baseType + ">";
         String var = "label";
-        String queryString = PREFIX_RDFS + PREFIX_FOAF +
+        String queryString = PREFIX_RDFS + PREFIX_FOAF + PREFIX_RDF + PREFIX_VRANK + PREFIX_DBPEDIA_ONTOLOGY +
                 "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
                 "{?d rdfs:label ?dlabel .}\n" +
                 UNION +
-                "{?d foaf:name ??dlabel .}\n" +
+                "{?d foaf:name ?dlabel .}\n" +
                 "{\n" +
-                "select distinct ?d ?pop (((" + answerPop + " - ?pop) * (" + answerPop + " - ?pop)) AS ?sd) where { " +
+                "select distinct ?d (ABS(" + answerPop + " - ?v) AS ?sd) where {\n" +
                 "{\n" +
-                "select distinct ?d (COUNT(*) AS ?pop) where {\n" +
-                "{ ?s ?p ?d .}\n" +
-                UNION +
-                "{ ?d ?p ?o .}\n" +
+                "SELECT distinct ?d ?v WHERE {\n" +
                 "?d a " + baseType + " .\n" +
+                "?d vrank:hasRank/vrank:rankValue ?v.\n" +
                 "filter (?d != " + uri + ")\n" +
-                "} group by ?d\n" +
                 "}\n" +
-                "} group by ?pop ?d\n" +
                 "}\n" +
+                "}\n" +
+                "}\n" +
+                "filter (langMatches(lang(?dlabel), \"EN\"))\n" +
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
-
         try {
-            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE, PAGE_RANK_GRAPH);
             distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1077,7 +1081,7 @@ public class ARQClient {
 
     private List<String> getNPopularDistractorsForBaseType(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second,  int n, int level) {
         List<String> distractors = new ArrayList<>();
-        int answerPop = getPopularityOfResource(uri);
+        float answerPop = getVRankOfResource(uri);
         uri = "<" + uri + ">";
         baseType = "<" + baseType + ">";
         String var = "label";
@@ -1088,19 +1092,17 @@ public class ARQClient {
         String p2 = second.getPredicate() != null ? "<" + second.getPredicate() + "> " : null;
         String o2 = second.getObject() != null ? "<" + second.getObject() + "> " : "?d ";
 
-        String queryString = PREFIX_RDFS + PREFIX_FOAF +
+        String queryString = PREFIX_RDFS + PREFIX_FOAF + PREFIX_RDF + PREFIX_VRANK + PREFIX_DBPEDIA_ONTOLOGY +
                 "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
                 "{?d rdfs:label ?dlabel .}\n" +
                 UNION +
-                "{?d foaf:name ??dlabel .}\n" +
+                "{?d foaf:name ?dlabel .}\n" +
                 "{\n" +
-                "select distinct ?d ?pop (((" + answerPop + " - ?pop) * (" + answerPop + " - ?pop)) AS ?sd) where { " +
+                "select distinct ?d (ABS(" + answerPop + " - ?v) AS ?sd) where {\n" +
                 "{\n" +
-                "select distinct ?d (COUNT(*) AS ?pop) where {\n" +
-                "{ ?s ?p ?d .}\n" +
-                UNION +
-                "{ ?d ?p ?o .}\n" +
+                "SELECT distinct ?d ?v WHERE {\n" +
                 "?d a " + baseType + " .\n" +
+                "?d vrank:hasRank/vrank:rankValue ?v.\n" +
                 "filter (?d != " + uri + ")\n";
 
         if(level == 1){
@@ -1120,14 +1122,15 @@ public class ARQClient {
         }
 
         queryString +=
-                "} group by ?d\n" +
                 "}\n" +
-                "} group by ?pop ?d\n" +
                 "}\n" +
+                "}\n" +
+                "}\n" +
+                "filter (langMatches(lang(?dlabel), \"EN\"))\n" +
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
         try {
-            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE, PAGE_RANK_GRAPH);
             distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1135,24 +1138,26 @@ public class ARQClient {
         return distractors;
     }
 
-    private int getPopularityOfResource(String uri) {
+    private float getVRankOfResource(String uri) {
         uri = "<" + uri + ">";
-        String var = "pop";
-        String queryString = "select distinct (COUNT(*) AS ?" + var + ") where {\n" +
-                "{ " + uri + " ?p ?d .}\n" +
-                UNION +
-                "{ ?d ?p " + uri + " .}\n" +
-                "}";
+        String var = "v";
+        String queryString = PREFIX_VRANK +
+                "SELECT ?" + var + "\n" +
+                "FROM <http://dbpedia.org> \n" +
+                "FROM <http://people.aifb.kit.edu/ath/#DBpedia_PageRank> \n" +
+                "WHERE {\n" +
+                uri + " vrank:hasRank/vrank:rankValue ?" + var + ".\n" +
+                "}\n";
 
         try {
             ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
             if(results != null){
                 while (results.hasNext()){
                     QuerySolution result = results.next();
-                    RDFNode pop = result.get(var);
-                    if(pop != null && pop.isLiteral()){
-                        Literal literal = (Literal) pop;
-                        return (literal.getInt());
+                    RDFNode vRank = result.get(var);
+                    if(vRank != null && vRank.isLiteral()){
+                        Literal literal = (Literal) vRank;
+                        return (literal.getFloat());
                     }
                 }
             }
