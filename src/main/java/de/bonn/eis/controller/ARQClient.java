@@ -27,9 +27,9 @@ import java.util.stream.Collectors;
  */
 public class ARQClient {
 
-    private static final String DBPEDIA_URL = "http://dbpedia.org/";
+    private static final String DBPEDIA_URL = "http://dbpedia.org";
     private static final String DBPEDIA_LIVE_SPARQL_SERVICE = "http://dbpedia-live.openlinksw.com/sparql/";
-    private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "sparql/";
+    private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "/sparql/";
     private static final String WORDNET_SPARQL_SERVICE = "http://wordnet-rdf.princeton.edu/sparql/";
     private static final int QUERY_LIMIT = 10;
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
@@ -54,7 +54,7 @@ public class ARQClient {
     private static final String PREFIX_DBPEDIA_ONTOLOGY = "PREFIX dbp-ont:<http://dbpedia.org/ontology/>";
     private static final String PREFIX_DBPEDIA_PROPERTY = "PREFIX dbp-prop:<http://dbpedia.org/property/>";
     private static final String DBPEDIA_PAGE_RANK = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
-    private final String PREFIX_DBRES = "PREFIX dbres: <" + DBPEDIA_URL + "ontology/>\n";
+    private final String PREFIX_DBRES = "PREFIX dbres: <" + DBPEDIA_URL + "/ontology/>\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
 
@@ -543,13 +543,13 @@ public class ARQClient {
                         if (result != null) {
                             answerType = result.get("aName");
                             RDFNode distractor = result.get("dName");
-                            String literal = getLiteral(distractor);
+                            String literal = getStringLiteral(distractor);
                             if (literal != null) {
                                 sisterTypes.add(literal);
                             }
                         }
                     }
-                    String literal = getLiteral(answerType);
+                    String literal = getStringLiteral(answerType);
                     if (literal != null) {
                         sisterTypes.add(0, literal);
                     }
@@ -596,7 +596,7 @@ public class ARQClient {
                     if (result != null) {
                         answerType = result.get("aName");
                         RDFNode distractor = result.get("dName");
-                        String literal = getLiteral(distractor);
+                        String literal = getStringLiteral(distractor);
                         if (literal != null) {
                             sisterTypes.add(literal);
                         } else {
@@ -606,7 +606,7 @@ public class ARQClient {
                         }
                     }
                 }
-                String literal = getLiteral(answerType);
+                String literal = getStringLiteral(answerType);
                 if (literal != null) {
                     sisterTypes.add(0, literal);
                 } else {
@@ -780,7 +780,7 @@ public class ARQClient {
         return stringBuilder.toString().trim();
     }
 
-    private String getLiteral(RDFNode node) {
+    private String getStringLiteral(RDFNode node) {
         String literal = null;
         if (node != null && node.isLiteral()) {
             literal = ((Literal) node).getLexicalForm();
@@ -825,7 +825,7 @@ public class ARQClient {
         if(results != null){
             if (results.hasNext()){
                 QuerySolution result = results.next();
-                return getLiteral(result.get(variable));
+                return getStringLiteral(result.get(variable));
             }
         }
         return null;
@@ -878,7 +878,7 @@ public class ARQClient {
 
 //        String DBPEDIA_SPARQL_SERVICE = "http://dbpedia.org/sparql/";
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_SPARQL_SERVICE , queryString);
-        qExec.addDefaultGraph("http://dbpedia.org");
+        qExec.addDefaultGraph(DBPEDIA_URL);
         ResultSet resultSet = null;
         try {
             resultSet = qExec.execSelect();
@@ -923,9 +923,9 @@ public class ARQClient {
                             .subject(subjectNode != null ? subjectNode.toString() : null)
                             .predicate(predicateNode != null ? predicateNode.toString() : null)
                             .object(objectNode != null ? objectNode.toString() : null)
-                            .subjectLabel(getLiteral(result.get(subLabel)))
-                            .predicateLabel(getLiteral(result.get(predLabel)))
-                            .objectLabel(getLiteral(result.get(obLabel)));
+                            .subjectLabel(getStringLiteral(result.get(subLabel)))
+                            .predicateLabel(getStringLiteral(result.get(predLabel)))
+                            .objectLabel(getStringLiteral(result.get(obLabel)));
                     RDFNode vRankNode = result.get(vRank);
                     if(vRankNode != null && vRankNode.isLiteral()){
                         Literal literal = (Literal) vRankNode;
@@ -942,6 +942,7 @@ public class ARQClient {
         String uri = resource.getURI();
         List<String> mostSpecificTypes = getNMostSpecificTypes(uri, 1, true);
         String baseType = "";
+        String baseTypeLabel = "";
         if(mostSpecificTypes != null && !mostSpecificTypes.isEmpty()){
             baseType = mostSpecificTypes.get(0);
         }
@@ -949,19 +950,20 @@ public class ARQClient {
             List<String> yagoTypes = getNMostSpecificYAGOTypesForDepthLimit(uri, 10);
             if(!yagoTypes.isEmpty()){
                 int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
-                baseType = getWikicatYAGOTypeName(yagoTypes.get(randomIndex));
+                baseType = yagoTypes.get(randomIndex);
+                baseTypeLabel = getWikicatYAGOTypeName(baseType);
             }
         } else{
-            baseType = getLabelOfType(baseType);
+            baseTypeLabel = getLabelOfType(baseType);
         }
-        if(baseType == null || baseType.isEmpty()){
+        if(baseTypeLabel == null || baseTypeLabel.isEmpty()){
             return null;
         }
 
         WhoAmIQuestion.WhoAmIQuestionBuilder builder = WhoAmIQuestion.builder();
         String resourceName = resource.getSurfaceForm();
 
-        builder.baseType(RiTa.singularize(baseType));
+        builder.baseType(RiTa.singularize(baseTypeLabel));
         builder.answer(resourceName);
 
         List<LinkSUMResultRow> linkSUMResults = getLinkSUMForResource(uri);
@@ -998,7 +1000,8 @@ public class ARQClient {
                     i--;
                 }
                 getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
-                return builder.build();
+                List<String> distractors = getNPopularDistractorsForBaseType(uri, baseType, 3);
+                builder.distractors(distractors);
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
                 linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
@@ -1013,10 +1016,81 @@ public class ARQClient {
                     i--;
                 }
                 getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
-                return builder.build();
             }
+            return builder.build();
         }
         return null;
+    }
+
+    private List<String> getNPopularDistractorsForBaseType(String uri, String baseType, int n) {
+        List<String> distractors = new ArrayList<>();
+        int answerPop = getPopularityOfResource(uri);
+        uri = "<" + uri + ">";
+        baseType = "<" + baseType + ">";
+        String var = "label";
+        String queryString = PREFIX_RDFS + PREFIX_FOAF +
+                "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
+                "{?d rdfs:label ?dlabel .}\n" +
+                UNION +
+                "{?d foaf:name ??dlabel .}\n" +
+                "{\n" +
+                "select distinct ?d ?pop (((" + answerPop + " - ?pop) * (" + answerPop + " - ?pop)) AS ?sd) where { " +
+                "{\n" +
+                "select distinct ?d (COUNT(*) AS ?pop) where {\n" +
+                "{ ?s ?p ?d .}\n" +
+                UNION +
+                "{ ?d ?p ?o .}\n" +
+                "?d a " + baseType + " .\n" +
+                "filter (?d != " + uri + ")\n" +
+                "} group by ?d\n" +
+                "}\n" +
+                "} group by ?pop ?d\n" +
+                "}\n" +
+                "} group by ?d ?sd order by (?sd) limit " + n;
+
+        try {
+            ResultSet results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            if(results != null){
+                while (results.hasNext()){
+                    QuerySolution result = results.next();
+                    RDFNode distractor = result.get(var);
+                    String literal = getStringLiteral(distractor);
+                    if(literal != null){
+                        distractors.add(literal);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return distractors;
+    }
+
+    private int getPopularityOfResource(String uri) {
+        uri = "<" + uri + ">";
+        String var = "pop";
+        String queryString = "select distinct (COUNT(*) AS ?" + var + ") where {\n" +
+                "{ " + uri + " ?p ?d .}\n" +
+                UNION +
+                "{ ?d ?p " + uri + " .}\n" +
+                "}";
+
+        try {
+            ResultSet results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            if(results != null){
+                while (results.hasNext()){
+                    QuerySolution result = results.next();
+                    RDFNode pop = result.get(var);
+                    if(pop != null && pop.isLiteral()){
+                        Literal literal = (Literal) pop;
+                        return (literal.getInt());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     private boolean isIdentityRevealed(LinkSUMResultRow linkSUMResultRow, String resourceName) {
