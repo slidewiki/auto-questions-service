@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 public class ARQClient {
 
     private static final String DBPEDIA_URL = "http://dbpedia.org";
-    private static final String DBPEDIA_LIVE_SPARQL_SERVICE = "http://dbpedia-live.openlinksw.com/sparql/";
     private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "/sparql/";
+    //    private static final String DBPEDIA_LIVE_SPARQL_SERVICE = "http://dbpedia-live.openlinksw.com/sparql/";
     private static final String WORDNET_SPARQL_SERVICE = "http://wordnet-rdf.princeton.edu/sparql/";
     private static final int QUERY_LIMIT = 10;
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
@@ -114,7 +114,7 @@ public class ARQClient {
         ResultSet results = null;
         try {
             QGenLogger.fine("###########################RESOURCE: " + resource.getSurfaceForm() + "###########################\n" + "SELECT Query:\n" + queryString);
-            results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
@@ -328,7 +328,7 @@ public class ARQClient {
 
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
@@ -425,7 +425,7 @@ public class ARQClient {
         ResultSet results;
         int count = 0;
         try {
-            results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
             while (results.hasNext()) {
                 results.next();
                 count++;
@@ -500,7 +500,7 @@ public class ARQClient {
                                 "} order by rand() limit 3";
                         ResultSet results = null;
                         try {
-                            results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+                            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -532,7 +532,7 @@ public class ARQClient {
 
                 ResultSet resultSet = null;
                 try {
-                    resultSet = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+                    resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -585,7 +585,7 @@ public class ARQClient {
 
             resultSet = null;
             try {
-                resultSet = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+                resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -655,7 +655,7 @@ public class ARQClient {
 
         ResultSet resultSet = null;
         try {
-            resultSet = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -684,7 +684,7 @@ public class ARQClient {
 
         ResultSet resultSet = null;
         try {
-            resultSet = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -715,12 +715,12 @@ public class ARQClient {
 
 //        ResultSet resultSet = null;
 //        try {
-//            resultSet = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+//            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }
 
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_LIVE_SPARQL_SERVICE , queryString);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_SPARQL_SERVICE , queryString);
         qExec.addDefaultGraph("http://dbpedia.org");
         ResultSet resultSet = null;
         try {
@@ -806,7 +806,7 @@ public class ARQClient {
                 "}";
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -827,7 +827,7 @@ public class ARQClient {
                 "}";
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1067,7 +1067,7 @@ public class ARQClient {
 
 
         try {
-            ResultSet results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
             distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1127,7 +1127,7 @@ public class ARQClient {
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
         try {
-            ResultSet results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
             distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1145,7 +1145,7 @@ public class ARQClient {
                 "}";
 
         try {
-            ResultSet results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
             if(results != null){
                 while (results.hasNext()){
                     QuerySolution result = results.next();
