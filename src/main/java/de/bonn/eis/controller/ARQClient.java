@@ -1009,7 +1009,7 @@ public class ARQClient {
                     i--;
                 }
                 getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
-                List<String> distractors = getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3);
+                List<String> distractors = getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 1);
                 builder.distractors(distractors);
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
@@ -1025,6 +1025,14 @@ public class ARQClient {
                     i--;
                 }
                 getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
+                List<String> distractors = getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 2);
+                if(distractors.isEmpty() || distractors.size() < 3){
+                    distractors.addAll(getNPopularDistractorsForBaseType(uri, baseType, secondLinkSUMResultRow, linkSUMResultRow, 3 - distractors.size(), 2));
+                    if(distractors.isEmpty() || distractors.size() < 3){
+                        distractors.addAll(getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3 - distractors.size(), 1));
+                    }
+                }
+                builder.distractors(distractors);
             }
             return builder.build();
         }
@@ -1067,7 +1075,7 @@ public class ARQClient {
         return distractors;
     }
 
-    private List<String> getNPopularDistractorsForBaseType(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second,  int n) {
+    private List<String> getNPopularDistractorsForBaseType(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second,  int n, int level) {
         List<String> distractors = new ArrayList<>();
         int answerPop = getPopularityOfResource(uri);
         uri = "<" + uri + ">";
@@ -1095,12 +1103,20 @@ public class ARQClient {
                 "?d a " + baseType + " .\n" +
                 "filter (?d != " + uri + ")\n";
 
-        if(p1 != null) {
-            queryString += "filter not exists {" + s1 + p1 + o1  + "}\n";
-        }
-
-        if(p2 != null) {
-            queryString += "filter not exists {" + s2 + p2 + o2  + "}\n";
+        if(level == 1){
+            if(p1 != null) {
+                queryString += "filter not exists {" + s1 + p1 + o1  + "}\n";
+            }
+            if(p2 != null) {
+                queryString += "filter not exists {" + s2 + p2 + o2  + "}\n";
+            }
+        } else if (level == 2) {
+            if(p1 != null) {
+                queryString += s1 + p1 + o1  + "\n";
+            }
+            if(p2 != null) {
+                queryString += "filter not exists {" + s2 + p2 + o2  + "}\n";
+            }
         }
 
         queryString +=
