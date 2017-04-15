@@ -659,7 +659,7 @@ public class ARQClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return getResultSetAsStringList(resultSet, variableName);
+        return getResultSetAsStringList(resultSet, variableName, false);
     }
 
     private List<String> getNMostSpecificTypes(String resourceURI, int n, boolean owlClassOnly) {
@@ -688,7 +688,7 @@ public class ARQClient {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return getResultSetAsStringList(resultSet, variableName);
+        return getResultSetAsStringList(resultSet, variableName, false);
     }
 
     private List<String> getNMostSpecificYAGOTypesForDepthLimit(String resourceURI, int n ){
@@ -731,26 +731,35 @@ public class ARQClient {
         } finally {
             qExec.close();
         }
-        return getResultSetAsStringList(resultSet, variableName);
+        return getResultSetAsStringList(resultSet, variableName, false);
     }
 
 //    private String getMostSpecificType (String resourceURI, boolean owlClassOnly) {
 //        return getNMostSpecificTypes(resourceURI, 1, owlClassOnly).get(0);
 //    }
 
-    private List<String> getResultSetAsStringList(ResultSet resultSet, String variableName) {
-        List<String> typeStrings = new ArrayList<>();
-        RDFNode specificType;
+    private List<String> getResultSetAsStringList(ResultSet resultSet, String variableName, boolean literalRequired) {
+        List<String> resultStrings = new ArrayList<>();
+        RDFNode node;
         if (resultSet != null) {
             while (resultSet.hasNext()) {
                 QuerySolution result = resultSet.next();
                 if (result != null) {
-                    specificType = result.get(variableName);
-                    typeStrings.add(specificType.toString());
+                    node = result.get(variableName);
+                    if(literalRequired){
+                        String literal = getStringLiteral(node);
+                        if(literal != null){
+                            resultStrings.add(literal);
+                        }
+                    } else {
+                        if(node != null) {
+                            resultStrings.add(node.toString());
+                        }
+                    }
                 }
             }
         }
-        return typeStrings;
+        return resultStrings;
     }
 
     private String getWikicatYAGOTypeName(String type) {
@@ -1000,7 +1009,7 @@ public class ARQClient {
                     i--;
                 }
                 getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
-                List<String> distractors = getNPopularDistractorsForBaseType(uri, baseType, 3);
+                List<String> distractors = getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3);
                 builder.distractors(distractors);
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
@@ -1048,18 +1057,62 @@ public class ARQClient {
                 "}\n" +
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
+
         try {
             ResultSet results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
-            if(results != null){
-                while (results.hasNext()){
-                    QuerySolution result = results.next();
-                    RDFNode distractor = result.get(var);
-                    String literal = getStringLiteral(distractor);
-                    if(literal != null){
-                        distractors.add(literal);
-                    }
-                }
-            }
+            distractors = getResultSetAsStringList(results, var, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return distractors;
+    }
+
+    private List<String> getNPopularDistractorsForBaseType(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second,  int n) {
+        List<String> distractors = new ArrayList<>();
+        int answerPop = getPopularityOfResource(uri);
+        uri = "<" + uri + ">";
+        baseType = "<" + baseType + ">";
+        String var = "label";
+        String s1 = first.getSubject() != null ? "<" + first.getSubject() + "> " : "?d ";
+        String p1 = first.getPredicate() != null ? "<" + first.getPredicate() + "> " : null;
+        String o1 = first.getObject() != null ? "<" + first.getObject() + "> " : "?d ";
+        String s2 = second.getSubject() != null ? "<" + second.getSubject() + "> " : "?d ";
+        String p2 = second.getPredicate() != null ? "<" + second.getPredicate() + "> " : null;
+        String o2 = second.getObject() != null ? "<" + second.getObject() + "> " : "?d ";
+
+        String queryString = PREFIX_RDFS + PREFIX_FOAF +
+                "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
+                "{?d rdfs:label ?dlabel .}\n" +
+                UNION +
+                "{?d foaf:name ??dlabel .}\n" +
+                "{\n" +
+                "select distinct ?d ?pop (((" + answerPop + " - ?pop) * (" + answerPop + " - ?pop)) AS ?sd) where { " +
+                "{\n" +
+                "select distinct ?d (COUNT(*) AS ?pop) where {\n" +
+                "{ ?s ?p ?d .}\n" +
+                UNION +
+                "{ ?d ?p ?o .}\n" +
+                "?d a " + baseType + " .\n" +
+                "filter (?d != " + uri + ")\n";
+
+        if(p1 != null) {
+            queryString += "filter not exists {" + s1 + p1 + o1  + "}\n";
+        }
+
+        if(p2 != null) {
+            queryString += "filter not exists {" + s2 + p2 + o2  + "}\n";
+        }
+
+        queryString +=
+                "} group by ?d\n" +
+                "}\n" +
+                "} group by ?pop ?d\n" +
+                "}\n" +
+                "} group by ?d ?sd order by (?sd) limit " + n;
+
+        try {
+            ResultSet results = runSelectQuery(queryString, DBPEDIA_LIVE_SPARQL_SERVICE);
+            distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
