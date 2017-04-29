@@ -1,8 +1,5 @@
 package de.bonn.eis.controller;
 
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimaps;
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.LinkSUMResultRow;
 import de.bonn.eis.model.WhoAmIQuestion;
@@ -17,9 +14,10 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 import rita.RiTa;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -28,10 +26,9 @@ import java.util.stream.Collectors;
 public class ARQClient {
 
     private static final String DBPEDIA_URL = "http://dbpedia.org";
+    private static final String DBPEDIA_ONTOLOGY = DBPEDIA_URL + "/ontology/";
     private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "/sparql/";
-    //    private static final String DBPEDIA_LIVE_SPARQL_SERVICE = "http://dbpedia-live.openlinksw.com/sparql/";
     private static final String WORDNET_SPARQL_SERVICE = "http://wordnet-rdf.princeton.edu/sparql/";
-    private static final int QUERY_LIMIT = 10;
     private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
     private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
     private static final String PREFIX_RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n";
@@ -40,12 +37,8 @@ public class ARQClient {
     private static final String TIMEOUT_VALUE = "100000";
     private static final String UNION = "UNION\n";
     private static final String MINUS = "MINUS\n";
-    private static final int ALLOWED_DEPTH_FOR_MEDIUM = 6;
-    //    private static final int ALLOWED_DEPTH_FOR_HARD = 12;
     private static final String DBPEDIA = "dbpedia";
-    private static final int NO_OF_SPECIFIC_TYPES = 10;
     private static final String NNP_POS_TAG = "nnp";
-    private static final int NO_OF_SPECIFIC_TYPES_EASY = 3;
     private static final String WIKICAT = "wikicat";
     private static final String YAGO = "yago";
     private static final String OWL_PERSON = "http://dbpedia.org/ontology/Person";
@@ -55,7 +48,7 @@ public class ARQClient {
     private static final String PREFIX_DBPEDIA_PROPERTY = "PREFIX dbp-prop:<http://dbpedia.org/property/>";
     private static final String DBPEDIA_PAGE_RANK = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
     private static final String PAGE_RANK_GRAPH = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
-    private final String PREFIX_DBRES = "PREFIX dbres: <" + DBPEDIA_URL + "/ontology/>\n";
+    private final String PREFIX_DBRES = "PREFIX dbres: <" + DBPEDIA_ONTOLOGY + ">\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
 
@@ -64,14 +57,18 @@ public class ARQClient {
     public List<String> getSimilarResourceNames(DBPediaResource resource, String level) {
         List<String> resourceNames = new ArrayList<>();
 
-        //TODO use the spotlight types
         if (level.equals(NLPConsts.LEVEL_EASY)) {
-            List<String> types = getNMostSpecificTypes(resource.getURI(), 1, true);
             String baseType = "";
-            if(!types.isEmpty()){
-                baseType = types.get(0);
+            if(!resource.getTypes().isEmpty()) {
+                baseType = getMostSpecificSpotlightType(resource.getTypes());
             }
-            if(baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON)){
+            else {
+                List<String> specificTypes = getNMostSpecificTypes(resource.getURI(), 1, true);
+                if(!specificTypes.isEmpty()){
+                    baseType = specificTypes.get(0);
+                }
+            }
+            if(baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON)){
                 List<String> yagoTypes = getNMostSpecificYAGOTypesForDepthRange(resource.getURI(), 10, 11, 14);
                 if(!yagoTypes.isEmpty()){
                     int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
@@ -92,6 +89,17 @@ public class ARQClient {
             }
         }
         return resourceNames;
+    }
+
+    private String getMostSpecificSpotlightType(String types) {
+        String[] typeArray = types.split(",");
+        for (int i = typeArray.length - 1; i >= 0; i--) {
+            if (typeArray[i].toLowerCase().contains(DBPEDIA)) {
+                String ontologyName = typeArray[i].split(":")[1];
+                return DBPEDIA_ONTOLOGY + ontologyName;
+            }
+        }
+        return null;
     }
 
     private List<String> getDistractorsFromWordnet(String resourceName) {
@@ -325,55 +333,6 @@ public class ARQClient {
             qExec.close();
         }
         return set;
-    }
-
-    /**
-     * Get the most specific rdf:type i.e. the one that has the most number of super classes
-     *
-     * @param types
-     * @param level
-     * @return
-     */
-    private List<String> getMostSpecificTypes(List<String> types, String level) {
-
-        if (types.isEmpty()) {
-            return null;
-        } else if (types.size() == 1) {
-            return types;
-        }
-
-        List<String> mostSpecificTypes = new ArrayList<>();
-        Function<String, Integer> typeDepthFunction = this::getTypeDepth;
-
-        ImmutableListMultimap<Integer, String> map = Multimaps.index(types, typeDepthFunction::apply);
-        ImmutableSet<Integer> keySet = map.keySet();
-        Integer maxDepth = Collections.max(keySet); // as it is for easy
-
-        if (level.equalsIgnoreCase(NLPConsts.LEVEL_MEDIUM)) {
-            maxDepth = ALLOWED_DEPTH_FOR_MEDIUM;
-        } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
-            maxDepth--; // the second most specific
-        }
-
-        int noOfTypes = NO_OF_SPECIFIC_TYPES;
-        if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
-            noOfTypes = NO_OF_SPECIFIC_TYPES_EASY;
-        }
-
-        while (mostSpecificTypes.size() < noOfTypes) {
-            mostSpecificTypes.addAll(0, map.get(maxDepth));
-            maxDepth--;
-        }
-        if (mostSpecificTypes.size() > NO_OF_SPECIFIC_TYPES) {
-            mostSpecificTypes = mostSpecificTypes.subList(0, NO_OF_SPECIFIC_TYPES + 1);
-        }
-
-        // If env is dev
-        for (Integer key : keySet) {
-            System.out.println(key);
-            System.out.println(map.get(key));
-        }
-        return mostSpecificTypes;
     }
 
     private int getTypeDepth(String type) {
