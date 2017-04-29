@@ -63,8 +63,8 @@ public class ARQClient {
     // http://stackoverflow.com/questions/7250189/how-to-build-sparql-queries-in-java
     public List<String> getSimilarResourceNames(DBPediaResource resource, String level) {
         List<String> resourceNames = new ArrayList<>();
-        List<String> resourceTypeList = null;
 
+        //TODO use the spotlight types
         if (level.equals(NLPConsts.LEVEL_EASY)) {
             List<String> types = getNMostSpecificTypes(resource.getURI(), 1, true);
             String baseType = "";
@@ -79,59 +79,15 @@ public class ARQClient {
                 }
             }
             return getNPopularDistractorsForBaseType(resource.getURI(), baseType, 3);
-        } else if (level.equals(NLPConsts.LEVEL_MEDIUM) || level.equals(NLPConsts.LEVEL_HARD)) {
-            resourceTypeList = getResourceTypes(resource);
-            if (resourceTypeList != null && !resourceTypeList.isEmpty()) {
-                if (resourceTypeList.size() == 1) {
-                    String type = resourceTypeList.get(0);
-                    if (type.contains("owl:Thing") || type.contains("owl#Thing")) {
-                        return null;
-                    }
-                }
-                QGenLogger.info("Resource: " + resource.getSurfaceForm());
-//                int maxAllowedDepth = ALLOWED_DEPTH_FOR_HARD;
-                int maxAllowedDepth = -1;
-                if (level.equals(NLPConsts.LEVEL_MEDIUM)) {
-                    maxAllowedDepth = ALLOWED_DEPTH_FOR_MEDIUM;
-                }
-                resourceTypeList = getMostSpecificTypes(resourceTypeList, level);
-            }
         }
-
-        String queryString =
-                PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
-//                        "SELECT DISTINCT ?name (COUNT(*) AS ?count) FROM <http://dbpedia.org> WHERE {\n" +
-                        "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
-                        "{ ?s foaf:name ?name }\n" + UNION +
-                        "{ ?s rdfs:label ?name }\n";
-
-
-        if (resourceTypeList == null || resourceTypeList.isEmpty()) {
-            return null;
-        }
-
-        queryString = addTriplePatternsAndUnions(resourceTypeList, queryString);
-//        queryString = addTriplePatternsAndMinus(resourceTypeList, queryString);
-        queryString += "FILTER (langMatches(lang(?name), \"EN\")) .";
-        queryString += "}\nORDER BY RAND()\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
-//        queryString += "}\nGROUP BY ?name\nORDER BY DESC(?count)\nLIMIT " + QUERY_LIMIT; // add bind(rand(1 + strlen(str(?s))*0) as ?rid) for randomization
-        // TODO Refine Query results
-
-        ResultSet results = null;
-        try {
-            QGenLogger.fine("###########################RESOURCE: " + resource.getSurfaceForm() + "###########################\n" + "SELECT Query:\n" + queryString);
-            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
-        } catch (Exception e) {
-            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
-        }
-        if (results != null) {
-            while (results.hasNext()) {
-                QuerySolution result = results.next();
-                RDFNode n = result.get("name");
-                String nameLiteral;
-                if (n.isLiteral()) {
-                    nameLiteral = ((Literal) n).getLexicalForm();
-                    resourceNames.add(nameLiteral);
+        else if(level.equals(NLPConsts.LEVEL_HARD)) {
+            List<String> types = getNMostSpecificTypes(resource.getURI(), 5, false);
+            List<String> distractors = new ArrayList<>();
+            for (String type: types) {
+                System.out.println(type);
+                distractors.addAll(getNPopularDistractorsForBaseType(resource.getURI(), type, 3));
+                if(distractors.size() >= 3){
+                    return distractors.subList(0, 3);
                 }
             }
         }
