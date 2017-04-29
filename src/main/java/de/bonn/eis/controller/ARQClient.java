@@ -66,14 +66,19 @@ public class ARQClient {
         List<String> resourceTypeList = null;
 
         if (level.equals(NLPConsts.LEVEL_EASY)) {
-            resourceNames = getDistractorsFromWordnet(resource.getSurfaceForm()); // surface form as in text or label of the resource disambiguated?
-            if (resourceNames.size() > 3) {
-                return resourceNames;
-            } else {
-                resourceNames.clear();
+            List<String> types = getNMostSpecificTypes(resource.getURI(), 1, true);
+            String baseType = "";
+            if(!types.isEmpty()){
+                baseType = types.get(0);
             }
-            String[] types = resource.getTypes().split(",");
-            resourceTypeList = Arrays.asList(types[types.length - 1]);
+            if(baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON)){
+                List<String> yagoTypes = getNMostSpecificYAGOTypesForDepthRange(resource.getURI(), 10, 11, 14);
+                if(!yagoTypes.isEmpty()){
+                    int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
+                    baseType = yagoTypes.get(randomIndex);
+                }
+            }
+            return getNPopularDistractorsForBaseType(resource.getURI(), baseType, 3);
         } else if (level.equals(NLPConsts.LEVEL_MEDIUM) || level.equals(NLPConsts.LEVEL_HARD)) {
             resourceTypeList = getResourceTypes(resource);
             if (resourceTypeList != null && !resourceTypeList.isEmpty()) {
@@ -697,7 +702,7 @@ public class ARQClient {
         return getResultSetAsStringList(resultSet, variableName, false);
     }
 
-    private List<String> getNMostSpecificYAGOTypesForDepthLimit(String resourceURI, int n ){
+    private List<String> getNMostSpecificYAGOTypesForDepthRange(String resourceURI, int n, int depthLowerBound, int depthUpperBound ){
         String queryString = PREFIX_RDFS;
         String variableName = "type";
         resourceURI = "<" + resourceURI + ">";
@@ -715,7 +720,7 @@ public class ARQClient {
                 "} group by ?" + variableName + " order by desc  (?count)\n" +
                 "}\n";
         if(n != -1){
-            queryString += "filter (?count < 14 && ?count > 11)\n";
+            queryString += "filter (?count < " + depthUpperBound + " && ?count > " + depthLowerBound + ")\n";
         }
         queryString += "} limit " + n;
 
@@ -962,7 +967,7 @@ public class ARQClient {
             baseType = mostSpecificTypes.get(0);
         }
         if(baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON)){
-            List<String> yagoTypes = getNMostSpecificYAGOTypesForDepthLimit(uri, 10);
+            List<String> yagoTypes = getNMostSpecificYAGOTypesForDepthRange(uri, 10, 11, 14);
             if(!yagoTypes.isEmpty()){
                 int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
                 baseType = yagoTypes.get(randomIndex);
@@ -1185,12 +1190,10 @@ public class ARQClient {
         float upperBound = 0.5f;
         float maxVRank = linkSUMResults.get(0).getVRank();
         linkSUMResultRow = getLinkSUMResultRowForVRankRange(linkSUMResults, lowerBound, upperBound);
-        float j = 1.0f;
         while (linkSUMResultRow == null && upperBound <= maxVRank){
             lowerBound = upperBound;
-            upperBound += 0.2f * j;
+            upperBound *= 2;
             linkSUMResultRow = getLinkSUMResultRowForVRankRange(linkSUMResults, lowerBound, upperBound);
-            j += 2.0f;
         }
         return linkSUMResultRow;
     }
