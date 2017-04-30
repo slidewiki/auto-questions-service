@@ -1,8 +1,9 @@
 package de.bonn.eis.model;
 
 /**
- * Created by Ainuddin Faizan on 3/13/17.
+ * Created by andy on 4/30/17.
  */
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -14,36 +15,37 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "spotlightEntity",
-        "tfidf"
+        "entry",
+        "value"
 })
-public class TFIDFEntity {
+public class Result implements Serializable
+{
 
-    @JsonProperty("spotlightEntity")
-    private String spotlightEntity;
-    @JsonProperty("tfidf")
-    private Double tfidf;
+    @JsonProperty("entry")
+    private String entry;
+    @JsonProperty("value")
+    private Double value;
     @JsonIgnore
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new HashMap<>();
 
-    @JsonProperty("spotlightEntity")
-    public String getSpotlightEntity() {
-        return spotlightEntity;
+    @JsonProperty("entry")
+    public String getEntry() {
+        return entry;
     }
 
-    @JsonProperty("spotlightEntity")
-    public void setSpotlightEntity(String spotlightEntity) {
-        this.spotlightEntity = spotlightEntity;
+    @JsonProperty("entry")
+    public void setEntry(String entry) {
+        this.entry = entry;
     }
 
-    @JsonProperty("tfidf")
-    public Double getTfidf() {
-        return tfidf;
+    @JsonProperty("value")
+    public Double getValue() {
+        return value;
     }
 
-    @JsonProperty("tfidf")
-    public void setTfidf(Double tfidf) {
-        this.tfidf = tfidf;
+    @JsonProperty("value")
+    public void setValue(Double value) {
+        this.value = value;
     }
 
     @JsonAnyGetter
@@ -57,3 +59,4 @@ public class TFIDFEntity {
     }
 
 }
+

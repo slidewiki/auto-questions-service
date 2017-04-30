@@ -3,6 +3,7 @@ package de.bonn.eis.model;
 /**
  * Created by Ainuddin Faizan on 3/13/17.
  */
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "slideTitleAndText",
         "detectedLanguage",
         "tokens",
-        "DBPediaSpotlightResult"
+        "NER",
+        "DBPediaSpotlight"
 })
-public class NlpProcessResults {
+public class NlpProcessResults implements Serializable
+{
 
     @JsonProperty("slideId")
     private String slideId;
@@ -31,10 +34,13 @@ public class NlpProcessResults {
     private String detectedLanguage;
     @JsonProperty("tokens")
     private List<String> tokens = null;
-    @JsonProperty("DBPediaSpotlightResult")
-    private DBPediaSpotlightResult dBPediaSpotlightResult;
+    @JsonProperty("NER")
+    private List<NER> nER = null;
+    @JsonProperty("DBPediaSpotlight")
+    private DBPediaSpotlightResult dBPediaSpotlight;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    private final static long serialVersionUID = 8193220172692345640L;
 
     @JsonProperty("slideId")
     public String getSlideId() {
@@ -76,14 +82,24 @@ public class NlpProcessResults {
         this.tokens = tokens;
     }
 
-    @JsonProperty("DBPediaSpotlightResult")
-    public DBPediaSpotlightResult getDBPediaSpotlight() {
-        return dBPediaSpotlightResult;
+    @JsonProperty("NER")
+    public List<NER> getNER() {
+        return nER;
     }
 
-    @JsonProperty("DBPediaSpotlightResult")
-    public void setDBPediaSpotlight(DBPediaSpotlightResult dBPediaSpotlightResult) {
-        this.dBPediaSpotlightResult = dBPediaSpotlightResult;
+    @JsonProperty("NER")
+    public void setNER(List<NER> nER) {
+        this.nER = nER;
+    }
+
+    @JsonProperty("DBPediaSpotlight")
+    public DBPediaSpotlightResult getDBPediaSpotlight() {
+        return dBPediaSpotlight;
+    }
+
+    @JsonProperty("DBPediaSpotlight")
+    public void setDBPediaSpotlight(DBPediaSpotlightResult dBPediaSpotlight) {
+        this.dBPediaSpotlight = dBPediaSpotlight;
     }
 
     @JsonAnyGetter

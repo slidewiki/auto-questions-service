@@ -30,6 +30,10 @@ public class QuestionGenerator {
     private static final String BLANK = "________";
     private static final String SELECT_QUESTION_TEXT = " is a: ";
     private static final String DBPEDIA_PERSON = "DBPedia:Person";
+    private static final String DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE = "dbpediaSpotlightConfidenceForSlide";
+    private static final String DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK = "dbpediaSpotlightConfidenceForDeck";
+    private static final double SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE = 0.6;
+    private static final double SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE = 0.6;
     @Context
     private ServletContext servletContext;
 
@@ -41,9 +45,11 @@ public class QuestionGenerator {
         String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
         WebTarget webTarget = client.target(hostIp);
         NLP nlp = webTarget
+                .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE, SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE)
+                .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK, SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE)
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
-        DBPediaSpotlightResult spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
+        DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
         List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
         List<GapFillQuestionSet> gapFillQuestionSets = getQuestionsForText(spotlightResults.getText(), resources, level);
         return Response.status(200).entity(gapFillQuestionSets).build();
@@ -99,9 +105,11 @@ public class QuestionGenerator {
         String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
         WebTarget webTarget = client.target(hostIp);
         NLP nlp = webTarget
+                .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE, SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE)
+                .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK, SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE)
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
-        DBPediaSpotlightResult spotlightResults = nlp.getNlpProcessResultsForDeck().getDBPediaSpotlightPerDeck();
+        DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
         if(spotlightResults != null){
             List<DBPediaResource> dbPediaResources = spotlightResults.getDBPediaResources();
             List<SelectQuestion> selectQuestions = getSelectQuestions(dbPediaResources, level);

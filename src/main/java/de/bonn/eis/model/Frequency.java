@@ -1,11 +1,10 @@
 package de.bonn.eis.model;
 
 /**
- * Created by Ainuddin Faizan on 3/13/17.
+ * Created by andy on 4/30/17.
  */
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -16,36 +15,37 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "providerName",
-        "results"
+        "entry",
+        "frequency"
 })
-public class TFIDF implements Serializable
+public class Frequency implements Serializable
 {
-    @JsonProperty("providerName")
-    private String providerName;
-    @JsonProperty("results")
-    private List<Result> results = null;
+
+    @JsonProperty("entry")
+    private String entry;
+    @JsonProperty("frequency")
+    private Integer frequency;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<>();
 
-    @JsonProperty("providerName")
-    public String getProviderName() {
-        return providerName;
+    @JsonProperty("entry")
+    public String getEntry() {
+        return entry;
     }
 
-    @JsonProperty("providerName")
-    public void setProviderName(String providerName) {
-        this.providerName = providerName;
+    @JsonProperty("entry")
+    public void setEntry(String entry) {
+        this.entry = entry;
     }
 
-    @JsonProperty("results")
-    public List<Result> getResults() {
-        return results;
+    @JsonProperty("frequency")
+    public Integer getFrequency() {
+        return frequency;
     }
 
-    @JsonProperty("results")
-    public void setResults(List<Result> results) {
-        this.results = results;
+    @JsonProperty("frequency")
+    public void setFrequency(Integer frequency) {
+        this.frequency = frequency;
     }
 
     @JsonAnyGetter
