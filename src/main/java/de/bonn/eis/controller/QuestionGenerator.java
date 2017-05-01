@@ -34,13 +34,16 @@ public class QuestionGenerator {
     private static final String DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK = "dbpediaSpotlightConfidenceForDeck";
     private static final double SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE = 0.6;
     private static final double SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE = 0.6;
+    private static final String GAP_FILL = "gap-fill";
+    private static final String SELECT = "select";
+    private static final String WHOAMI = "whoami";
     @Context
     private ServletContext servletContext;
 
-    @Path("/{level}/{deckID}")
+    @Path("/{type}/{level}/{deckID}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response generateQuestionsForSlides(@PathParam("level") String level, @PathParam("deckID") String deckID) {
+    public Response generateQuestionsForSlides(@PathParam("type") String type, @PathParam("level") String level, @PathParam("deckID") String deckID) {
         Client client = ClientBuilder.newClient();
         String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
         WebTarget webTarget = client.target(hostIp);
@@ -50,10 +53,31 @@ public class QuestionGenerator {
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
         DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
-        List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
-        List<GapFillQuestionSet> gapFillQuestionSets = getQuestionsForText(spotlightResults.getText(), resources, level);
-        return Response.status(200).entity(gapFillQuestionSets).build();
+        if(spotlightResults != null){
+            List<DBPediaResource> dbPediaResources = spotlightResults.getDBPediaResources();
+            List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
+            if(type.equals(GAP_FILL)) {
+                List<GapFillQuestionSet> gapFillQuestionSets = getQuestionsForText(spotlightResults.getText(), resources, level);
+                if(gapFillQuestionSets != null) {
+                    return Response.status(200).entity(gapFillQuestionSets).build();
+                }
+            }
+            if(type.equals(SELECT)) {
+                List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
+                if(selectQuestions != null){
+                    return Response.status(200).entity(selectQuestions).build();
+                }
+            }
+            if(type.equals(WHOAMI)) {
+                List<WhoAmIQuestion> questions = getWhoamIQuestions(dbPediaResources, level);
+                if(questions != null){
+                    return Response.status(200).entity(questions).build();
+                }
+            }
+        }
+        return Response.noContent().build();
     }
+
 
     @Path("/{level}/text")
     @POST
@@ -97,29 +121,6 @@ public class QuestionGenerator {
         return Response.status(200).entity(gapFillQuestionSets).build();
     }
 
-    @Path("/select/{level}/{deckID}")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response generateSelectQuestions(@PathParam("level") String level, @PathParam("deckID") String deckID) {
-        Client client = ClientBuilder.newClient();
-        String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
-        WebTarget webTarget = client.target(hostIp);
-        NLP nlp = webTarget
-                .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE, SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE)
-                .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK, SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE)
-                .request(MediaType.APPLICATION_JSON)
-                .get(NLP.class);
-        DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
-        if(spotlightResults != null){
-            List<DBPediaResource> dbPediaResources = spotlightResults.getDBPediaResources();
-            List<SelectQuestion> selectQuestions = getSelectQuestions(dbPediaResources, level);
-            if(selectQuestions != null){
-                return Response.status(200).entity(selectQuestions).build();
-            }
-        }
-        return Response.noContent().build();
-    }
-
     @Path("/select/{level}/text")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -159,16 +160,6 @@ public class QuestionGenerator {
             dbPediaResources.forEach(resource -> {
                 WhoAmIQuestion whoAmIQuestionAndAnswers = DistractorGenerator.getWhoAmIQuestionAndDistractors(resource, level);
                 if (whoAmIQuestionAndAnswers != null) {
-//                    String questionText = whoAmIQuestionAndAnswers.get(0);
-//                    String answer = whoAmIQuestionAndAnswers.get(1);
-//                    if (!answer.trim().isEmpty()) {
-//                        questionBuilder.questionText(questionText)
-//                                .answer(answer);
-//                        if (whoAmIQuestionAndAnswers.size() > 2) {
-//                            questionBuilder.distractors(whoAmIQuestionAndAnswers.subList(2, whoAmIQuestionAndAnswers.size()));
-//                        }
-//                        whoAmIQuestions.add(questionBuilder.build());
-//                    }
                     whoAmIQuestions.add(whoAmIQuestionAndAnswers);
                 }
             });
@@ -210,9 +201,6 @@ public class QuestionGenerator {
         String dir = System.getProperty("user.dir");
         RiWordNet wordnet = new RiWordNet(dir + "/wordnet/");
 
-//        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
-//        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-
         if (dbPediaResources == null || dbPediaResources.size() == 0) {
             return gapFillQuestionSets;
         }
@@ -220,15 +208,9 @@ public class QuestionGenerator {
             QGenLogger.info("Resources retrieved");
             dbPediaResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
         }
-        // Selecting most relevant occurring words
-//        List<DBPediaResource> topResources = retriever.getMostRelevantWords(NLPConsts.WORDS_COUNT);
-//        List<DBPediaResource> topResources = dbPediaResources;
-//        if (envIsDev) {
-//            QGenLogger.info("Relevant resources");
-//            topResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
-//        }
-        String cleanText = text.replaceAll("/\\s*(?:[\\dA-Z]+\\.|[a-z]\\)|•)+/gm", ".");
-        System.out.println(cleanText);
+        String cleanText = text.replaceAll("/\\s*(?:[\\dA-Z]+\\.|[a-z]\\)|•)+/gm", ". ");
+        cleanText = cleanText.replaceAll("/(\r\n|\n|\r)/gm",". ");
+        cleanText = cleanText.replaceAll("\n",". ");
         LanguageProcessor processor = new LanguageProcessor(cleanText);
         List<String> sentences = processor.getSentences();
 
@@ -252,44 +234,6 @@ public class QuestionGenerator {
             QGenUtils.removeDuplicatesFromStringList(inTextDistractors);
             gapFillQuestionSets.add(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
         });
-
-//        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(topResources);
-//        ImmutableSet<String> types = mapOfGroupedResources.keySet();
-//        types.forEach(type -> {
-//            ImmutableList<DBPediaResource> groupedResources = mapOfGroupedResources.get(type);
-//            if (envIsDev)
-//                QGenLogger.info(type);
-//            if (type.isEmpty()) {
-//                for (DBPediaResource resource : groupedResources) {
-//                    String surfaceForm = resource.getSurfaceForm();
-//                    String plural = RiTa.pluralize(surfaceForm);
-//                    if (envIsDev) {
-//                        QGenLogger.info(surfaceForm);
-//                    }
-//                    List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(resource);
-//                    if (externalDistractors == null) {
-//                        externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
-//                    }
-//                    questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, new ArrayList<>()));
-//                }
-//            } else {
-//                DBPediaResource firstResource = groupedResources.get(0);
-//                List<String> externalDistractors = TextInfoRetriever.getExternalDistractors(firstResource);
-//                for (DBPediaResource resource : groupedResources) {
-//                    String surfaceForm = resource.getSurfaceForm();
-//                    String plural = RiTa.pluralize(surfaceForm);
-//                    if (envIsDev) {
-//                        QGenLogger.info(surfaceForm);
-//                    }
-//                    if (externalDistractors == null) {
-//                        externalDistractors = attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
-//                    }
-//                    List<String> inTextDistractors = groupedResources.stream().filter(res -> !res.equals(resource))
-//                            .map(res -> surfaceForm).collect(Collectors.toList());
-//                    questions.addAll(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
-//                }
-//            }
-//        });
         return gapFillQuestionSets;
     }
 

@@ -11,6 +11,7 @@ import java.util.List;
 @Data
 @Builder
 public class WhoAmIQuestion implements Question {
+    private String question;
     private String baseType;
     private String answer;
     private String firstSubject;

@@ -960,6 +960,8 @@ public class ARQClient {
                 }
                 builder.distractors(distractors);
             }
+            WhoAmIVerbaliser whoAmIVerbaliser = new WhoAmIVerbaliser();
+            builder.question(whoAmIVerbaliser.verbalise(builder.build()));
             return builder.build();
         }
         return null;
