@@ -54,10 +54,9 @@ public class QuestionGenerator {
                 .get(NLP.class);
         DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
         if(spotlightResults != null){
-            List<DBPediaResource> dbPediaResources = spotlightResults.getDBPediaResources();
-            List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
+            List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
             if(type.equals(GAP_FILL)) {
-                List<GapFillQuestionSet> gapFillQuestionSets = getQuestionsForText(spotlightResults.getText(), resources, level);
+                List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(spotlightResults.getText(), resources, level);
                 if(gapFillQuestionSets != null) {
                     return Response.status(200).entity(gapFillQuestionSets).build();
                 }
@@ -69,7 +68,7 @@ public class QuestionGenerator {
                 }
             }
             if(type.equals(WHOAMI)) {
-                List<WhoAmIQuestion> questions = getWhoamIQuestions(dbPediaResources, level);
+                List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
                 if(questions != null){
                     return Response.status(200).entity(questions).build();
                 }
@@ -78,20 +77,32 @@ public class QuestionGenerator {
         return Response.noContent().build();
     }
 
-
-    @Path("/{level}/text")
+    @Path("/{type}/{level}/text")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
-    public Response generateQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
-
-        List<GapFillQuestionSet> gapFillQuestionSets;
+    public Response generateQuestionsForText(@PathParam("type") String type, @PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
         TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
-        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        gapFillQuestionSets = getQuestionsForText(text, dbPediaResources, level);
-
-        if (gapFillQuestionSets.isEmpty()) return Response.noContent().build();
-        return Response.status(200).entity(gapFillQuestionSets).build();
+        List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(retriever.getDbPediaResources());
+        if(type.equals(GAP_FILL)) {
+            List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(text, resources, level);
+            if(gapFillQuestionSets != null) {
+                return Response.status(200).entity(gapFillQuestionSets).build();
+            }
+        }
+        if(type.equals(SELECT)) {
+            List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
+            if(selectQuestions != null){
+                return Response.status(200).entity(selectQuestions).build();
+            }
+        }
+        if(type.equals(WHOAMI)) {
+            List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
+            if(questions != null){
+                return Response.status(200).entity(questions).build();
+            }
+        }
+        return Response.noContent().build();
     }
 
     @Path("/text/numbers")
@@ -119,38 +130,6 @@ public class QuestionGenerator {
             gapFillQuestionSets.add(builder.build());
         });
         return Response.status(200).entity(gapFillQuestionSets).build();
-    }
-
-    @Path("/select/{level}/text")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response generateSelectQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
-        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
-        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        List<SelectQuestion> selectQuestions = getSelectQuestions(dbPediaResources, level);
-        if(selectQuestions != null){
-            return Response.status(200).entity(selectQuestions).build();
-        }
-        return Response.noContent().build();
-    }
-
-    @Path("/whoami/{level}/text")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response generateWhoAmIQuestionsForText(@PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
-        TextInfoRetriever retriever = new TextInfoRetriever(text, DBPEDIA_PERSON, servletContext);
-        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
-        List<WhoAmIQuestion> questions = getWhoamIQuestions(dbPediaResources, level);
-        if(questions != null){
-            WhoAmIVerbaliser whoAmIVerbaliser = new WhoAmIVerbaliser();
-            for (WhoAmIQuestion question : questions) {
-                System.out.println(whoAmIVerbaliser.verbalise(question));
-            }
-            return Response.status(200).entity(questions).build();
-        }
-        return Response.noContent().build();
     }
 
     private List<WhoAmIQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
@@ -192,7 +171,7 @@ public class QuestionGenerator {
         return null;
     }
 
-    private List<GapFillQuestionSet> getQuestionsForText(String text, List<DBPediaResource> dbPediaResources, String level) {
+    private List<GapFillQuestionSet> getGapFillQuestionsForText(String text, List<DBPediaResource> dbPediaResources, String level) {
         List<GapFillQuestionSet> gapFillQuestionSets = new ArrayList<>();
 
         String env = servletContext.getInitParameter("env");
