@@ -91,7 +91,12 @@ public class QuestionGenerator {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     public Response generateQuestionsForText(@PathParam("type") String type, @PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
-        TextInfoRetriever retriever = new TextInfoRetriever(text, servletContext);
+        TextInfoRetriever retriever;
+        if(type.equals(WHOAMI)){
+            retriever = new TextInfoRetriever(text, DBPEDIA_PERSON, servletContext);
+        } else {
+            retriever = new TextInfoRetriever(text, servletContext);
+        }
         List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(retriever.getDbPediaResources());
         if(type.equals(GAP_FILL)) {
             List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(text, resources, level);
@@ -114,32 +119,32 @@ public class QuestionGenerator {
         return Response.noContent().build();
     }
 
-    @Path("/text/numbers")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response generateQuestionsForValues(String text) {
-        LanguageProcessor processor = new LanguageProcessor(text);
-        List<GapFillQuestionSet> gapFillQuestionSets = new ArrayList<>();
-        Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
-        System.out.println(sentencesWithNumbers);
-        Set<String> numbers = sentencesWithNumbers.keySet();
-        sentencesWithNumbers.forEach((numberString, sentences) -> {
-            GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
-            builder.
-                    answer(numberString).
-                    inTextDistractors(numbers.stream().
-                            filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
-            List<String> questionStrings = new ArrayList<>();
-            sentences.forEach(sentence -> {
-                String questionText = sentence.replaceAll("\\b" + numberString + "\\b", BLANK);
-                questionStrings.add(questionText);
-            });
-            builder.questions(questionStrings);
-            gapFillQuestionSets.add(builder.build());
-        });
-        return Response.status(200).entity(gapFillQuestionSets).build();
-    }
+//    @Path("/text/numbers")
+//    @POST
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Consumes(MediaType.TEXT_PLAIN)
+//    public Response generateQuestionsForValues(String text) {
+//        LanguageProcessor processor = new LanguageProcessor(text);
+//        List<GapFillQuestionSet> gapFillQuestionSets = new ArrayList<>();
+//        Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
+//        System.out.println(sentencesWithNumbers);
+//        Set<String> numbers = sentencesWithNumbers.keySet();
+//        sentencesWithNumbers.forEach((numberString, sentences) -> {
+//            GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
+//            builder.
+//                    answer(numberString).
+//                    inTextDistractors(numbers.stream().
+//                            filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
+//            List<String> questionStrings = new ArrayList<>();
+//            sentences.forEach(sentence -> {
+//                String questionText = sentence.replaceAll("\\b" + numberString + "\\b", BLANK);
+//                questionStrings.add(questionText);
+//            });
+//            builder.questions(questionStrings);
+//            gapFillQuestionSets.add(builder.build());
+//        });
+//        return Response.status(200).entity(gapFillQuestionSets).build();
+//    }
 
     private List<WhoAmIQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
         if(dbPediaResources != null && !dbPediaResources.isEmpty()){

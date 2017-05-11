@@ -21,14 +21,7 @@ public class TextInfoRetriever {
         DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
         dbPediaSpotlightClient.init(servletContext);
         DBPediaSpotlightResult response;
-        //TODO Check for text length limit
-        if (text.length() < 200) {
-            System.out.println("GET");
-            response = dbPediaSpotlightClient.annotateGet(text);
-        } else {
-            System.out.println("POST");
-            response = dbPediaSpotlightClient.annotatePost(text);
-        }
+        response = dbPediaSpotlightClient.annotatePost(text);
         dbPediaResources = response.getDBPediaResources();
     }
 
@@ -36,11 +29,7 @@ public class TextInfoRetriever {
         DBPediaSpotlightClient dbPediaSpotlightClient = new DBPediaSpotlightClient();
         dbPediaSpotlightClient.init(servletContext);
         DBPediaSpotlightResult response;
-        if (text.length() < 200) {
-            response = dbPediaSpotlightClient.annotateGet(text, filterType);
-        } else {
-            response = dbPediaSpotlightClient.annotatePost(text, filterType);
-        }
+        response = dbPediaSpotlightClient.annotatePost(text, filterType);
         dbPediaResources = response.getDBPediaResources();
     }
 
