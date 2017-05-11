@@ -21,44 +21,39 @@ The username/password for the tomcat server is set in the tomcat-users.xml and t
 
 #### REST Endpoints
 
-##### Production
+##### Questions from Decks
 
-```GET /qgen/{level}/{id}```
+```GET /qgen/{type}/{level}/{deckID}```
 
-This endpoint is for getting questions for a deck by passing the difficulty level and deck id.
-The difficulty level can be either "easy", "medium" or "hard" (without quotes).
+This endpoint is for getting questions for a deck by passing the question type, difficulty level and deck id.
 
-```
-curl -X GET "http://localhost:8080/qgen/easy/997-1"
+The type can be either "gap-fill", "select" or "whoami" (without quotes).
 
-```
+The difficulty level can be either "easy" or "hard" (without quotes).
 
-##### Development
-
-The following endpoints are for a development environment only and might be removed in the future
-
-```POST /qgen/{level}/text/```
-
-For testing the system by sending text to it
+An example is shown below:
 
 ```
-curl -X POST -H "Content-Type: text/plain" -d 'Germany won the 2014 FIFA World Cup.' "http://localhost:8080/qgen/text"
+curl -X GET http://localhost:8080/qgen/select/hard/1573
 ```
 
-```POST /qgen/text/numbers/```
+##### Questions from Text
 
-For getting questions related to values/numerals found in the text. This is done using the Stanford CoreNLP tools.
- 
+This endpoint is for getting questions for some text by passing the question type, difficulty level and text.
+
+```POST /qgen/{type}/{level}/text```
+
+The type and level is the same as the shown previously.
+
+An example cURL request is shown below: 
+
 ```
-curl -X POST -H "Content-Type: text/plain" -d 'Germany won the 2014 FIFA World Cup.' "http://localhost:8080/qgen/text/numbers"
+curl -X POST \
+  http://localhost:8080/qgen/gap-fill/easy/text \
+  -H 'content-type: text/plain' \
+  -d 'Germany won the 2014 FIFA World Cup.'
 ```
 
-```POST /qgen/select/{level}/text/```
-
-For select multiple choice questions
-```
-curl -X POST -H "Content-Type: text/plain" -d 'Mount Rushmore has faces carved onto it.' "http://localhost:8080/qgen/select/easy/text"
-```
 ### Running with the spotlight docker container (Production Environment)
 
 One can also run a container of DBPediaSpotlight on the same host as this one and communicate with it.
