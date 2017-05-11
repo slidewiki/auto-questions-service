@@ -29,7 +29,7 @@ public class QuestionGenerator {
 
     private static final String BLANK = "________";
     private static final String SELECT_QUESTION_TEXT = " is a: ";
-    private static final String DBPEDIA_PERSON = "DBPedia:Person";
+    private static final String DBPEDIA_PERSON = "DBpedia:Person";
     private static final String DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE = "dbpediaSpotlightConfidenceForSlide";
     private static final String DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK = "dbpediaSpotlightConfidenceForDeck";
     private static final double SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE = 0.6;
@@ -45,32 +45,41 @@ public class QuestionGenerator {
     @Produces(MediaType.APPLICATION_JSON)
     public Response generateQuestionsForSlides(@PathParam("type") String type, @PathParam("level") String level, @PathParam("deckID") String deckID) {
         Client client = ClientBuilder.newClient();
-        String hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
+        String hostIp = "https://nlpstore.experimental.slidewiki.org/nlp/" + deckID;
         WebTarget webTarget = client.target(hostIp);
         NLP nlp = webTarget
-                .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE, SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE)
-                .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK, SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE)
                 .request(MediaType.APPLICATION_JSON)
                 .get(NLP.class);
-        DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
-        if(spotlightResults != null){
-            List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
-            if(type.equals(GAP_FILL)) {
-                List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(spotlightResults.getText(), resources, level);
-                if(gapFillQuestionSets != null) {
-                    return Response.status(200).entity(gapFillQuestionSets).build();
+        if(nlp == null){
+            hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
+            webTarget = client.target(hostIp);
+            nlp = webTarget
+                    .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE, SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE)
+                    .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK, SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE)
+                    .request(MediaType.APPLICATION_JSON)
+                    .get(NLP.class);
+        }
+        if(nlp != null){
+            DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
+            if(spotlightResults != null){
+                List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
+                if(type.equals(GAP_FILL)) {
+                    List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(spotlightResults.getText(), resources, level);
+                    if(gapFillQuestionSets != null) {
+                        return Response.status(200).entity(gapFillQuestionSets).build();
+                    }
                 }
-            }
-            if(type.equals(SELECT)) {
-                List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
-                if(selectQuestions != null){
-                    return Response.status(200).entity(selectQuestions).build();
+                if(type.equals(SELECT)) {
+                    List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
+                    if(selectQuestions != null){
+                        return Response.status(200).entity(selectQuestions).build();
+                    }
                 }
-            }
-            if(type.equals(WHOAMI)) {
-                List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
-                if(questions != null){
-                    return Response.status(200).entity(questions).build();
+                if(type.equals(WHOAMI)) {
+                    List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
+                    if(questions != null){
+                        return Response.status(200).entity(questions).build();
+                    }
                 }
             }
         }
@@ -135,6 +144,11 @@ public class QuestionGenerator {
     private List<WhoAmIQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
         if(dbPediaResources != null && !dbPediaResources.isEmpty()){
             dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
+            dbPediaResources = dbPediaResources.stream().
+                    filter(dbPediaResource -> {
+                        String types = dbPediaResource.getTypes();
+                        return !types.isEmpty() && types.contains(DBPEDIA_PERSON);
+                    }).collect(Collectors.toList());
             List<WhoAmIQuestion> whoAmIQuestions = new ArrayList<>();
             dbPediaResources.forEach(resource -> {
                 WhoAmIQuestion whoAmIQuestionAndAnswers = DistractorGenerator.getWhoAmIQuestionAndDistractors(resource, level);
