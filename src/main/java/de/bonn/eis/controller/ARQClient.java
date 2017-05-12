@@ -322,7 +322,7 @@ public class ARQClient {
                 qExec.addDefaultGraph(defaultGraph);
             }
         }
-//        qExec.addParam("timeout", TIMEOUT_VALUE); //1 sec
+        qExec.addParam("timeout", TIMEOUT_VALUE); //100 sec
         ResultSet set = null;
         try {
             set = qExec.execSelect();
