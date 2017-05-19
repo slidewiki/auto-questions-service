@@ -62,23 +62,26 @@ public class QuestionGenerator {
         if(nlp != null){
             DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
             if(spotlightResults != null){
-                List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(spotlightResults.getDBPediaResources());
-                if(type.equals(GAP_FILL)) {
-                    List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(spotlightResults.getText(), resources, level);
-                    if(gapFillQuestionSets != null) {
-                        return Response.status(200).entity(gapFillQuestionSets).build();
+                List<DBPediaResource> resources = spotlightResults.getDBPediaResources();
+                if(resources != null && !resources.isEmpty()){
+                    resources = QGenUtils.removeDuplicatesFromResourceList(resources);
+                    if(type.equals(GAP_FILL)) {
+                        List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(spotlightResults.getText(), resources, level);
+                        if(gapFillQuestionSets != null) {
+                            return Response.status(200).entity(gapFillQuestionSets).build();
+                        }
                     }
-                }
-                if(type.equals(SELECT)) {
-                    List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
-                    if(selectQuestions != null){
-                        return Response.status(200).entity(selectQuestions).build();
+                    if(type.equals(SELECT)) {
+                        List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
+                        if(selectQuestions != null){
+                            return Response.status(200).entity(selectQuestions).build();
+                        }
                     }
-                }
-                if(type.equals(WHOAMI)) {
-                    List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
-                    if(questions != null){
-                        return Response.status(200).entity(questions).build();
+                    if(type.equals(WHOAMI)) {
+                        List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
+                        if(questions != null){
+                            return Response.status(200).entity(questions).build();
+                        }
                     }
                 }
             }
@@ -118,33 +121,6 @@ public class QuestionGenerator {
         }
         return Response.noContent().build();
     }
-
-//    @Path("/text/numbers")
-//    @POST
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @Consumes(MediaType.TEXT_PLAIN)
-//    public Response generateQuestionsForValues(String text) {
-//        LanguageProcessor processor = new LanguageProcessor(text);
-//        List<GapFillQuestionSet> gapFillQuestionSets = new ArrayList<>();
-//        Map<String, List<String>> sentencesWithNumbers = processor.getCardinals();
-//        System.out.println(sentencesWithNumbers);
-//        Set<String> numbers = sentencesWithNumbers.keySet();
-//        sentencesWithNumbers.forEach((numberString, sentences) -> {
-//            GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
-//            builder.
-//                    answer(numberString).
-//                    inTextDistractors(numbers.stream().
-//                            filter(num -> !num.equalsIgnoreCase(numberString)).collect(Collectors.toList()));
-//            List<String> questionStrings = new ArrayList<>();
-//            sentences.forEach(sentence -> {
-//                String questionText = sentence.replaceAll("\\b" + numberString + "\\b", BLANK);
-//                questionStrings.add(questionText);
-//            });
-//            builder.questions(questionStrings);
-//            gapFillQuestionSets.add(builder.build());
-//        });
-//        return Response.status(200).entity(gapFillQuestionSets).build();
-//    }
 
     private List<WhoAmIQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
         if(dbPediaResources != null && !dbPediaResources.isEmpty()){
@@ -230,7 +206,10 @@ public class QuestionGenerator {
                     filter(res -> (!res.equals(resource) && !res.getSurfaceForm().equalsIgnoreCase(resource.getSurfaceForm())))
                     .map(DBPediaResource::getSurfaceForm).collect(Collectors.toList());
             QGenUtils.removeDuplicatesFromStringList(inTextDistractors);
-            gapFillQuestionSets.add(getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors));
+            GapFillQuestionSet questionSet = getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors);
+            if(questionSet != null){
+                gapFillQuestionSets.add(questionSet);
+            }
         });
         return gapFillQuestionSets;
     }
@@ -245,11 +224,8 @@ public class QuestionGenerator {
     private GapFillQuestionSet getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
         List<String> questions = new ArrayList<>();
         GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
-        builder.answer(resourceName).
-                externalDistractors(externalDistractors).
-                inTextDistractors(inTextDistractors);
         sentences.forEach(s -> {
-            if (QGenUtils.sourceHasWord(s, resourceName)) {
+            if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWord(s, resourceName)) {
                 String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
                 if (QGenUtils.sourceHasWord(s, pluralResourceName)) {
                     questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
@@ -258,7 +234,13 @@ public class QuestionGenerator {
                 questions.add(questionText);
             }
         });
-        builder.questions(questions);
-        return builder.build();
+        if(questions.isEmpty()){
+            return null;
+        }
+        return builder.questions(questions).
+                answer(resourceName).
+                externalDistractors(externalDistractors).
+                inTextDistractors(inTextDistractors).
+                build();
     }
 }

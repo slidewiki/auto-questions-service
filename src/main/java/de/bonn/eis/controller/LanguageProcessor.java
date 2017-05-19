@@ -1,57 +1,39 @@
 package de.bonn.eis.controller;
 
-import edu.stanford.nlp.ling.CoreAnnotations;
-import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.util.CoreMap;
+import opennlp.tools.sentdetect.SentenceDetectorME;
+import opennlp.tools.sentdetect.SentenceModel;
 
-import java.util.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Ainuddin Faizan on 12/6/16.
  */
 public class LanguageProcessor {
 
-    private Properties props;
-    private StanfordCoreNLP pipeline;
-    private Annotation document;
-    private List<CoreMap> coreMaps;
+    private SentenceModel model;
+    private String text;
+
 
     public LanguageProcessor(String text) {
-        props = new Properties();
-        props.setProperty("annotators", "tokenize, ssplit, pos");
-        pipeline = new StanfordCoreNLP(props);
-        document = new Annotation(text);
-        pipeline.annotate(document);
-        coreMaps = document.get(CoreAnnotations.SentencesAnnotation.class);
+        String dir = System.getProperty("user.dir");
+        try {
+            InputStream inputStream = new FileInputStream(dir + "/en-sent.bin");
+            model = new SentenceModel(inputStream);
+            this.text = text;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<String> getSentences() {
         List<String> sentences = new ArrayList<>();
-        coreMaps.forEach(coreMap -> sentences.add(coreMap.get(CoreAnnotations.TextAnnotation.class)));
+        SentenceDetectorME detector = new SentenceDetectorME(model);
+        sentences.addAll(Arrays.asList(detector.sentDetect(text)));
         return sentences;
     }
-
-    public Map<String, List<String>> getCardinals() {
-        Map<String, List<String>> cardinalsAndSentencesMap = new LinkedHashMap<>();
-        coreMaps.forEach(coreMap -> {
-            for (CoreLabel token : coreMap.get(CoreAnnotations.TokensAnnotation.class)) {
-                String pos = token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-                if (pos.equalsIgnoreCase("CD")) {
-                    String word = token.get(CoreAnnotations.TextAnnotation.class);
-                    List<String> sentenceList = cardinalsAndSentencesMap.getOrDefault(word, new ArrayList<>());
-                    sentenceList.add(coreMap.get(CoreAnnotations.TextAnnotation.class));
-                    cardinalsAndSentencesMap.put(word, sentenceList);
-                }
-            }
-        });
-        return cardinalsAndSentencesMap;
-    }
-//
-//    public String getPOSTag(int offset) {
-//        List<CoreLabel> tokens = document.get(CoreAnnotations.TokensAnnotation.class);
-//        CoreLabel token = tokens.get(offset);
-//        return token.get(CoreAnnotations.PartOfSpeechAnnotation.class);
-//    }
 }

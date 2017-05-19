@@ -84,6 +84,7 @@
         <jsoup.version>1.10.2</jsoup.version>
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
         <inflector.version>0.7.0</inflector.version>
+        <opennlp-tools.version>1.7.2</opennlp-tools.version>
     </properties>
 
     <dependencies>
@@ -92,17 +93,6 @@
             <artifactId>apache-jena-libs</artifactId>
             <type>pom</type>
             <version>${jena.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>${nlp.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>${nlp.version}</version>
-            <classifier>models</classifier>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
@@ -161,6 +151,11 @@
             <artifactId>rita</artifactId>
             <version>1.0.92-SNAPSHOT</version>
         </dependency>
-
+        <!-- https://mvnrepository.com/artifact/org.apache.opennlp/opennlp-tools -->
+        <dependency>
+            <groupId>org.apache.opennlp</groupId>
+            <artifactId>opennlp-tools</artifactId>
+            <version>${opennlp-tools.version}</version>
+        </dependency>
     </dependencies>
 </project>
