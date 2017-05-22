@@ -114,26 +114,28 @@ public class QuestionGenerator {
         } else {
             retriever = new TextInfoRetriever(text, servletContext);
         }
-        int maxIndex = retriever.getDbPediaResources().size() < 5 ? retriever.getDbPediaResources().size() - 1 : 5;
-        resources.addAll(retriever.getFrequentWords(maxIndex).keySet());
-
-        if(type.equals(GAP_FILL)) {
-            List<GapFillDistractor> distractors = getGapFillDistractors(resources, level);
-            List<QuestionSetPerSlide> gapFillQuestionSets = getGapFillQuestions(text, null, distractors);
-            if(gapFillQuestionSets != null) {
-                return Response.status(200).entity(gapFillQuestionSets).build();
+        List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
+        if(dbPediaResources != null && !dbPediaResources.isEmpty()){
+            int maxIndex = dbPediaResources.size() < 5 ? dbPediaResources.size() - 1 : 5;
+            resources.addAll(retriever.getFrequentWords(maxIndex).keySet());
+            if(type.equals(GAP_FILL)) {
+                List<GapFillDistractor> distractors = getGapFillDistractors(resources, level);
+                List<QuestionSetPerSlide> gapFillQuestionSets = getGapFillQuestions(text, null, distractors);
+                if(gapFillQuestionSets != null) {
+                    return Response.status(200).entity(gapFillQuestionSets).build();
+                }
             }
-        }
-        if(type.equals(SELECT)) {
-            List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
-            if(selectQuestions != null){
-                return Response.status(200).entity(selectQuestions).build();
+            if(type.equals(SELECT)) {
+                List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
+                if(selectQuestions != null){
+                    return Response.status(200).entity(selectQuestions).build();
+                }
             }
-        }
-        if(type.equals(WHOAMI)) {
-            List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
-            if(questions != null){
-                return Response.status(200).entity(questions).build();
+            if(type.equals(WHOAMI)) {
+                List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
+                if(questions != null){
+                    return Response.status(200).entity(questions).build();
+                }
             }
         }
         return Response.noContent().build();
