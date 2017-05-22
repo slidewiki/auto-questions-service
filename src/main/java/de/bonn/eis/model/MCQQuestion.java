@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Data
 @Builder
-public class GapFillQuestionSet implements Serializable, Question {
+public class MCQQuestion implements Serializable, Question {
     private String questionText;
     private String answer;
     private List<String> inTextDistractors;

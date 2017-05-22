@@ -85,7 +85,7 @@ public class QuestionGenerator {
                         }
                     }
                     if(type.equals(SELECT)) {
-                        List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
+                        List<MCQQuestion> selectQuestions = getSelectQuestions(resources, level);
                         if(selectQuestions != null){
                             return Response.status(200).entity(selectQuestions).build();
                         }
@@ -126,7 +126,7 @@ public class QuestionGenerator {
                 }
             }
             if(type.equals(SELECT)) {
-                List<SelectQuestion> selectQuestions = getSelectQuestions(resources, level);
+                List<MCQQuestion> selectQuestions = getSelectQuestions(resources, level);
                 if(selectQuestions != null){
                     return Response.status(200).entity(selectQuestions).build();
                 }
@@ -161,12 +161,12 @@ public class QuestionGenerator {
         return null;
     }
 
-    private List<SelectQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {
+    private List<MCQQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {
         if(resources!= null && !resources.isEmpty()) {
             resources = QGenUtils.removeDuplicatesFromResourceList(resources);
-            List<SelectQuestion> selectQuestions = new ArrayList<>();
+            List<MCQQuestion> selectQuestions = new ArrayList<>();
             resources.forEach(resource -> {
-                SelectQuestion.SelectQuestionBuilder questionBuilder = SelectQuestion.builder();
+                MCQQuestion.MCQQuestionBuilder questionBuilder = MCQQuestion.builder();
                 List<String> answerAndDistractors = DistractorGenerator.getSelectQuestionDistractors(resource, level);
                 if (answerAndDistractors != null && !answerAndDistractors.isEmpty()) {
                     String answer = answerAndDistractors.get(0);
@@ -174,7 +174,7 @@ public class QuestionGenerator {
                         questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
                                 .answer(answer);
                         if (answerAndDistractors.size() > 1) {
-                            questionBuilder.distractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
+                            questionBuilder.externalDistractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
                         }
                         selectQuestions.add(questionBuilder.build());
                     }
@@ -221,7 +221,7 @@ public class QuestionGenerator {
             for (GapFillDistractor gapFillDistractor : distractorsPerResource) {
                 String resourceName = gapFillDistractor.getSurfaceForm();
                 String pluralResourceName = gapFillDistractor.getPluralSurfaceForm();
-                GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
+                MCQQuestion.MCQQuestionBuilder builder = MCQQuestion.builder();
                 if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWord(s, resourceName)) {
                     String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
                     if (QGenUtils.sourceHasWord(s, pluralResourceName)) {
