@@ -64,9 +64,22 @@ public class QuestionGenerator {
             if(spotlightResults != null){
                 List<DBPediaResource> resources = spotlightResults.getDBPediaResources();
                 if(resources != null && !resources.isEmpty()){
+                    List<Frequency> frequencies = nlp.getDBPediaSpotlightURIFrequencies();
+                    int maxIndex = frequencies.size() < 5 ? frequencies.size() - 1 : 5;
+                    frequencies = frequencies.subList(0, maxIndex);
                     resources = QGenUtils.removeDuplicatesFromResourceList(resources);
+                    List<DBPediaResource> temp = new ArrayList<>();
+                    for (DBPediaResource resource : resources) {
+                        for (Frequency frequency : frequencies) {
+                            if(resource.getURI().equals(frequency.getEntry())){
+                                temp.add(resource);
+                            }
+                        }
+                    }
+                    resources = temp;
                     if(type.equals(GAP_FILL)) {
-                        List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(spotlightResults.getText(), resources, level);
+                        List<GapFillDistractor> distractors = getGapFillDistractors(resources, level);
+                        List<QuestionSetPerSlide> gapFillQuestionSets = getGapFillQuestions(null, nlp.getChildren(), distractors);
                         if(gapFillQuestionSets != null) {
                             return Response.status(200).entity(gapFillQuestionSets).build();
                         }
@@ -95,14 +108,18 @@ public class QuestionGenerator {
     @Consumes(MediaType.TEXT_PLAIN)
     public Response generateQuestionsForText(@PathParam("type") String type, @PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
         TextInfoRetriever retriever;
+        List<DBPediaResource> resources = new ArrayList<>();
         if(type.equals(WHOAMI)){
             retriever = new TextInfoRetriever(text, DBPEDIA_PERSON, servletContext);
         } else {
             retriever = new TextInfoRetriever(text, servletContext);
         }
-        List<DBPediaResource> resources = QGenUtils.removeDuplicatesFromResourceList(retriever.getDbPediaResources());
+        int maxIndex = retriever.getDbPediaResources().size() < 5 ? retriever.getDbPediaResources().size() - 1 : 5;
+        resources.addAll(retriever.getFrequentWords(maxIndex).keySet());
+
         if(type.equals(GAP_FILL)) {
-            List<GapFillQuestionSet> gapFillQuestionSets = getGapFillQuestionsForText(text, resources, level);
+            List<GapFillDistractor> distractors = getGapFillDistractors(resources, level);
+            List<QuestionSetPerSlide> gapFillQuestionSets = getGapFillQuestions(text, null, distractors);
             if(gapFillQuestionSets != null) {
                 return Response.status(200).entity(gapFillQuestionSets).build();
             }
@@ -166,33 +183,61 @@ public class QuestionGenerator {
         return null;
     }
 
-    private List<GapFillQuestionSet> getGapFillQuestionsForText(String text, List<DBPediaResource> dbPediaResources, String level) {
-        List<GapFillQuestionSet> gapFillQuestionSets = new ArrayList<>();
+    private List<QuestionSetPerSlide> getGapFillQuestions(String text, List<NlpProcessResults> nlpProcessResults, List<GapFillDistractor> distractorsPerResource) {
+        List<QuestionSetPerSlide> questionSetPerSlideList = new ArrayList<>();
+        QuestionSetPerSlide.QuestionSetPerSlideBuilder builder;
+        List<Question> questions;
 
+        if(text != null) {
+            builder = QuestionSetPerSlide.builder();
+            questions = getGapFillQuestionSetForText(text, distractorsPerResource);
+            builder.questionSet(questions);
+            questionSetPerSlideList.add(builder.build());
+        } else if(nlpProcessResults != null) {
+            // Each process result is for a slide
+            for (NlpProcessResults result : nlpProcessResults) {
+                builder = QuestionSetPerSlide.builder();
+                questions = getGapFillQuestionSetForText(result.getSlideTitleAndText(), distractorsPerResource);
+                builder.
+                        slideId(result.getSlideId()).
+                        questionSet(questions);
+                questionSetPerSlideList.add(builder.build());
+            }
+        }
+        return questionSetPerSlideList;
+    }
+
+    private List<Question> getGapFillQuestionSetForText(String text, List<GapFillDistractor> distractorsPerResource) {
+        List<Question> gapFillQuestionSets = new ArrayList<>();
+        String cleanText = text.replaceAll("/\\s*(?:[\\dA-Z]+\\.|[a-z]\\)|•)+/gm", ". ");
+        cleanText = cleanText.replaceAll("/(\r\n|\n|\r)/gm",". ");
+        cleanText = cleanText.replaceAll("\n",". ");
+        LanguageProcessor processor = new LanguageProcessor(cleanText);
+        List<String> sentences = processor.getSentences();
+        for (GapFillDistractor gapFillDistractor : distractorsPerResource) {
+            GapFillQuestionSet questionSet = makeGapFillQuestionsFromSentences(sentences, gapFillDistractor.getSurfaceForm(), gapFillDistractor.getPluralSurfaceForm()
+                    , gapFillDistractor.getExternalDistractors(), gapFillDistractor.getInTextDistractors());
+            if(questionSet != null){
+                gapFillQuestionSets.add(questionSet);
+            }
+        }
+        if(gapFillQuestionSets.isEmpty()){
+            return null;
+        }
+        return gapFillQuestionSets;
+    }
+
+    private List<GapFillDistractor> getGapFillDistractors(List<DBPediaResource> dbPediaResources, String level) {
+
+        List<GapFillDistractor> distractorsPerResource = new ArrayList<>();
         String env = servletContext.getInitParameter("env");
         boolean envIsDev = env == null || !env.equalsIgnoreCase("prod");
 
         String dir = System.getProperty("user.dir");
         RiWordNet wordnet = new RiWordNet(dir + "/wordnet/");
 
-        if (dbPediaResources == null || dbPediaResources.size() == 0) {
-            return gapFillQuestionSets;
-        }
-        if (envIsDev) {
-            QGenLogger.info("Resources retrieved");
-            dbPediaResources.forEach(resource -> QGenLogger.info(resource.getSurfaceForm()));
-        }
-        String cleanText = text.replaceAll("/\\s*(?:[\\dA-Z]+\\.|[a-z]\\)|•)+/gm", ". ");
-        cleanText = cleanText.replaceAll("/(\r\n|\n|\r)/gm",". ");
-        cleanText = cleanText.replaceAll("\n",". ");
-        LanguageProcessor processor = new LanguageProcessor(cleanText);
-        List<String> sentences = processor.getSentences();
-
-        //TODO Efficiency?
-        //TODO Create distractor cache for resources with same types or create some scheme
-
         ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(dbPediaResources);
-        dbPediaResources.forEach(resource -> {
+        for (DBPediaResource resource: dbPediaResources) {
             String surfaceForm = resource.getSurfaceForm();
             String plural = RiTa.pluralize(surfaceForm);
             if (envIsDev) {
@@ -206,12 +251,16 @@ public class QuestionGenerator {
                     filter(res -> (!res.equals(resource) && !res.getSurfaceForm().equalsIgnoreCase(resource.getSurfaceForm())))
                     .map(DBPediaResource::getSurfaceForm).collect(Collectors.toList());
             QGenUtils.removeDuplicatesFromStringList(inTextDistractors);
-            GapFillQuestionSet questionSet = getQuestionsForResource(sentences, surfaceForm, plural, externalDistractors, inTextDistractors);
-            if(questionSet != null){
-                gapFillQuestionSets.add(questionSet);
-            }
-        });
-        return gapFillQuestionSets;
+            GapFillDistractor.GapFillDistractorBuilder builder = GapFillDistractor.builder();
+            builder.
+                    surfaceForm(resource.getSurfaceForm()).
+                    pluralSurfaceForm(plural).
+                    resourceURI(resource.getURI()).
+                    inTextDistractors(inTextDistractors).
+                    externalDistractors(externalDistractors);
+            distractorsPerResource.add(builder.build());
+        }
+        return distractorsPerResource;
     }
 
     private List<String> attemptToGetSynonyms(RiWordNet wordnet, String surfaceForm) {
@@ -221,7 +270,8 @@ public class QuestionGenerator {
         return synList;
     }
 
-    private GapFillQuestionSet getQuestionsForResource(List<String> sentences, String resourceName, String pluralResourceName, List<String> externalDistractors, List<String> inTextDistractors) {
+    private GapFillQuestionSet makeGapFillQuestionsFromSentences(List<String> sentences, String resourceName, String pluralResourceName,
+                                                                 List<String> externalDistractors, List<String> inTextDistractors) {
         List<String> questions = new ArrayList<>();
         GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
         sentences.forEach(s -> {
@@ -237,7 +287,8 @@ public class QuestionGenerator {
         if(questions.isEmpty()){
             return null;
         }
-        return builder.questions(questions).
+        return builder.
+                questions(questions).
                 answer(resourceName).
                 externalDistractors(externalDistractors).
                 inTextDistractors(inTextDistractors).

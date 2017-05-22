@@ -44,11 +44,11 @@ public class TextInfoRetriever {
 
         // get frequency of each unique word
         for (DBPediaResource dbPediaResource : dbPediaResources) {
-            if (Double.parseDouble(dbPediaResource.getPercentageOfSecondRank()) < 0.5) {
+//            if (Double.parseDouble(dbPediaResource.getPercentageOfSecondRank()) < 0.5) {
                 int frequency = wordFrequencyPairs.getOrDefault(dbPediaResource.getSurfaceForm(), 0) + 1;
                 wordFrequencyPairs.put(dbPediaResource.getSurfaceForm(), frequency);
                 frequentResources.putIfAbsent(dbPediaResource.getSurfaceForm(), dbPediaResource);
-            }
+//            }
         }
 
         Map<String, Integer> sortedMap = QGenUtils.sortMap(wordFrequencyPairs);
