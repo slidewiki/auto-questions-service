@@ -924,14 +924,18 @@ public class ARQClient {
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
                 getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
 
-                randomIndex = ThreadLocalRandom.current().nextInt(bound);
-                secondLinkSUMResultRow = linkSUMResults.get(randomIndex);
+                int secondRandomIndex = ThreadLocalRandom.current().nextInt(bound);
                 int i = bound;
-                while (linkSUMResultRow == secondLinkSUMResultRow ||
-                        linkSUMResultRow.getPredicateLabel().equalsIgnoreCase(secondLinkSUMResultRow.getPredicateLabel())
+                while(secondRandomIndex == randomIndex && i >= 0){
+                    secondRandomIndex = ThreadLocalRandom.current().nextInt(bound);
+                    i--;
+                }
+                secondLinkSUMResultRow = linkSUMResults.get(secondRandomIndex);
+                i = bound;
+                while (linkSUMResultRow.getPredicateLabel().equalsIgnoreCase(secondLinkSUMResultRow.getPredicateLabel())
                         && i >= 0){
-                    randomIndex = ThreadLocalRandom.current().nextInt(bound);
-                    secondLinkSUMResultRow = linkSUMResults.get(randomIndex);
+                    secondRandomIndex = ThreadLocalRandom.current().nextInt(bound);
+                    secondLinkSUMResultRow = linkSUMResults.get(secondRandomIndex);
                     i--;
                 }
                 getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);

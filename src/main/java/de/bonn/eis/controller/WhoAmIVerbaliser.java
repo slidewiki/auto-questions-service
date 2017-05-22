@@ -65,6 +65,14 @@ public class WhoAmIVerbaliser implements Verbaliser{
             String secondPredicate = whoAmIQuestionStructure.getSecondPredicate();
             String secondObject = whoAmIQuestionStructure.getSecondObject();
 
+            boolean firstPredicateHasNoValue = firstPredicate == null || firstPredicate.isEmpty();
+            boolean secondPredicateHasNoValue = secondPredicate == null || secondPredicate.isEmpty();
+
+            if(firstPredicateHasNoValue &&
+                    secondPredicateHasNoValue){
+                return null;
+            }
+
             if(startWithAVowel(baseType)){
                 questionText.append(I_AM_AN);
             } else {
@@ -72,9 +80,17 @@ public class WhoAmIVerbaliser implements Verbaliser{
             }
             questionText.append(baseType).
                     append(FULL_STOP_AND_SPACE);
-            getVerbalisationOfTriple(questionText, firstSubject, firstPredicate, firstObject, true);
-            questionText.append(AND);
-            getVerbalisationOfTriple(questionText, secondSubject, secondPredicate, secondObject, false);
+
+            if(!firstPredicateHasNoValue){
+                getVerbalisationOfTriple(questionText, firstSubject, firstPredicate, firstObject, true);
+            }
+
+            if(!secondPredicateHasNoValue){
+                if(!firstPredicateHasNoValue){
+                    questionText.append(AND);
+                }
+                getVerbalisationOfTriple(questionText, secondSubject, secondPredicate, secondObject, false);
+            }
             questionText.append(FULL_STOP_AND_SPACE);
             questionText.append(WHO_AM_I);
             return questionText.toString();
