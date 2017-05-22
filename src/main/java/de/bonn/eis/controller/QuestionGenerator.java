@@ -37,6 +37,7 @@ public class QuestionGenerator {
     private static final String GAP_FILL = "gap-fill";
     private static final String SELECT = "select";
     private static final String WHOAMI = "whoami";
+    private static final int NO_OF_FREQUENT_RESOURCES = 5;
     @Context
     private ServletContext servletContext;
 
@@ -64,16 +65,23 @@ public class QuestionGenerator {
             if(spotlightResults != null){
                 List<DBPediaResource> resources = spotlightResults.getDBPediaResources();
                 if(resources != null && !resources.isEmpty()){
-                    List<Frequency> frequencies = nlp.getDBPediaSpotlightURIFrequencies();
-                    int maxIndex = frequencies.size() < 5 ? frequencies.size() - 1 : 5;
-                    frequencies = frequencies.subList(0, maxIndex);
                     resources = QGenUtils.removeDuplicatesFromResourceList(resources);
+                    List<Frequency> frequencies = nlp.getDBPediaSpotlightURIFrequencies();
                     List<DBPediaResource> temp = new ArrayList<>();
-                    for (DBPediaResource resource : resources) {
-                        for (Frequency frequency : frequencies) {
+                    for (Frequency frequency : frequencies) {
+                        for (DBPediaResource resource : resources) {
                             if(resource.getURI().equals(frequency.getEntry())){
-                                temp.add(resource);
+                                if(type.equals(WHOAMI)){
+                                    if(resource.getTypes().contains(DBPEDIA_PERSON)){
+                                        temp.add(resource);
+                                    }
+                                } else{
+                                    temp.add(resource);
+                                }
                             }
+                        }
+                        if(temp.size() == NO_OF_FREQUENT_RESOURCES){
+                            break;
                         }
                     }
                     resources = temp;
@@ -116,8 +124,7 @@ public class QuestionGenerator {
         }
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
         if(dbPediaResources != null && !dbPediaResources.isEmpty()){
-            int maxIndex = dbPediaResources.size() < 5 ? dbPediaResources.size() - 1 : 5;
-            resources.addAll(retriever.getFrequentWords(maxIndex).keySet());
+            resources.addAll(retriever.getFrequentWords(NO_OF_FREQUENT_RESOURCES).keySet());
             if(type.equals(GAP_FILL)) {
                 List<GapFillDistractor> distractors = getGapFillDistractors(resources, level);
                 List<QuestionSetPerSlide> gapFillQuestionSets = getGapFillQuestions(text, null, distractors);
@@ -143,12 +150,6 @@ public class QuestionGenerator {
 
     private List<MCQQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
         if(dbPediaResources != null && !dbPediaResources.isEmpty()){
-            dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
-            dbPediaResources = dbPediaResources.stream().
-                    filter(dbPediaResource -> {
-                        String types = dbPediaResource.getTypes();
-                        return !types.isEmpty() && types.contains(DBPEDIA_PERSON);
-                    }).collect(Collectors.toList());
             List<MCQQuestion> questions = new ArrayList<>();
             dbPediaResources.forEach(resource -> {
                 WhoAmIQuestionStructure whoAmIQuestionStructureAndAnswers = DistractorGenerator.getWhoAmIQuestionAndDistractors(resource, level);
@@ -168,7 +169,6 @@ public class QuestionGenerator {
 
     private List<MCQQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {
         if(resources!= null && !resources.isEmpty()) {
-            resources = QGenUtils.removeDuplicatesFromResourceList(resources);
             List<MCQQuestion> selectQuestions = new ArrayList<>();
             resources.forEach(resource -> {
                 MCQQuestion.MCQQuestionBuilder questionBuilder = MCQQuestion.builder();
