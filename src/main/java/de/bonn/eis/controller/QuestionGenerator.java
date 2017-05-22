@@ -233,11 +233,14 @@ public class QuestionGenerator {
                         questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
                         resourceName = resourceName + ", " + pluralResourceName;
                     }
+                    List<String> inTextDistractors = gapFillDistractor.getInTextDistractors();
+                    String finalQuestionText = questionText;
+                    inTextDistractors = inTextDistractors.stream().filter(d -> !QGenUtils.sourceHasWord(finalQuestionText, d)).collect(Collectors.toList());
                     builder.
                             questionText(questionText).
                             answer(resourceName).
-                            externalDistractors(gapFillDistractor.getExternalDistractors()).
-                            inTextDistractors(gapFillDistractor.getInTextDistractors());
+                            inTextDistractors(inTextDistractors).
+                            externalDistractors(gapFillDistractor.getExternalDistractors());
                     gapFillQuestionSets.add(builder.build());
                 }
             }
