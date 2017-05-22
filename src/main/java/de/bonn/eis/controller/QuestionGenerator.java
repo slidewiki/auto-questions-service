@@ -91,7 +91,7 @@ public class QuestionGenerator {
                         }
                     }
                     if(type.equals(WHOAMI)) {
-                        List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
+                        List<WhoAmIQuestionStructure> questions = getWhoamIQuestions(resources, level);
                         if(questions != null){
                             return Response.status(200).entity(questions).build();
                         }
@@ -132,7 +132,7 @@ public class QuestionGenerator {
                 }
             }
             if(type.equals(WHOAMI)) {
-                List<WhoAmIQuestion> questions = getWhoamIQuestions(resources, level);
+                List<WhoAmIQuestionStructure> questions = getWhoamIQuestions(resources, level);
                 if(questions != null){
                     return Response.status(200).entity(questions).build();
                 }
@@ -141,7 +141,7 @@ public class QuestionGenerator {
         return Response.noContent().build();
     }
 
-    private List<WhoAmIQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
+    private List<WhoAmIQuestionStructure> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
         if(dbPediaResources != null && !dbPediaResources.isEmpty()){
             dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
             dbPediaResources = dbPediaResources.stream().
@@ -149,14 +149,14 @@ public class QuestionGenerator {
                         String types = dbPediaResource.getTypes();
                         return !types.isEmpty() && types.contains(DBPEDIA_PERSON);
                     }).collect(Collectors.toList());
-            List<WhoAmIQuestion> whoAmIQuestions = new ArrayList<>();
+            List<WhoAmIQuestionStructure> whoAmIQuestionStructures = new ArrayList<>();
             dbPediaResources.forEach(resource -> {
-                WhoAmIQuestion whoAmIQuestionAndAnswers = DistractorGenerator.getWhoAmIQuestionAndDistractors(resource, level);
-                if (whoAmIQuestionAndAnswers != null) {
-                    whoAmIQuestions.add(whoAmIQuestionAndAnswers);
+                WhoAmIQuestionStructure whoAmIQuestionStructureAndAnswers = DistractorGenerator.getWhoAmIQuestionAndDistractors(resource, level);
+                if (whoAmIQuestionStructureAndAnswers != null) {
+                    whoAmIQuestionStructures.add(whoAmIQuestionStructureAndAnswers);
                 }
             });
-            return whoAmIQuestions;
+            return whoAmIQuestionStructures;
         }
         return null;
     }
@@ -216,11 +216,25 @@ public class QuestionGenerator {
         cleanText = cleanText.replaceAll("\n",". ");
         LanguageProcessor processor = new LanguageProcessor(cleanText);
         List<String> sentences = processor.getSentences();
-        for (GapFillDistractor gapFillDistractor : distractorsPerResource) {
-            GapFillQuestionSet questionSet = makeGapFillQuestionsFromSentences(sentences, gapFillDistractor.getSurfaceForm(), gapFillDistractor.getPluralSurfaceForm()
-                    , gapFillDistractor.getExternalDistractors(), gapFillDistractor.getInTextDistractors());
-            if(questionSet != null){
-                gapFillQuestionSets.add(questionSet);
+
+        for (String s: sentences) {
+            for (GapFillDistractor gapFillDistractor : distractorsPerResource) {
+                String resourceName = gapFillDistractor.getSurfaceForm();
+                String pluralResourceName = gapFillDistractor.getPluralSurfaceForm();
+                GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
+                if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWord(s, resourceName)) {
+                    String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
+                    if (QGenUtils.sourceHasWord(s, pluralResourceName)) {
+                        questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
+                        resourceName = resourceName + ", " + pluralResourceName;
+                    }
+                    builder.
+                            questionText(questionText).
+                            answer(resourceName).
+                            externalDistractors(gapFillDistractor.getExternalDistractors()).
+                            inTextDistractors(gapFillDistractor.getInTextDistractors());
+                    gapFillQuestionSets.add(builder.build());
+                }
             }
         }
         if(gapFillQuestionSets.isEmpty()){
@@ -270,30 +284,5 @@ public class QuestionGenerator {
         String[] synonyms = wordnet.getAllSynonyms(surfaceForm, RiWordNet.NOUN);
         synList = Arrays.asList(synonyms);
         return synList;
-    }
-
-    private GapFillQuestionSet makeGapFillQuestionsFromSentences(List<String> sentences, String resourceName, String pluralResourceName,
-                                                                 List<String> externalDistractors, List<String> inTextDistractors) {
-        List<String> questions = new ArrayList<>();
-        GapFillQuestionSet.GapFillQuestionSetBuilder builder = GapFillQuestionSet.builder();
-        sentences.forEach(s -> {
-            if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWord(s, resourceName)) {
-                String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
-                if (QGenUtils.sourceHasWord(s, pluralResourceName)) {
-                    questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
-                    builder.answer(resourceName + ", " + pluralResourceName);
-                }
-                questions.add(questionText);
-            }
-        });
-        if(questions.isEmpty()){
-            return null;
-        }
-        return builder.
-                questions(questions).
-                answer(resourceName).
-                externalDistractors(externalDistractors).
-                inTextDistractors(inTextDistractors).
-                build();
     }
 }

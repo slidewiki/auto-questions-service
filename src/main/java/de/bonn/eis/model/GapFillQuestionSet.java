@@ -9,11 +9,11 @@ import java.util.List;
 /**
  * Created by Ainuddin Faizan on 2/13/17.
  */
+@Data
 @Builder
-@Data // Needed for JSON serialization
 public class GapFillQuestionSet implements Serializable, Question {
+    private String questionText;
     private String answer;
-    private List<String> questions;
     private List<String> inTextDistractors;
     private List<String> externalDistractors;
 }

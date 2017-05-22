@@ -2,7 +2,7 @@ package de.bonn.eis.controller;
 
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.LinkSUMResultRow;
-import de.bonn.eis.model.WhoAmIQuestion;
+import de.bonn.eis.model.WhoAmIQuestionStructure;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -873,7 +873,7 @@ public class ARQClient {
         return rows;
     }
 
-    public WhoAmIQuestion getWhoAmIQuestion(DBPediaResource resource, String level) {
+    public WhoAmIQuestionStructure getWhoAmIQuestion(DBPediaResource resource, String level) {
         String uri = resource.getURI();
         List<String> mostSpecificTypes = getNMostSpecificTypes(uri, 1, true);
         String baseType = "";
@@ -895,7 +895,7 @@ public class ARQClient {
             return null;
         }
 
-        WhoAmIQuestion.WhoAmIQuestionBuilder builder = WhoAmIQuestion.builder();
+        WhoAmIQuestionStructure.WhoAmIQuestionStructureBuilder builder = WhoAmIQuestionStructure.builder();
         String resourceName = resource.getSurfaceForm();
 
         builder.baseType(RiTa.singularize(baseTypeLabel));
@@ -1129,7 +1129,7 @@ public class ARQClient {
         return linkSUMResultRow;
     }
 
-    private void getWhoAmIFromLinkSUMRow(WhoAmIQuestion.WhoAmIQuestionBuilder builder, String resourceName, LinkSUMResultRow linkSUMResultRow, int propNo) {
+    private void getWhoAmIFromLinkSUMRow(WhoAmIQuestionStructure.WhoAmIQuestionStructureBuilder builder, String resourceName, LinkSUMResultRow linkSUMResultRow, int propNo) {
         switch (propNo){
             case 1:
                 if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubjectLabel())

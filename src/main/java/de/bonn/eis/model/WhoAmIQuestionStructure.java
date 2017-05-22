@@ -10,7 +10,7 @@ import java.util.List;
  */
 @Data
 @Builder
-public class WhoAmIQuestion implements Question {
+public class WhoAmIQuestionStructure implements Question {
     private String question;
     private String baseType;
     private String answer;

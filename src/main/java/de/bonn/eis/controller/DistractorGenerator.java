@@ -1,7 +1,7 @@
 package de.bonn.eis.controller;
 
 import de.bonn.eis.model.DBPediaResource;
-import de.bonn.eis.model.WhoAmIQuestion;
+import de.bonn.eis.model.WhoAmIQuestionStructure;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class DistractorGenerator {
         return arqClient.getSisterTypes(answer, level);
     }
 
-    public static WhoAmIQuestion getWhoAmIQuestionAndDistractors(DBPediaResource resource, String level) {
+    public static WhoAmIQuestionStructure getWhoAmIQuestionAndDistractors(DBPediaResource resource, String level) {
         ARQClient arqClient = new ARQClient();
         return arqClient.getWhoAmIQuestion(resource, level);
     }

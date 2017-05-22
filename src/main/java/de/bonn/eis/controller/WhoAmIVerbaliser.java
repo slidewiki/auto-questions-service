@@ -1,7 +1,7 @@
 package de.bonn.eis.controller;
 
 import de.bonn.eis.model.Question;
-import de.bonn.eis.model.WhoAmIQuestion;
+import de.bonn.eis.model.WhoAmIQuestionStructure;
 import de.bonn.eis.utils.QGenUtils;
 import rita.RiTa;
 
@@ -54,16 +54,16 @@ public class WhoAmIVerbaliser implements Verbaliser{
 
     @Override
     public String verbalise(Question question) {
-        if(question != null && question instanceof WhoAmIQuestion){
-            WhoAmIQuestion whoAmIQuestion = (WhoAmIQuestion) question;
+        if(question != null && question instanceof WhoAmIQuestionStructure){
+            WhoAmIQuestionStructure whoAmIQuestionStructure = (WhoAmIQuestionStructure) question;
             StringBuilder questionText = new StringBuilder();
-            String baseType = whoAmIQuestion.getBaseType().toLowerCase();
-            String firstSubject = whoAmIQuestion.getFirstSubject();
-            String firstPredicate = whoAmIQuestion.getFirstPredicate();
-            String firstObject = whoAmIQuestion.getFirstObject();
-            String secondSubject = whoAmIQuestion.getSecondSubject();
-            String secondPredicate = whoAmIQuestion.getSecondPredicate();
-            String secondObject = whoAmIQuestion.getSecondObject();
+            String baseType = whoAmIQuestionStructure.getBaseType().toLowerCase();
+            String firstSubject = whoAmIQuestionStructure.getFirstSubject();
+            String firstPredicate = whoAmIQuestionStructure.getFirstPredicate();
+            String firstObject = whoAmIQuestionStructure.getFirstObject();
+            String secondSubject = whoAmIQuestionStructure.getSecondSubject();
+            String secondPredicate = whoAmIQuestionStructure.getSecondPredicate();
+            String secondObject = whoAmIQuestionStructure.getSecondObject();
 
             if(startWithAVowel(baseType)){
                 questionText.append(I_AM_AN);
