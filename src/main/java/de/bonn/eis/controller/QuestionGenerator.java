@@ -91,7 +91,7 @@ public class QuestionGenerator {
                         }
                     }
                     if(type.equals(WHOAMI)) {
-                        List<WhoAmIQuestionStructure> questions = getWhoamIQuestions(resources, level);
+                        List<MCQQuestion> questions = getWhoamIQuestions(resources, level);
                         if(questions != null){
                             return Response.status(200).entity(questions).build();
                         }
@@ -132,7 +132,7 @@ public class QuestionGenerator {
                 }
             }
             if(type.equals(WHOAMI)) {
-                List<WhoAmIQuestionStructure> questions = getWhoamIQuestions(resources, level);
+                List<MCQQuestion> questions = getWhoamIQuestions(resources, level);
                 if(questions != null){
                     return Response.status(200).entity(questions).build();
                 }
@@ -141,7 +141,7 @@ public class QuestionGenerator {
         return Response.noContent().build();
     }
 
-    private List<WhoAmIQuestionStructure> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
+    private List<MCQQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
         if(dbPediaResources != null && !dbPediaResources.isEmpty()){
             dbPediaResources = QGenUtils.removeDuplicatesFromResourceList(dbPediaResources);
             dbPediaResources = dbPediaResources.stream().
@@ -149,14 +149,19 @@ public class QuestionGenerator {
                         String types = dbPediaResource.getTypes();
                         return !types.isEmpty() && types.contains(DBPEDIA_PERSON);
                     }).collect(Collectors.toList());
-            List<WhoAmIQuestionStructure> whoAmIQuestionStructures = new ArrayList<>();
+            List<MCQQuestion> questions = new ArrayList<>();
             dbPediaResources.forEach(resource -> {
                 WhoAmIQuestionStructure whoAmIQuestionStructureAndAnswers = DistractorGenerator.getWhoAmIQuestionAndDistractors(resource, level);
                 if (whoAmIQuestionStructureAndAnswers != null) {
-                    whoAmIQuestionStructures.add(whoAmIQuestionStructureAndAnswers);
+                    MCQQuestion.MCQQuestionBuilder builder = MCQQuestion.builder();
+                    builder
+                            .questionText(whoAmIQuestionStructureAndAnswers.getQuestion())
+                            .answer(whoAmIQuestionStructureAndAnswers.getAnswer())
+                            .externalDistractors(whoAmIQuestionStructureAndAnswers.getDistractors());
+                    questions.add(builder.build());
                 }
             });
-            return whoAmIQuestionStructures;
+            return questions;
         }
         return null;
     }
