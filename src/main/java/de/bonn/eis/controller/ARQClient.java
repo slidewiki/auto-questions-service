@@ -922,7 +922,7 @@ public class ARQClient {
                 int bound = size <= 10 ? size : 10;
                 randomIndex = ThreadLocalRandom.current().nextInt(bound);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
-                getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
+                getWhoAmIFromLinkSUMRow(builder, linkSUMResultRow, 1);
 
                 int secondRandomIndex = ThreadLocalRandom.current().nextInt(bound);
                 int i = bound;
@@ -938,13 +938,13 @@ public class ARQClient {
                     secondLinkSUMResultRow = linkSUMResults.get(secondRandomIndex);
                     i--;
                 }
-                getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
+                getWhoAmIFromLinkSUMRow(builder, secondLinkSUMResultRow, 2);
                 List<String> distractors = getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 1);
                 builder.distractors(distractors);
 
             } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
                 linkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
-                getWhoAmIFromLinkSUMRow(builder, resourceName, linkSUMResultRow, 1);
+                getWhoAmIFromLinkSUMRow(builder, linkSUMResultRow, 1);
 
                 secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
                 int i = size;
@@ -954,7 +954,7 @@ public class ARQClient {
                     secondLinkSUMResultRow = getHardPropertyForWhoAmI(linkSUMResults);
                     i--;
                 }
-                getWhoAmIFromLinkSUMRow(builder, resourceName, secondLinkSUMResultRow, 2);
+                getWhoAmIFromLinkSUMRow(builder, secondLinkSUMResultRow, 2);
                 List<String> distractors = getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 2);
                 if(distractors.isEmpty() || distractors.size() < 3){
                     distractors.addAll(getNPopularDistractorsForBaseType(uri, baseType, secondLinkSUMResultRow, linkSUMResultRow, 3 - distractors.size(), 2));
@@ -1133,29 +1133,27 @@ public class ARQClient {
         return linkSUMResultRow;
     }
 
-    private void getWhoAmIFromLinkSUMRow(WhoAmIQuestionStructure.WhoAmIQuestionStructureBuilder builder, String resourceName, LinkSUMResultRow linkSUMResultRow, int propNo) {
+    private void getWhoAmIFromLinkSUMRow(WhoAmIQuestionStructure.WhoAmIQuestionStructureBuilder builder, LinkSUMResultRow linkSUMResultRow, int propNo) {
         switch (propNo){
             case 1:
-                if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubjectLabel())
-                        || linkSUMResultRow.getSubjectLabel().contains(resourceName))
+                if(linkSUMResultRow.getSubject() == null)
                 {
                     builder.firstPredicate(linkSUMResultRow.getPredicateLabel())
                             .firstObject(linkSUMResultRow.getObjectLabel());
                 }
-                else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObjectLabel())
-                        || linkSUMResultRow.getObjectLabel().contains(resourceName))
+                else if(linkSUMResultRow.getObject() == null)
                 {
                     builder.firstPredicate(linkSUMResultRow.getPredicateLabel())
                             .firstSubject(linkSUMResultRow.getSubjectLabel());
                 }
                 break;
             case 2:
-                if(resourceName.equalsIgnoreCase(linkSUMResultRow.getSubjectLabel())
-                        || linkSUMResultRow.getSubjectLabel().contains(resourceName))
+                if(linkSUMResultRow.getSubject() == null)
                 {
                     builder.secondPredicate(linkSUMResultRow.getPredicateLabel())
                             .secondObject(linkSUMResultRow.getObjectLabel());
-                } else if(resourceName.equalsIgnoreCase(linkSUMResultRow.getObjectLabel()))
+                }
+                else if(linkSUMResultRow.getObject() == null)
                 {
                     builder.secondPredicate(linkSUMResultRow.getPredicateLabel())
                             .secondSubject(linkSUMResultRow.getSubjectLabel());
