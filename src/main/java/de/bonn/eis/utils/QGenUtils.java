@@ -31,7 +31,7 @@ public class QGenUtils {
     }
 
     public static void removeDuplicatesFromStringList(List<String> list) {
-        Set<String> hashSet = new LinkedHashSet<>();
+        Set<String> hashSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         hashSet.addAll(list);
         list.clear();
         list.addAll(hashSet);
