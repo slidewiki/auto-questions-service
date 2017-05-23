@@ -36,7 +36,7 @@ public class QuestionGenerator {
     private static final double SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE = 0.6;
     private static final String GAP_FILL = "gap-fill";
     private static final String SELECT = "select";
-    private static final String WHOAMI = "whoami";
+    private static final String WHO_AM_I = "whoami";
     private static final int NO_OF_FREQUENT_RESOURCES = 5;
     @Context
     private ServletContext servletContext;
@@ -71,7 +71,7 @@ public class QuestionGenerator {
                     for (Frequency frequency : frequencies) {
                         for (DBPediaResource resource : resources) {
                             if(resource.getURI().equals(frequency.getEntry())){
-                                if(type.equals(WHOAMI)){
+                                if(type.equals(WHO_AM_I)){
                                     if(resource.getTypes().contains(DBPEDIA_PERSON)){
                                         temp.add(resource);
                                     }
@@ -98,7 +98,7 @@ public class QuestionGenerator {
                             return Response.status(200).entity(selectQuestions).build();
                         }
                     }
-                    if(type.equals(WHOAMI)) {
+                    if(type.equals(WHO_AM_I)) {
                         List<MCQQuestion> questions = getWhoamIQuestions(resources, level);
                         if(questions != null){
                             return Response.status(200).entity(questions).build();
@@ -117,7 +117,7 @@ public class QuestionGenerator {
     public Response generateQuestionsForText(@PathParam("type") String type, @PathParam("level") String level, String text) throws FileNotFoundException, UnsupportedEncodingException {
         TextInfoRetriever retriever;
         List<DBPediaResource> resources = new ArrayList<>();
-        if(type.equals(WHOAMI)){
+        if(type.equals(WHO_AM_I)){
             retriever = new TextInfoRetriever(text, DBPEDIA_PERSON, servletContext);
         } else {
             retriever = new TextInfoRetriever(text, servletContext);
@@ -138,7 +138,7 @@ public class QuestionGenerator {
                     return Response.status(200).entity(selectQuestions).build();
                 }
             }
-            if(type.equals(WHOAMI)) {
+            if(type.equals(WHO_AM_I)) {
                 List<MCQQuestion> questions = getWhoamIQuestions(resources, level);
                 if(questions != null){
                     return Response.status(200).entity(questions).build();
