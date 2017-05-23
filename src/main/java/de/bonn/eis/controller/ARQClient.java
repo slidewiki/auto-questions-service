@@ -69,8 +69,18 @@ public class ARQClient {
                 }
             }
             if(baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON)){
-                List<String> yagoTypes = getNMostSpecificYAGOTypesForDepthRange(resource.getURI(), 10, 11, 14);
-                if(!yagoTypes.isEmpty()){
+                List<String> yagoTypes = null;
+                int lowerBound = 11;
+                while((yagoTypes == null || yagoTypes.isEmpty()) && lowerBound > 3){
+                    yagoTypes = getNMostSpecificYAGOTypesForDepthRange(resource.getURI(), 10, lowerBound, lowerBound+3);
+                    if(lowerBound == 5){
+                        lowerBound--;
+                    }
+                    else {
+                        lowerBound -= 3;
+                    }
+                }
+                if(yagoTypes != null && !yagoTypes.isEmpty()){
                     int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
                     baseType = yagoTypes.get(randomIndex);
                 }
