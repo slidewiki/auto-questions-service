@@ -111,7 +111,7 @@ public class WhoAmIVerbaliser implements Verbaliser{
         } else {
             predicate = RiTa.singularize(predicate);
             if(subject == null) {
-                if(QGenUtils.sourceHasWord(predicate, "by")){
+                if(QGenUtils.sourceHasWordIgnoreCase(predicate, "by")){
                     questionText.append(I_WAS).
                             append(predicate).
                             append(SPACE).
@@ -149,7 +149,7 @@ public class WhoAmIVerbaliser implements Verbaliser{
                             append(object);
                 }
             } else if(object == null) {
-                if(QGenUtils.sourceHasWord(predicate, "by")){
+                if(QGenUtils.sourceHasWordIgnoreCase(predicate, "by")){
                     questionText.append(subject).
                             append(" was ").
                             append(predicate).

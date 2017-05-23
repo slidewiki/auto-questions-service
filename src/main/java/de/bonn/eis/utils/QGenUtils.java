@@ -47,10 +47,10 @@ public class QGenUtils {
         return randomItems;
     }
 
-    public static boolean sourceHasWord(String source, String word) {
-        String pattern = "\\b" + word + "\\b";
+    public static boolean sourceHasWordIgnoreCase(String source, String word) {
+        String pattern = "\\b" + word.toLowerCase() + "\\b";
         Pattern p = Pattern.compile(pattern);
-        Matcher m = p.matcher(source);
+        Matcher m = p.matcher(source.toLowerCase());
         return m.find();
     }
 

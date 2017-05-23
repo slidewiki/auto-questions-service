@@ -227,15 +227,15 @@ public class QuestionGenerator {
                 String resourceName = gapFillDistractor.getSurfaceForm();
                 String pluralResourceName = gapFillDistractor.getPluralSurfaceForm();
                 MCQQuestion.MCQQuestionBuilder builder = MCQQuestion.builder();
-                if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWord(s, resourceName)) {
+                if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWordIgnoreCase(s, resourceName)) {
                     String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
-                    if (QGenUtils.sourceHasWord(s, pluralResourceName)) {
+                    if (QGenUtils.sourceHasWordIgnoreCase(s, pluralResourceName)) {
                         questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
                         resourceName = resourceName + ", " + pluralResourceName;
                     }
                     List<String> inTextDistractors = gapFillDistractor.getInTextDistractors();
                     String finalQuestionText = questionText;
-                    inTextDistractors = inTextDistractors.stream().filter(d -> !QGenUtils.sourceHasWord(finalQuestionText, d)).collect(Collectors.toList());
+                    inTextDistractors = inTextDistractors.stream().filter(d -> !QGenUtils.sourceHasWordIgnoreCase(finalQuestionText, d)).collect(Collectors.toList());
                     builder.
                             questionText(questionText).
                             answer(resourceName).
