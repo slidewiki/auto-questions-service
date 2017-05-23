@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -228,7 +229,7 @@ public class QuestionGenerator {
                 String pluralResourceName = gapFillDistractor.getPluralSurfaceForm();
                 MCQQuestion.MCQQuestionBuilder builder = MCQQuestion.builder();
                 if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWordIgnoreCase(s, resourceName)) {
-                    String questionText = s.replaceAll("\\b" + resourceName + "\\b", BLANK);
+                    String questionText = s.replaceAll("(?i)"+ Pattern.quote(resourceName), BLANK);
                     if (QGenUtils.sourceHasWordIgnoreCase(s, pluralResourceName)) {
                         questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
                         resourceName = resourceName + ", " + pluralResourceName;
