@@ -229,9 +229,9 @@ public class QuestionGenerator {
                 String pluralResourceName = gapFillDistractor.getPluralSurfaceForm();
                 MCQQuestion.MCQQuestionBuilder builder = MCQQuestion.builder();
                 if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWordIgnoreCase(s, resourceName)) {
-                    String questionText = s.replaceAll("(?i)"+ Pattern.quote(resourceName), BLANK);
+                    String questionText = s.replaceAll("(?i)\\b" + resourceName +"\\b", BLANK);
                     if (QGenUtils.sourceHasWordIgnoreCase(s, pluralResourceName)) {
-                        questionText = questionText.replaceAll("\\b" + pluralResourceName + "\\b", BLANK);
+                        questionText = questionText.replaceAll("(?i)\\b" + pluralResourceName +"\\b", BLANK);
                         resourceName = resourceName + ", " + pluralResourceName;
                     }
                     List<String> inTextDistractors = gapFillDistractor.getInTextDistractors();
