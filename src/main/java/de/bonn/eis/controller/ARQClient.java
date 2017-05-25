@@ -58,40 +58,13 @@ public class ARQClient {
         List<String> resourceNames = new ArrayList<>();
 
         if (level.equals(NLPConsts.LEVEL_EASY)) {
-            String baseType = "";
-            if(!resource.getTypes().isEmpty()) {
-                baseType = getMostSpecificSpotlightType(resource.getTypes());
-            }
-            else {
-                List<String> specificTypes = getNMostSpecificTypes(resource.getURI(), 1, true);
-                if(!specificTypes.isEmpty()){
-                    baseType = specificTypes.get(0);
-                }
-            }
-            if(baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON)){
-                List<String> yagoTypes = null;
-                int lowerBound = 11;
-                while((yagoTypes == null || yagoTypes.isEmpty()) && lowerBound > 3){
-                    yagoTypes = getNMostSpecificYAGOTypesForDepthRange(resource.getURI(), 10, lowerBound, lowerBound+3);
-                    if(lowerBound == 5){
-                        lowerBound--;
-                    }
-                    else {
-                        lowerBound -= 3;
-                    }
-                }
-                if(yagoTypes != null && !yagoTypes.isEmpty()){
-                    int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
-                    baseType = yagoTypes.get(randomIndex);
-                }
-            }
+            String baseType = getBaseTypeForEasy(resource);
             return getNPopularDistractorsForBaseType(resource.getURI(), baseType, 3);
         }
         else if(level.equals(NLPConsts.LEVEL_HARD)) {
             List<String> types = getNMostSpecificTypes(resource.getURI(), 5, false);
             List<String> distractors = new ArrayList<>();
             for (String type: types) {
-                System.out.println(type);
                 distractors.addAll(getNPopularDistractorsForBaseType(resource.getURI(), type, 3));
                 if(distractors.size() >= 3){
                     return distractors.subList(0, 3);
@@ -99,6 +72,37 @@ public class ARQClient {
             }
         }
         return resourceNames;
+    }
+
+    private String getBaseTypeForEasy(DBPediaResource resource) {
+        String baseType = "";
+        if(!resource.getTypes().isEmpty()) {
+            baseType = getMostSpecificSpotlightType(resource.getTypes());
+        }
+        else {
+            List<String> specificTypes = getNMostSpecificTypes(resource.getURI(), 1, true);
+            if(!specificTypes.isEmpty()){
+                baseType = specificTypes.get(0);
+            }
+        }
+        if(baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON) || getTypeDepth(baseType) <= 3){
+            List<String> yagoTypes = null;
+            int lowerBound = 11;
+            while((yagoTypes == null || yagoTypes.isEmpty()) && lowerBound > 3){
+                yagoTypes = getNMostSpecificYAGOTypesForDepthRange(resource.getURI(), 10, lowerBound, lowerBound+3);
+                if(lowerBound == 5){
+                    lowerBound--;
+                }
+                else {
+                    lowerBound -= 3;
+                }
+            }
+            if(yagoTypes != null && !yagoTypes.isEmpty()){
+                int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
+                baseType = yagoTypes.get(randomIndex);
+            }
+        }
+        return baseType;
     }
 
     private String getMostSpecificSpotlightType(String types) {
@@ -346,10 +350,10 @@ public class ARQClient {
     }
 
     private int getTypeDepth(String type) {
-        String typeInLowerCase = type.toLowerCase();
-        if (!typeInLowerCase.contains(DBPEDIA)) {
-            return 0;
-        }
+//        String typeInLowerCase = type.toLowerCase();
+//        if (!typeInLowerCase.contains(DBPEDIA)) {
+//            return 0;
+//        }
 //        if(typeInLowerCase.contains("yago") && !typeInLowerCase.contains("wikicat")){
 //            return 0;
 //        }
@@ -407,6 +411,59 @@ public class ARQClient {
     public List<String> getSisterTypes(DBPediaResource answer, String level) {
         List<String> sisterTypes = new ArrayList<>();
         if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
+//            String baseType = getBaseTypeForEasy(answer);
+//            if(baseType.isEmpty()){
+//                return null;
+//            }
+//            int depth = getTypeDepth(baseType);
+//            System.out.println(baseType + " " + depth);
+//            while(sisterTypes.size() < 4 &&  depth > 3){
+//                String queryString =
+//                        PREFIX_RDF + PREFIX_RDFS + PREFIX_OWL +
+//                                "SELECT DISTINCT ?name ?superType ?baseTypeLabel FROM <http://dbpedia.org> WHERE {\n" +
+//                                "<" + baseType + "> rdfs:subClassOf ?superType .\n" +
+//                                " ?t rdfs:subClassOf ?superType .\n" +
+//                                "<" + baseType + "> rdfs:label ?baseTypeLabel .\n" +
+//                                " ?t rdfs:label ?name .\n" +
+//                                " filter (?t != <" + baseType + ">) .\n" +
+//                                " filter (langMatches(lang(?name), \"EN\")) ." +
+//                                " filter not exists {<" + answer.getURI() + "> a ?t } ." +
+//                                "} order by rand() limit 3";
+//                ResultSet resultSet = null;
+//                try {
+//                    resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                if (resultSet != null) {
+//                    addResultsToList(resultSet, sisterTypes, "name");
+//                    System.out.println(sisterTypes);
+//                    RDFNode baseTypeLabel;
+//                    while (resultSet.hasNext()) {
+//                        QuerySolution result = resultSet.next();
+//                        if (result != null) {
+//                            baseTypeLabel = result.get("baseTypeLabel");
+//                            String literal = getStringLiteral(baseTypeLabel);
+//                            if (literal != null) {
+//                                sisterTypes.add(0, literal);
+////                                System.out.println(sisterTypes);
+//                            }
+//                            RDFNode superType = result.get("superType");
+//                            if (superType != null) {
+//                                System.out.println(superType);
+//                                baseType = superType.toString();
+//                                depth = getTypeDepth(baseType);
+//                            } else {
+//                                break;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            if (sisterTypes.size() > 4) {
+//                sisterTypes = sisterTypes.subList(0, 4);
+//            }
+
             String types = answer.getTypes();
             if (!types.isEmpty()) {
                 String[] typesArray = types.split(",");
@@ -434,13 +491,13 @@ public class ARQClient {
                                 " filter (langMatches(lang(?name), \"EN\")) ." +
                                 " filter not exists {<" + answer.getURI() + "> a ?t } ." +
                                 "} order by rand() limit 3";
-                        ResultSet results = null;
+                        ResultSet resultSet = null;
                         try {
-                            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+                            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                        addResultsToList(results, sisterTypes, "name");
+                        addResultsToList(resultSet, sisterTypes, "name");
                         if (sisterTypes.size() == 4) {
                             break;
                         } else if (sisterTypes.size() > 4) {
@@ -551,6 +608,7 @@ public class ARQClient {
                 }
             }
         }
+        // Singularize plural types
         ArrayList<String> singleTypes = new ArrayList<>();
         for (String sisterType : sisterTypes) {
             String[] typeArray = sisterType.split(" ");
