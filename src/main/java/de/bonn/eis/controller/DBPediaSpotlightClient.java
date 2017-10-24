@@ -15,7 +15,7 @@ import javax.ws.rs.core.MediaType;
  * Created by Ainuddin Faizan on 12/29/16.
  */
 public class DBPediaSpotlightClient {
-    private final static String API_URL = "http://api.dbpedia-spotlight.org/annotate";
+    private final static String API_URL = "http://model.dbpedia-spotlight.org/en/annotate";
     private final static String LOCAL_API_URL = "http://spotlight/rest/annotate/";
     private static final double CONFIDENCE = 0.6;
     private static final int SUPPORT = 0;
