@@ -10,7 +10,7 @@ import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 /**
  * Created by andy on 10/31/17.
  */
-public class QueryExecutor {
+public class SPARQLClient {
     //TODO Query builder
     static ResultSet runSelectQuery(String queryString, String service, String... defaultGraphs) throws Exception {
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(service, queryString);
