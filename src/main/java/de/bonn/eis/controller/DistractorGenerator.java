@@ -26,13 +26,12 @@ class DistractorGenerator {
         if (level.equals(NLPConsts.LEVEL_EASY)) {
             String baseType = QueryUtils.getBaseTypeForEasy(answer);
             return Queries.getNPopularDistractorsForBaseType(answer.getURI(), baseType, 3);
-        }
-        else if(level.equals(NLPConsts.LEVEL_HARD)) {
+        } else if (level.equals(NLPConsts.LEVEL_HARD)) {
             List<String> types = Queries.getNMostSpecificTypes(answer.getURI(), 5, false);
             List<String> distractors = new ArrayList<>();
-            for (String type: types) {
+            for (String type : types) {
                 distractors.addAll(Queries.getNPopularDistractorsForBaseType(answer.getURI(), type, 3));
-                if(distractors.size() >= 3){
+                if (distractors.size() >= 3) {
                     return distractors.subList(0, 3);
                 }
             }
@@ -131,7 +130,7 @@ class DistractorGenerator {
             List<String> typeStrings = Queries.getNMostSpecificTypes(answer.getURI(), 10, false);
             //TODO Decide whether to use many types = distractors are of different types
             //TODO one type = distractors are of the same type e.g. all are rivers
-            if(typeStrings == null || typeStrings.isEmpty()){
+            if (typeStrings == null || typeStrings.isEmpty()) {
                 return null;
             }
             String queryString;
@@ -210,20 +209,20 @@ class DistractorGenerator {
         List<String> mostSpecificTypes = Queries.getNMostSpecificTypes(uri, 1, true);
         String baseType = "";
         String baseTypeLabel = "";
-        if(mostSpecificTypes != null && !mostSpecificTypes.isEmpty()){
+        if (mostSpecificTypes != null && !mostSpecificTypes.isEmpty()) {
             baseType = mostSpecificTypes.get(0);
         }
-        if(baseType.isEmpty() || baseType.equalsIgnoreCase(SPARQLConsts.OWL_PERSON)){
+        if (baseType.isEmpty() || baseType.equalsIgnoreCase(SPARQLConsts.OWL_PERSON)) {
             List<String> yagoTypes = Queries.getNMostSpecificYAGOTypesForDepthRange(uri, 10, 11, 14);
-            if(!yagoTypes.isEmpty()){
+            if (!yagoTypes.isEmpty()) {
                 int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
                 baseType = yagoTypes.get(randomIndex);
                 baseTypeLabel = QueryUtils.getWikicatYAGOTypeName(baseType);
             }
-        } else{
+        } else {
             baseTypeLabel = QueryUtils.getLabelOfType(baseType);
         }
-        if(baseTypeLabel == null || baseTypeLabel.isEmpty()){
+        if (baseTypeLabel == null || baseTypeLabel.isEmpty()) {
             return null;
         }
 
@@ -237,7 +236,7 @@ class DistractorGenerator {
         int randomIndex;
         LinkSUMResultRow linkSUMResultRow, secondLinkSUMResultRow;
         List<LinkSUMResultRow> tempResults = new ArrayList<>();
-        if(!linkSUMResults.isEmpty()){
+        if (!linkSUMResults.isEmpty()) {
             linkSUMResults.forEach(resultRow -> {
                 if (resultRow != null) {
                     if (resultRow.getObjectLabel() != null && resultRow.getSubjectLabel() != null
@@ -250,7 +249,7 @@ class DistractorGenerator {
             });
             linkSUMResults = tempResults;
             int size = linkSUMResults.size();
-            if(level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)){
+            if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
                 int bound = size <= 10 ? size : 10;
                 randomIndex = ThreadLocalRandom.current().nextInt(bound);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
@@ -258,14 +257,14 @@ class DistractorGenerator {
 
                 int secondRandomIndex = ThreadLocalRandom.current().nextInt(bound);
                 int i = bound;
-                while(secondRandomIndex == randomIndex && i >= 0){
+                while (secondRandomIndex == randomIndex && i >= 0) {
                     secondRandomIndex = ThreadLocalRandom.current().nextInt(bound);
                     i--;
                 }
                 secondLinkSUMResultRow = linkSUMResults.get(secondRandomIndex);
                 i = bound;
                 while (linkSUMResultRow.getPredicateLabel().equalsIgnoreCase(secondLinkSUMResultRow.getPredicateLabel())
-                        && i >= 0){
+                        && i >= 0) {
                     secondRandomIndex = ThreadLocalRandom.current().nextInt(bound);
                     secondLinkSUMResultRow = linkSUMResults.get(secondRandomIndex);
                     i--;
@@ -274,7 +273,7 @@ class DistractorGenerator {
                 List<String> distractors = Queries.getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 1);
                 builder.distractors(distractors);
 
-            } else if(level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)){
+            } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
                 linkSUMResultRow = WhoAmIHelper.getHardPropertyForWhoAmI(linkSUMResults);
                 linkSUMResultRow.getWhoAmIFromLinkSUMRow(builder, 1);
 
@@ -282,15 +281,15 @@ class DistractorGenerator {
                 int i = size;
                 while (linkSUMResultRow == secondLinkSUMResultRow ||
                         linkSUMResultRow.getPredicateLabel().equalsIgnoreCase(secondLinkSUMResultRow.getPredicateLabel())
-                                && i >= 0){
+                                && i >= 0) {
                     secondLinkSUMResultRow = WhoAmIHelper.getHardPropertyForWhoAmI(linkSUMResults);
                     i--;
                 }
                 secondLinkSUMResultRow.getWhoAmIFromLinkSUMRow(builder, 2);
                 List<String> distractors = Queries.getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 2);
-                if(distractors.isEmpty() || distractors.size() < 3){
+                if (distractors.isEmpty() || distractors.size() < 3) {
                     distractors.addAll(Queries.getNPopularDistractorsForBaseType(uri, baseType, secondLinkSUMResultRow, linkSUMResultRow, 3 - distractors.size(), 2));
-                    if(distractors.isEmpty() || distractors.size() < 3){
+                    if (distractors.isEmpty() || distractors.size() < 3) {
                         distractors.addAll(Queries.getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3 - distractors.size(), 1));
                     }
                 }

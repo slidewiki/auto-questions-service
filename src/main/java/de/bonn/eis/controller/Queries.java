@@ -77,16 +77,16 @@ public class Queries {
                 " {\n" +
                 " select distinct ?" + variableName + " where {\n" +
                 resourceURI + " a ?" + variableName + " .\n";
-        if(owlClassOnly){
+        if (owlClassOnly) {
             queryString = SPARQLConsts.PREFIX_OWL + queryString;
             queryString += "?" + variableName + " a owl:Class .\n";
-        } else{
+        } else {
             queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_URL + "\"))";
         }
         queryString += " }\n" +
-        " }\n" +
-        " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
-        " } group by (?" + variableName + ") order by desc (?count) limit " + n + "\n";
+                " }\n" +
+                " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
+                " } group by (?" + variableName + ") order by desc (?count) limit " + n + "\n";
 
         ResultSet resultSet = null;
         try {
@@ -97,7 +97,7 @@ public class Queries {
         return QueryUtils.getResultSetAsStringList(resultSet, variableName, false);
     }
 
-    static List<String> getNMostSpecificYAGOTypesForDepthRange(String resourceURI, int n, int depthLowerBound, int depthUpperBound){
+    static List<String> getNMostSpecificYAGOTypesForDepthRange(String resourceURI, int n, int depthLowerBound, int depthUpperBound) {
         String queryString = SPARQLConsts.PREFIX_RDFS;
         String variableName = "type";
         resourceURI = "<" + resourceURI + ">";
@@ -114,7 +114,7 @@ public class Queries {
                 " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
                 "} group by ?" + variableName + " order by desc  (?count)\n" +
                 "}\n";
-        if(n != -1){
+        if (n != -1) {
             queryString += "filter (?count < " + depthUpperBound + " && ?count > " + depthLowerBound + ")\n";
         }
         queryString += "} limit " + n;
@@ -126,7 +126,7 @@ public class Queries {
 //            e.printStackTrace();
 //        }
 
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQLConsts.DBPEDIA_SPARQL_SERVICE , queryString);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQLConsts.DBPEDIA_SPARQL_SERVICE, queryString);
         qExec.addDefaultGraph("http://dbpedia.org");
         ResultSet resultSet = null;
         try {
@@ -179,7 +179,7 @@ public class Queries {
 //        }
 
 //        String DBPEDIA_SPARQL_SERVICE = "http://dbpedia.org/sparql/";
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQLConsts.DBPEDIA_SPARQL_SERVICE , queryString);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQLConsts.DBPEDIA_SPARQL_SERVICE, queryString);
         qExec.addDefaultGraph(SPARQLConsts.DBPEDIA_URL);
         ResultSet resultSet = null;
         try {
@@ -203,7 +203,7 @@ public class Queries {
         return QueryUtils.getResultSetAsObjectList(resultSet);
     }
 
-    static List<String> getNPopularDistractorsForBaseType(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second,  int n, int level) {
+    static List<String> getNPopularDistractorsForBaseType(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second, int n, int level) {
         List<String> distractors = new ArrayList<>();
         float answerPop = QueryUtils.getVRankOfResource(uri);
         uri = "<" + uri + ">";
@@ -216,7 +216,11 @@ public class Queries {
         String p2 = second.getPredicate() != null ? "<" + second.getPredicate() + "> " : null;
         String o2 = second.getObject() != null ? "<" + second.getObject() + "> " : "?d ";
 
-        String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_FOAF + SPARQLConsts.PREFIX_RDF + SPARQLConsts.PREFIX_VRANK + SPARQLConsts.PREFIX_DBPEDIA_ONTOLOGY +
+        String queryString = SPARQLConsts.PREFIX_RDFS +
+                SPARQLConsts.PREFIX_FOAF +
+                SPARQLConsts.PREFIX_RDF +
+                SPARQLConsts.PREFIX_VRANK +
+                SPARQLConsts.PREFIX_DBPEDIA_ONTOLOGY +
                 "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
                 "{?d rdfs:label ?dlabel .}\n" +
                 SPARQLConsts.UNION +
@@ -229,19 +233,19 @@ public class Queries {
                 "?d vrank:hasRank/vrank:rankValue ?v.\n" +
                 "filter (?d != " + uri + ")\n";
 
-        if(level == 1){
-            if(p1 != null) {
-                queryString += "filter not exists {" + s1 + p1 + o1  + "}\n";
+        if (level == 1) {
+            if (p1 != null) {
+                queryString += "filter not exists {" + s1 + p1 + o1 + "}\n";
             }
-            if(p2 != null) {
-                queryString += "filter not exists {" + s2 + p2 + o2  + "}\n";
+            if (p2 != null) {
+                queryString += "filter not exists {" + s2 + p2 + o2 + "}\n";
             }
         } else if (level == 2) {
-            if(p1 != null) {
-                queryString += s1 + p1 + o1  + "\n";
+            if (p1 != null) {
+                queryString += s1 + p1 + o1 + "\n";
             }
-            if(p2 != null) {
-                queryString += "filter not exists {" + s2 + p2 + o2  + "}\n";
+            if (p2 != null) {
+                queryString += "filter not exists {" + s2 + p2 + o2 + "}\n";
             }
         }
 

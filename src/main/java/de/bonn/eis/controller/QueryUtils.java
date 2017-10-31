@@ -3,13 +3,10 @@ package de.bonn.eis.controller;
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.LinkSUMResultRow;
 import de.bonn.eis.utils.SPARQLConsts;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFactory;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,28 +23,26 @@ public class QueryUtils {
 
     static String getBaseTypeForEasy(DBPediaResource resource) {
         String baseType = "";
-        if(!resource.getTypes().isEmpty()) {
+        if (!resource.getTypes().isEmpty()) {
             baseType = QueryUtils.getMostSpecificSpotlightType(resource.getTypes());
-        }
-        else {
+        } else {
             List<String> specificTypes = Queries.getNMostSpecificTypes(resource.getURI(), 1, true);
-            if(!specificTypes.isEmpty()){
+            if (!specificTypes.isEmpty()) {
                 baseType = specificTypes.get(0);
             }
         }
-        if(baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(SPARQLConsts.OWL_PERSON) || Queries.getTypeDepth(baseType) <= 3){
+        if (baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(SPARQLConsts.OWL_PERSON) || Queries.getTypeDepth(baseType) <= 3) {
             List<String> yagoTypes = null;
             int lowerBound = 11;
-            while((yagoTypes == null || yagoTypes.isEmpty()) && lowerBound > 3){
-                yagoTypes = Queries.getNMostSpecificYAGOTypesForDepthRange(resource.getURI(), 10, lowerBound, lowerBound+3);
-                if(lowerBound == 5){
+            while ((yagoTypes == null || yagoTypes.isEmpty()) && lowerBound > 3) {
+                yagoTypes = Queries.getNMostSpecificYAGOTypesForDepthRange(resource.getURI(), 10, lowerBound, lowerBound + 3);
+                if (lowerBound == 5) {
                     lowerBound--;
-                }
-                else {
+                } else {
                     lowerBound -= 3;
                 }
             }
-            if(yagoTypes != null && !yagoTypes.isEmpty()){
+            if (yagoTypes != null && !yagoTypes.isEmpty()) {
                 int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
                 baseType = yagoTypes.get(randomIndex);
             }
@@ -68,11 +63,11 @@ public class QueryUtils {
 
         try {
             ResultSet results = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
-            if(results != null){
-                while (results.hasNext()){
+            if (results != null) {
+                while (results.hasNext()) {
                     QuerySolution result = results.next();
                     RDFNode vRank = result.get(var);
-                    if(vRank != null && vRank.isLiteral()){
+                    if (vRank != null && vRank.isLiteral()) {
                         Literal literal = (Literal) vRank;
                         return (literal.getFloat());
                     }
@@ -100,13 +95,13 @@ public class QueryUtils {
                 QuerySolution result = resultSet.next();
                 if (result != null) {
                     node = result.get(variableName);
-                    if(literalRequired){
+                    if (literalRequired) {
                         String literal = getStringLiteral(node);
-                        if(literal != null){
+                        if (literal != null) {
                             resultStrings.add(literal);
                         }
                     } else {
-                        if(node != null) {
+                        if (node != null) {
                             resultStrings.add(node.toString());
                         }
                     }
@@ -132,8 +127,8 @@ public class QueryUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if(results != null){
-            if (results.hasNext()){
+        if (results != null) {
+            if (results.hasNext()) {
                 QuerySolution result = results.next();
                 return getStringLiteral(result.get(variable));
             }
@@ -167,7 +162,7 @@ public class QueryUtils {
                             .predicateLabel(getStringLiteral(result.get(predLabel)))
                             .objectLabel(getStringLiteral(result.get(obLabel)));
                     RDFNode vRankNode = result.get(vRank);
-                    if(vRankNode != null && vRankNode.isLiteral()){
+                    if (vRankNode != null && vRankNode.isLiteral()) {
                         Literal literal = (Literal) vRankNode;
                         builder.vRank(literal.getFloat());
                     }

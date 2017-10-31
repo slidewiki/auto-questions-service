@@ -15,7 +15,7 @@ public class SPARQLClient {
     static ResultSet runSelectQuery(String queryString, String service, String... defaultGraphs) throws Exception {
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(service, queryString);
         qExec.addDefaultGraph(SPARQLConsts.DBPEDIA_URL);
-        if(defaultGraphs != null ){
+        if (defaultGraphs != null) {
             for (String defaultGraph : defaultGraphs) {
                 qExec.addDefaultGraph(defaultGraph);
             }
