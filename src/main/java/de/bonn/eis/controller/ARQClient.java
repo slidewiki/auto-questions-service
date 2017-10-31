@@ -4,7 +4,6 @@ import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.LinkSUMResultRow;
 import de.bonn.eis.model.WhoAmIQuestionStructure;
 import de.bonn.eis.utils.NLPConsts;
-import de.bonn.eis.utils.QGenLogger;
 import de.bonn.eis.utils.SPARQLConsts;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
@@ -131,28 +130,6 @@ public class ARQClient {
         return queryString;
     }
 
-    //TODO Query builder
-    private ResultSet runSelectQuery(String queryString, String service, String... defaultGraphs) throws Exception {
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(service, queryString);
-        qExec.addDefaultGraph(SPARQLConsts.DBPEDIA_URL);
-        if(defaultGraphs != null ){
-            for (String defaultGraph : defaultGraphs) {
-                qExec.addDefaultGraph(defaultGraph);
-            }
-        }
-        qExec.addParam("timeout", SPARQLConsts.TIMEOUT_VALUE); //100 sec
-        ResultSet set = null;
-        try {
-            set = qExec.execSelect();
-            set = ResultSetFactory.copyResults(set);
-        } catch (Exception e) {
-            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
-        } finally {
-            qExec.close();
-        }
-        return set;
-    }
-
     private int getTypeDepth(String type) {
 //        String typeInLowerCase = type.toLowerCase();
 //        if (!typeInLowerCase.contains(DBPEDIA)) {
@@ -169,7 +146,7 @@ public class ARQClient {
         ResultSet results;
         int count = 0;
         try {
-            results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            results = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
             while (results.hasNext()) {
                 results.next();
                 count++;
@@ -244,7 +221,7 @@ public class ARQClient {
                                 "} order by rand() limit 3";
                         ResultSet resultSet = null;
                         try {
-                            resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+                            resultSet = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -276,7 +253,7 @@ public class ARQClient {
 
                 ResultSet resultSet = null;
                 try {
-                    resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+                    resultSet = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -328,7 +305,7 @@ public class ARQClient {
 
             resultSet = null;
             try {
-                resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+                resultSet = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -399,7 +376,7 @@ public class ARQClient {
 
         ResultSet resultSet = null;
         try {
-            resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            resultSet = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -517,7 +494,7 @@ public class ARQClient {
                 "}";
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            results = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -538,7 +515,7 @@ public class ARQClient {
                 "}";
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            results = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -782,7 +759,7 @@ public class ARQClient {
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
         try {
-            ResultSet results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE, SPARQLConsts.PAGE_RANK_GRAPH);
+            ResultSet results = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE, SPARQLConsts.PAGE_RANK_GRAPH);
             distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -841,7 +818,7 @@ public class ARQClient {
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
         try {
-            ResultSet results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE, SPARQLConsts.PAGE_RANK_GRAPH);
+            ResultSet results = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE, SPARQLConsts.PAGE_RANK_GRAPH);
             distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -861,7 +838,7 @@ public class ARQClient {
                 "}\n";
 
         try {
-            ResultSet results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            ResultSet results = QueryExecutor.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
             if(results != null){
                 while (results.hasNext()){
                     QuerySolution result = results.next();
