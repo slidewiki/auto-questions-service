@@ -32,7 +32,7 @@ public class ARQClient {
 
     // TODO Use QueryBuilder
     // http://stackoverflow.com/questions/7250189/how-to-build-sparql-queries-in-java
-    public List<String> getSimilarResourceNames(DBPediaResource resource, String level) {
+    List<String> getSimilarResourceNames(DBPediaResource resource, String level) {
         List<String> resourceNames = new ArrayList<>();
 
         if (level.equals(NLPConsts.LEVEL_EASY)) {
@@ -212,7 +212,7 @@ public class ARQClient {
         return "";
     }
 
-    public List<String> getSisterTypes(DBPediaResource answer, String level) {
+    List<String> getSisterTypes(DBPediaResource answer, String level) {
         List<String> sisterTypes = new ArrayList<>();
         if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
             String types = answer.getTypes();
@@ -658,7 +658,7 @@ public class ARQClient {
         return rows;
     }
 
-    public WhoAmIQuestionStructure getWhoAmIQuestion(DBPediaResource resource, String level) {
+    WhoAmIQuestionStructure getWhoAmIQuestion(DBPediaResource resource, String level) {
         String uri = resource.getURI();
         List<String> mostSpecificTypes = getNMostSpecificTypes(uri, 1, true);
         String baseType = "";
