@@ -94,62 +94,6 @@ public class ARQClient {
         return null;
     }
 
-    private List<String> getDistractorsFromWordnet(String resourceName) {
-        List<String> distractors = new ArrayList<>();
-        List<String> lexicalDomains = getWordnetLexicalDomains(resourceName);
-        if (lexicalDomains.isEmpty()) {
-            // wordnet sometimes gives results for last names (in the case of people)
-            int index = resourceName.trim().lastIndexOf(" ");
-            if (index > 0) {
-                resourceName = resourceName.substring(index).trim();
-                String[] tags = RiTa.getPosTags(resourceName);
-                for (String tag : tags) {
-                    if (tag.equals(SPARQLConsts.NNP_POS_TAG)) {
-                        lexicalDomains = getWordnetLexicalDomains(resourceName);
-                        break;
-                    }
-                }
-            }
-        }
-        for (String lexicalDomain : lexicalDomains) {
-            distractors.addAll(getWordnetHypernyms(resourceName, lexicalDomain));
-        }
-        return distractors;
-    }
-
-    private List<String> getWordnetHypernyms(String resourceName, String lexicalDomain) {
-        String queryString = "PREFIX lemon: <http://lemon-model.net/lemon#> \n" +
-                "PREFIX wordnet: <http://wordnet-rdf.princeton.edu/> \n" +
-                "PREFIX wordnet-ontology: <http://wordnet-rdf.princeton.edu/ontology#>\n" +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                "\n" +
-                "select ?name where {\n" +
-                " ?s rdfs:label \"" + resourceName + "\"@eng .\n" +
-                " ?s wordnet-ontology:lexical_domain <" + lexicalDomain + "> ." +
-                " {\n" +
-                " ?s wordnet-ontology:instance_hypernym ?p .\n" +
-                " ?res wordnet-ontology:instance_hypernym ?p .\n" +
-                " ?res rdfs:label ?name .\n" +
-                " }\n" +
-                " UNION\n" +
-                " {\n" +
-                "  ?s wordnet-ontology:hypernym ?p .\n" +
-                "  ?res wordnet-ontology:hypernym ?p .\n" +
-                " ?res rdfs:label ?name .\n" +
-                " }\n" +
-                " FILTER (?s != ?res)\n" +
-                "} ORDER BY RAND() LIMIT 4";
-        ResultSet results = null;
-        List<String> resources = new ArrayList<>();
-        try {
-            results = runSelectQuery(queryString, SPARQLConsts.WORDNET_SPARQL_SERVICE);
-        } catch (Exception e) {
-            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
-        }
-        addResultsToList(results, resources, "name");
-        return resources;
-    }
-
     private void addResultsToList(ResultSet results, List<String> resources, String var) {
         if (results != null) {
             while (results.hasNext()) {
@@ -164,76 +108,6 @@ public class ARQClient {
                 }
             }
         }
-    }
-
-    private List<String> getWordnetLexicalDomains(String resourceName) {
-        String queryString = "PREFIX lemon: <http://lemon-model.net/lemon#> \n" +
-                "PREFIX wordnet: <http://wordnet-rdf.princeton.edu/> \n" +
-                "PREFIX wordnet-ontology: <http://wordnet-rdf.princeton.edu/ontology#>\n" +
-                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                "\n" +
-                "select distinct ?d where {\n" +
-                " ?s rdfs:label \"" + resourceName + "\"@eng .\n" +
-                " ?s wordnet-ontology:lexical_domain ?d .\n" +
-                " filter( regex(str(?d), \"noun\" ))\n" +
-                "} ORDER BY DESC (?d)";
-        ResultSet results = null;
-        List<String> domains = new ArrayList<>();
-        try {
-            results = runSelectQuery(queryString, SPARQLConsts.WORDNET_SPARQL_SERVICE);
-        } catch (Exception e) {
-            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
-        }
-        if (results != null) {
-            while (results.hasNext()) {
-                QuerySolution result = results.next();
-                if (result != null) {
-                    RDFNode node = result.get("d");
-                    domains.add(node.toString());
-                }
-            }
-        }
-        return domains;
-    }
-
-    private String addTriplePatternsAndUnions(List<String> resourceTypeList, String queryString) {
-        int numberOfTypes = resourceTypeList.size();
-        int groupSize = getGroupSize(numberOfTypes);
-        int count = 0;
-        boolean curlyBraceOpened = false;
-//        boolean groupIsOdd = true;
-        for (int i = 0; i < numberOfTypes; i++) {
-            if (groupSize > 0 && count == 0) {
-                queryString += "{\n";
-                curlyBraceOpened = true;
-//                if(groupIsOdd){
-//                    queryString += "?res ?p ?s .\n";
-//                } else {
-//                    queryString += "?s ?p ?res .\n";
-//                }
-//                groupIsOdd = !groupIsOdd;
-            }
-            String nsAndType = resourceTypeList.get(i);
-            queryString = addNsAndType(queryString, nsAndType, true);
-            if (groupSize > 0) {
-                count++;
-                if (groupSize == count) {
-                    queryString += "}\n";
-                    curlyBraceOpened = false;
-                    if (i < numberOfTypes - 1) {
-                        queryString += SPARQLConsts.UNION;
-                    }
-//                    else if( i == numberOfTypes - 2){
-//                        queryString += MINUS;
-//                    }
-                    count = 0;
-                }
-            }
-        }
-        if (curlyBraceOpened) {
-            queryString += "}\n";
-        }
-        return queryString;
     }
 
     private String addNsAndType(String queryString, String nsAndType, boolean shouldAddTriple) {
@@ -257,55 +131,7 @@ public class ARQClient {
         return queryString;
     }
 
-    private String addTriplePatternsAndMinus(List<String> resourceTypeList, String queryString) {
-        int size = resourceTypeList.size();
-        for (int i = 0; i < size; i++) {
-            if (i < size - 2) {
-                queryString = addNsAndType(queryString, resourceTypeList.get(i), true);
-            } else {
-                queryString += SPARQLConsts.MINUS + "{\n";
-                queryString = addNsAndType(queryString, resourceTypeList.get(i), true);
-                queryString += "}\n";
-            }
-        }
-        return queryString;
-    }
-
-    private int getGroupSize(int sizeOfList) {
-        int maxGroupSize = 3;
-        if (sizeOfList <= maxGroupSize) {
-            return sizeOfList - 1;
-        }
-        return maxGroupSize;
-    }
-
     //TODO Query builder
-    private List<String> getResourceTypes(DBPediaResource resource) {
-
-        List<String> resourceTypes = new ArrayList<>();
-        String uri = "<" + resource.getURI() + ">";
-        String queryString = SPARQLConsts.PREFIX_RDF + "SELECT ?o WHERE {\n" +
-                uri + " a ?o .\n" +
-                "}";
-
-        ResultSet results = null;
-        try {
-            results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
-        } catch (Exception e) {
-            QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
-        }
-        if (results != null) {
-            while (results.hasNext()) {
-                QuerySolution result = results.next();
-                if (result != null) {
-                    RDFNode node = result.get("o");
-                    resourceTypes.add(node.toString());
-                }
-            }
-        }
-        return resourceTypes;
-    }
-
     private ResultSet runSelectQuery(String queryString, String service, String... defaultGraphs) throws Exception {
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(service, queryString);
         qExec.addDefaultGraph(SPARQLConsts.DBPEDIA_URL);
@@ -389,59 +215,6 @@ public class ARQClient {
     public List<String> getSisterTypes(DBPediaResource answer, String level) {
         List<String> sisterTypes = new ArrayList<>();
         if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
-//            String baseType = getBaseTypeForEasy(answer);
-//            if(baseType.isEmpty()){
-//                return null;
-//            }
-//            int depth = getTypeDepth(baseType);
-//            System.out.println(baseType + " " + depth);
-//            while(sisterTypes.size() < 4 &&  depth > 3){
-//                String queryString =
-//                        PREFIX_RDF + PREFIX_RDFS + PREFIX_OWL +
-//                                "SELECT DISTINCT ?name ?superType ?baseTypeLabel FROM <http://dbpedia.org> WHERE {\n" +
-//                                "<" + baseType + "> rdfs:subClassOf ?superType .\n" +
-//                                " ?t rdfs:subClassOf ?superType .\n" +
-//                                "<" + baseType + "> rdfs:label ?baseTypeLabel .\n" +
-//                                " ?t rdfs:label ?name .\n" +
-//                                " filter (?t != <" + baseType + ">) .\n" +
-//                                " filter (langMatches(lang(?name), \"EN\")) ." +
-//                                " filter not exists {<" + answer.getURI() + "> a ?t } ." +
-//                                "} order by rand() limit 3";
-//                ResultSet resultSet = null;
-//                try {
-//                    resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//                if (resultSet != null) {
-//                    addResultsToList(resultSet, sisterTypes, "name");
-//                    System.out.println(sisterTypes);
-//                    RDFNode baseTypeLabel;
-//                    while (resultSet.hasNext()) {
-//                        QuerySolution result = resultSet.next();
-//                        if (result != null) {
-//                            baseTypeLabel = result.get("baseTypeLabel");
-//                            String literal = getStringLiteral(baseTypeLabel);
-//                            if (literal != null) {
-//                                sisterTypes.add(0, literal);
-////                                System.out.println(sisterTypes);
-//                            }
-//                            RDFNode superType = result.get("superType");
-//                            if (superType != null) {
-//                                System.out.println(superType);
-//                                baseType = superType.toString();
-//                                depth = getTypeDepth(baseType);
-//                            } else {
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//            if (sisterTypes.size() > 4) {
-//                sisterTypes = sisterTypes.subList(0, 4);
-//            }
-
             String types = answer.getTypes();
             if (!types.isEmpty()) {
                 String[] typesArray = types.split(",");
@@ -530,7 +303,6 @@ public class ARQClient {
             List<String> typeStrings = getNMostSpecificTypes(answer.getURI(), 10, false);
             //TODO Decide whether to use many types = distractors are of different types
             //TODO one type = distractors are of the same type e.g. all are rivers
-//            List<String> typeStrings = getNMostUniqueTypes(resource, 10);
             if(typeStrings == null || typeStrings.isEmpty()){
                 return null;
             }
@@ -605,35 +377,6 @@ public class ARQClient {
         return singleTypes;
     }
 
-    private List<String> getNMostUniqueTypes(String resourceURI, int n, boolean owlClassOnly) {
-        String queryString = SPARQLConsts.PREFIX_RDFS;
-        String variableName = "category";
-        resourceURI = "<" + resourceURI + ">";
-        queryString += "SELECT ?" + variableName + " (COUNT(?member) as ?memberCount) FROM <http://dbpedia.org> WHERE {\n" +
-                "?member a ?" + variableName + ".\n" +
-                "{ SELECT ?" + variableName + " WHERE { " + resourceURI + " a ?" + variableName + ". ";
-        if(owlClassOnly){
-            queryString = SPARQLConsts.PREFIX_OWL + queryString;
-            queryString += "?" + variableName + " a owl:Class .\n";
-        } else{
-            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_URL + "\"))";
-        }
-        queryString += "} }\n" +
-                "}\n" +
-                "group by (?" + variableName + ") ORDER BY ?memberCount \n";
-        if(n != -1){
-            queryString += "limit " + n + "\n";
-        }
-
-        ResultSet resultSet = null;
-        try {
-            resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return getResultSetAsStringList(resultSet, variableName, false);
-    }
-
     private List<String> getNMostSpecificTypes(String resourceURI, int n, boolean owlClassOnly) {
         String queryString = SPARQLConsts.PREFIX_RDFS;
         String variableName = "type";
@@ -705,10 +448,6 @@ public class ARQClient {
         }
         return getResultSetAsStringList(resultSet, variableName, false);
     }
-
-//    private String getMostSpecificType (String resourceURI, boolean owlClassOnly) {
-//        return getNMostSpecificTypes(resourceURI, 1, owlClassOnly).get(0);
-//    }
 
     private List<String> getResultSetAsStringList(ResultSet resultSet, String variableName, boolean literalRequired) {
         List<String> resultStrings = new ArrayList<>();
