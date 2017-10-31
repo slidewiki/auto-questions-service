@@ -5,6 +5,7 @@ import de.bonn.eis.model.LinkSUMResultRow;
 import de.bonn.eis.model.WhoAmIQuestionStructure;
 import de.bonn.eis.utils.NLPConsts;
 import de.bonn.eis.utils.QGenLogger;
+import de.bonn.eis.utils.SPARQLConsts;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -25,30 +26,7 @@ import java.util.stream.Collectors;
  */
 public class ARQClient {
 
-    private static final String DBPEDIA_URL = "http://dbpedia.org";
-    private static final String DBPEDIA_ONTOLOGY = DBPEDIA_URL + "/ontology/";
-    private static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "/sparql/";
-    private static final String WORDNET_SPARQL_SERVICE = "http://wordnet-rdf.princeton.edu/sparql/";
-    private static final String PREFIX_RDF = "PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n";
-    private static final String PREFIX_FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n";
-    private static final String PREFIX_RDFS = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n";
-    private static final String PREFIX_WIKIDATA = "PREFIX wikidata: <http://www.wikidata.org/entity/>\n";
-    private static final String PREFIX_OWL = "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n";
-    private static final String TIMEOUT_VALUE = "100000";
-    private static final String UNION = "UNION\n";
-    private static final String MINUS = "MINUS\n";
-    private static final String DBPEDIA = "dbpedia";
-    private static final String NNP_POS_TAG = "nnp";
-    private static final String WIKICAT = "wikicat";
-    private static final String YAGO = "yago";
-    private static final String OWL_PERSON = "http://dbpedia.org/ontology/Person";
-    private static final String DBPEDIA_CLASS_YAGO_WIKICAT = "http://dbpedia.org/class/yago/Wikicat";
-    private static final String PREFIX_VRANK = "PREFIX vrank:<http://purl.org/voc/vrank#>";
-    private static final String PREFIX_DBPEDIA_ONTOLOGY = "PREFIX dbp-ont:<http://dbpedia.org/ontology/>";
-    private static final String PREFIX_DBPEDIA_PROPERTY = "PREFIX dbp-prop:<http://dbpedia.org/property/>";
-    private static final String DBPEDIA_PAGE_RANK = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
-    private static final String PAGE_RANK_GRAPH = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
-    private final String PREFIX_DBRES = "PREFIX dbres: <" + DBPEDIA_ONTOLOGY + ">\n";
+    private final String PREFIX_DBRES = "PREFIX dbres: <" + SPARQLConsts.DBPEDIA_ONTOLOGY + ">\n";
     private final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
 
@@ -85,7 +63,7 @@ public class ARQClient {
                 baseType = specificTypes.get(0);
             }
         }
-        if(baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON) || getTypeDepth(baseType) <= 3){
+        if(baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(SPARQLConsts.OWL_PERSON) || getTypeDepth(baseType) <= 3){
             List<String> yagoTypes = null;
             int lowerBound = 11;
             while((yagoTypes == null || yagoTypes.isEmpty()) && lowerBound > 3){
@@ -108,9 +86,9 @@ public class ARQClient {
     private String getMostSpecificSpotlightType(String types) {
         String[] typeArray = types.split(",");
         for (int i = typeArray.length - 1; i >= 0; i--) {
-            if (typeArray[i].toLowerCase().contains(DBPEDIA)) {
+            if (typeArray[i].toLowerCase().contains(SPARQLConsts.DBPEDIA)) {
                 String ontologyName = typeArray[i].split(":")[1];
-                return DBPEDIA_ONTOLOGY + ontologyName;
+                return SPARQLConsts.DBPEDIA_ONTOLOGY + ontologyName;
             }
         }
         return null;
@@ -126,7 +104,7 @@ public class ARQClient {
                 resourceName = resourceName.substring(index).trim();
                 String[] tags = RiTa.getPosTags(resourceName);
                 for (String tag : tags) {
-                    if (tag.equals(NNP_POS_TAG)) {
+                    if (tag.equals(SPARQLConsts.NNP_POS_TAG)) {
                         lexicalDomains = getWordnetLexicalDomains(resourceName);
                         break;
                     }
@@ -164,7 +142,7 @@ public class ARQClient {
         ResultSet results = null;
         List<String> resources = new ArrayList<>();
         try {
-            results = runSelectQuery(queryString, WORDNET_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, SPARQLConsts.WORDNET_SPARQL_SERVICE);
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
@@ -202,7 +180,7 @@ public class ARQClient {
         ResultSet results = null;
         List<String> domains = new ArrayList<>();
         try {
-            results = runSelectQuery(queryString, WORDNET_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, SPARQLConsts.WORDNET_SPARQL_SERVICE);
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
@@ -243,7 +221,7 @@ public class ARQClient {
                     queryString += "}\n";
                     curlyBraceOpened = false;
                     if (i < numberOfTypes - 1) {
-                        queryString += UNION;
+                        queryString += SPARQLConsts.UNION;
                     }
 //                    else if( i == numberOfTypes - 2){
 //                        queryString += MINUS;
@@ -285,7 +263,7 @@ public class ARQClient {
             if (i < size - 2) {
                 queryString = addNsAndType(queryString, resourceTypeList.get(i), true);
             } else {
-                queryString += MINUS + "{\n";
+                queryString += SPARQLConsts.MINUS + "{\n";
                 queryString = addNsAndType(queryString, resourceTypeList.get(i), true);
                 queryString += "}\n";
             }
@@ -306,13 +284,13 @@ public class ARQClient {
 
         List<String> resourceTypes = new ArrayList<>();
         String uri = "<" + resource.getURI() + ">";
-        String queryString = PREFIX_RDF + "SELECT ?o WHERE {\n" +
+        String queryString = SPARQLConsts.PREFIX_RDF + "SELECT ?o WHERE {\n" +
                 uri + " a ?o .\n" +
                 "}";
 
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             QGenLogger.severe("Exception in SELECT\n" + queryString + "\n" + e.getMessage());
         }
@@ -330,13 +308,13 @@ public class ARQClient {
 
     private ResultSet runSelectQuery(String queryString, String service, String... defaultGraphs) throws Exception {
         QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(service, queryString);
-        qExec.addDefaultGraph(DBPEDIA_URL);
+        qExec.addDefaultGraph(SPARQLConsts.DBPEDIA_URL);
         if(defaultGraphs != null ){
             for (String defaultGraph : defaultGraphs) {
                 qExec.addDefaultGraph(defaultGraph);
             }
         }
-        qExec.addParam("timeout", TIMEOUT_VALUE); //100 sec
+        qExec.addParam("timeout", SPARQLConsts.TIMEOUT_VALUE); //100 sec
         ResultSet set = null;
         try {
             set = qExec.execSelect();
@@ -358,14 +336,14 @@ public class ARQClient {
 //            return 0;
 //        }
         String queryString =
-                PREFIX_RDF + PREFIX_FOAF + PREFIX_RDFS +
+                SPARQLConsts.PREFIX_RDF + SPARQLConsts.PREFIX_FOAF + SPARQLConsts.PREFIX_RDFS +
                         "SELECT DISTINCT ?path FROM <http://dbpedia.org> WHERE {\n" +
                         "<" + type + "> rdfs:subClassOf* ?path . }";
 
         ResultSet results;
         int count = 0;
         try {
-            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
             while (results.hasNext()) {
                 results.next();
                 count++;
@@ -385,7 +363,7 @@ public class ARQClient {
         } else if (namespace.equalsIgnoreCase("dul")) {
             prefix = PREFIX_DUL;
         } else if (namespace.equalsIgnoreCase("wikidata")) {
-            prefix = PREFIX_WIKIDATA;
+            prefix = SPARQLConsts.PREFIX_WIKIDATA;
         }
         if (!queryString.contains(prefix)) {
             queryString = prefix + queryString;
@@ -468,7 +446,7 @@ public class ARQClient {
             if (!types.isEmpty()) {
                 String[] typesArray = types.split(",");
                 List<String> resourceTypeList = Arrays.asList(typesArray);
-                resourceTypeList = resourceTypeList.stream().filter(type -> type.toLowerCase().contains(DBPEDIA)).collect(Collectors.toList());
+                resourceTypeList = resourceTypeList.stream().filter(type -> type.toLowerCase().contains(SPARQLConsts.DBPEDIA)).collect(Collectors.toList());
                 if (resourceTypeList != null) {
                     int size = resourceTypeList.size();
                     sisterTypes.add(getLabelOfSpotlightType(resourceTypeList.get(size - 1)));
@@ -476,7 +454,7 @@ public class ARQClient {
                         String type = resourceTypeList.get(i);
                         String superType = resourceTypeList.get(i - 1);
                         String queryString =
-                                PREFIX_RDF + PREFIX_RDFS + PREFIX_OWL;
+                                SPARQLConsts.PREFIX_RDF + SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_OWL;
                         queryString = addNsAndType(queryString, type, false);
                         queryString = addNsAndType(queryString, superType, false);
                         type = getNsAndTypeForSpotlightType(type);
@@ -493,7 +471,7 @@ public class ARQClient {
                                 "} order by rand() limit 3";
                         ResultSet resultSet = null;
                         try {
-                            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+                            resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -506,7 +484,7 @@ public class ARQClient {
                     }
                 }
             } else {
-                String queryString = PREFIX_RDFS + PREFIX_OWL;
+                String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_OWL;
                 String resource = "<" + answer.getURI() + ">";
                 queryString += "SELECT DISTINCT ?dName ?aName WHERE {\n" +
                         resource + " a ?t .\n" +
@@ -525,7 +503,7 @@ public class ARQClient {
 
                 ResultSet resultSet = null;
                 try {
-                    resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+                    resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -558,7 +536,7 @@ public class ARQClient {
             }
             String queryString;
             ResultSet resultSet;
-            queryString = PREFIX_RDFS + PREFIX_FOAF;
+            queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_FOAF;
             queryString += "SELECT DISTINCT ?dName ?aName ?d FROM <http://dbpedia.org> WHERE {\n";
             for (String typeString : typeStrings) {
                 queryString += "{\n <" + typeString + "> rdfs:subClassOf ?st .\n" +
@@ -566,7 +544,7 @@ public class ARQClient {
                         " optional { <" + typeString + "> foaf:name ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
                         "}\n";
                 if (typeStrings.indexOf(typeString) != typeStrings.size() - 1) {
-                    queryString += UNION;
+                    queryString += SPARQLConsts.UNION;
                 }
             }
 
@@ -578,7 +556,7 @@ public class ARQClient {
 
             resultSet = null;
             try {
-                resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+                resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -628,17 +606,17 @@ public class ARQClient {
     }
 
     private List<String> getNMostUniqueTypes(String resourceURI, int n, boolean owlClassOnly) {
-        String queryString = PREFIX_RDFS;
+        String queryString = SPARQLConsts.PREFIX_RDFS;
         String variableName = "category";
         resourceURI = "<" + resourceURI + ">";
         queryString += "SELECT ?" + variableName + " (COUNT(?member) as ?memberCount) FROM <http://dbpedia.org> WHERE {\n" +
                 "?member a ?" + variableName + ".\n" +
                 "{ SELECT ?" + variableName + " WHERE { " + resourceURI + " a ?" + variableName + ". ";
         if(owlClassOnly){
-            queryString = PREFIX_OWL + queryString;
+            queryString = SPARQLConsts.PREFIX_OWL + queryString;
             queryString += "?" + variableName + " a owl:Class .\n";
         } else{
-            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))";
+            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_URL + "\"))";
         }
         queryString += "} }\n" +
                 "}\n" +
@@ -649,7 +627,7 @@ public class ARQClient {
 
         ResultSet resultSet = null;
         try {
-            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -657,7 +635,7 @@ public class ARQClient {
     }
 
     private List<String> getNMostSpecificTypes(String resourceURI, int n, boolean owlClassOnly) {
-        String queryString = PREFIX_RDFS;
+        String queryString = SPARQLConsts.PREFIX_RDFS;
         String variableName = "type";
         resourceURI = "<" + resourceURI + ">";
 
@@ -666,10 +644,10 @@ public class ARQClient {
                 " select distinct ?" + variableName + " where {\n" +
                 resourceURI + " a ?" + variableName + " .\n";
         if(owlClassOnly){
-            queryString = PREFIX_OWL + queryString;
+            queryString = SPARQLConsts.PREFIX_OWL + queryString;
             queryString += "?" + variableName + " a owl:Class .\n";
         } else{
-            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))";
+            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_URL + "\"))";
         }
         queryString += " }\n" +
         " }\n" +
@@ -678,7 +656,7 @@ public class ARQClient {
 
         ResultSet resultSet = null;
         try {
-            resultSet = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            resultSet = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -686,7 +664,7 @@ public class ARQClient {
     }
 
     private List<String> getNMostSpecificYAGOTypesForDepthRange(String resourceURI, int n, int depthLowerBound, int depthUpperBound ){
-        String queryString = PREFIX_RDFS;
+        String queryString = SPARQLConsts.PREFIX_RDFS;
         String variableName = "type";
         resourceURI = "<" + resourceURI + ">";
         queryString += "SELECT ?" + variableName + " ?count WHERE {\n" +
@@ -695,8 +673,8 @@ public class ARQClient {
                 "  {\n" +
                 "   select distinct ?" + variableName + " where {\n" +
                 resourceURI + " a ?" + variableName + " .\n" +
-                "   filter (strstarts(str(?" + variableName + "), \"" + DBPEDIA_URL + "\"))\n" +
-                "   filter (!strstarts(str(?" + variableName + "), \"" + DBPEDIA_CLASS_YAGO_WIKICAT + "\"))\n" +
+                "   filter (strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_URL + "\"))\n" +
+                "   filter (!strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_CLASS_YAGO_WIKICAT + "\"))\n" +
                 "  }\n" +
                 " }\n" +
                 " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
@@ -714,7 +692,7 @@ public class ARQClient {
 //            e.printStackTrace();
 //        }
 
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_SPARQL_SERVICE , queryString);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQLConsts.DBPEDIA_SPARQL_SERVICE , queryString);
         qExec.addDefaultGraph("http://dbpedia.org");
         ResultSet resultSet = null;
         try {
@@ -758,7 +736,7 @@ public class ARQClient {
 
     private String getWikicatYAGOTypeName(String type) {
         StringBuilder stringBuilder = new StringBuilder();
-        boolean containsYago = type.toLowerCase().contains(YAGO);
+        boolean containsYago = type.toLowerCase().contains(SPARQLConsts.YAGO);
         String[] typeArray = type.split("/");
         type = typeArray[typeArray.length - 1];
         // Split camel case or title case
@@ -767,10 +745,10 @@ public class ARQClient {
         String prefixOne = "1";
         for (int i = 0; i < array.length; i++) {
             String s = array[i];
-            if (s.equalsIgnoreCase(WIKICAT)) {
+            if (s.equalsIgnoreCase(SPARQLConsts.WIKICAT)) {
                 continue;
             }
-            if (s.equalsIgnoreCase(YAGO)) {
+            if (s.equalsIgnoreCase(SPARQLConsts.YAGO)) {
                 containsYago = true;
                 continue;
             }
@@ -793,14 +771,14 @@ public class ARQClient {
 
     private String getLabelOfSpotlightType(String type) {
         String nsAndType = getNsAndTypeForSpotlightType(type);
-        String queryString = PREFIX_RDFS + PREFIX_DBRES;
+        String queryString = SPARQLConsts.PREFIX_RDFS + PREFIX_DBRES;
         queryString += "SELECT ?name FROM <http://dbpedia.org> WHERE {\n" +
                 nsAndType + " rdfs:label ?name .\n" +
                 " filter (langMatches(lang(?name), \"EN\")) ." +
                 "}";
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -811,17 +789,17 @@ public class ARQClient {
 
     private String getLabelOfType(String type) {
         type = "<" + type + ">";
-        String queryString = PREFIX_RDFS + PREFIX_FOAF;
+        String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_FOAF;
         String variable = "name";
         queryString += "SELECT ?" + variable + " FROM <http://dbpedia.org> WHERE {\n" +
                 "{" + type + " rdfs:label ?name .}\n" +
-                UNION +
+                SPARQLConsts.UNION +
                 "{" + type + " foaf:name ?name .}\n" +
                 " filter (langMatches(lang(?name), \"EN\")) ." +
                 "}";
         ResultSet results = null;
         try {
-            results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -843,11 +821,11 @@ public class ARQClient {
 
     private List<LinkSUMResultRow> getLinkSUMForResource(String resourceURI) {
         resourceURI = "<" + resourceURI + ">";
-        String queryString = PREFIX_RDFS + PREFIX_VRANK + PREFIX_DBPEDIA_ONTOLOGY + PREFIX_DBPEDIA_PROPERTY +
+        String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_VRANK + SPARQLConsts.PREFIX_DBPEDIA_ONTOLOGY + SPARQLConsts.PREFIX_DBPEDIA_PROPERTY +
                 "SELECT distinct (SAMPLE (?s) AS ?subject) (SAMPLE (?p) AS ?pred) (SAMPLE(?o) AS ?object) " +
                 "(SAMPLE(?slabel) AS ?sublabel) (SAMPLE (?plabel) AS ?predlabel) (SAMPLE(?olabel) AS ?oblabel) ?v \n" +
-                "FROM <" + DBPEDIA_URL + "> \n" +
-                "FROM <" + DBPEDIA_PAGE_RANK + "> \n" +
+                "FROM <" + SPARQLConsts.DBPEDIA_URL + "> \n" +
+                "FROM <" + SPARQLConsts.DBPEDIA_PAGE_RANK + "> \n" +
                 "WHERE {\n" +
                 "\t{\t" + resourceURI + " ?p ?o.\n" +
                 "\t\tFILTER regex(str(?o),\"http://dbpedia.org/resource\",\"i\").\n" +
@@ -880,8 +858,8 @@ public class ARQClient {
 //        }
 
 //        String DBPEDIA_SPARQL_SERVICE = "http://dbpedia.org/sparql/";
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(DBPEDIA_SPARQL_SERVICE , queryString);
-        qExec.addDefaultGraph(DBPEDIA_URL);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQLConsts.DBPEDIA_SPARQL_SERVICE , queryString);
+        qExec.addDefaultGraph(SPARQLConsts.DBPEDIA_URL);
         ResultSet resultSet = null;
         try {
             resultSet = qExec.execSelect();
@@ -949,7 +927,7 @@ public class ARQClient {
         if(mostSpecificTypes != null && !mostSpecificTypes.isEmpty()){
             baseType = mostSpecificTypes.get(0);
         }
-        if(baseType.isEmpty() || baseType.equalsIgnoreCase(OWL_PERSON)){
+        if(baseType.isEmpty() || baseType.equalsIgnoreCase(SPARQLConsts.OWL_PERSON)){
             List<String> yagoTypes = getNMostSpecificYAGOTypesForDepthRange(uri, 10, 11, 14);
             if(!yagoTypes.isEmpty()){
                 int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
@@ -1045,10 +1023,10 @@ public class ARQClient {
         uri = "<" + uri + ">";
         baseType = "<" + baseType + ">";
         String var = "label";
-        String queryString = PREFIX_RDFS + PREFIX_FOAF + PREFIX_RDF + PREFIX_VRANK + PREFIX_DBPEDIA_ONTOLOGY +
+        String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_FOAF + SPARQLConsts.PREFIX_RDF + SPARQLConsts.PREFIX_VRANK + SPARQLConsts.PREFIX_DBPEDIA_ONTOLOGY +
                 "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
                 "{?d rdfs:label ?dlabel .}\n" +
-                UNION +
+                SPARQLConsts.UNION +
                 "{?d foaf:name ?dlabel .}\n" +
                 "{\n" +
                 "select distinct ?d (ABS(" + answerPop + " - ?v) AS ?sd) where {\n" +
@@ -1065,7 +1043,7 @@ public class ARQClient {
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
         try {
-            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE, PAGE_RANK_GRAPH);
+            ResultSet results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE, SPARQLConsts.PAGE_RANK_GRAPH);
             distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1086,10 +1064,10 @@ public class ARQClient {
         String p2 = second.getPredicate() != null ? "<" + second.getPredicate() + "> " : null;
         String o2 = second.getObject() != null ? "<" + second.getObject() + "> " : "?d ";
 
-        String queryString = PREFIX_RDFS + PREFIX_FOAF + PREFIX_RDF + PREFIX_VRANK + PREFIX_DBPEDIA_ONTOLOGY +
+        String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_FOAF + SPARQLConsts.PREFIX_RDF + SPARQLConsts.PREFIX_VRANK + SPARQLConsts.PREFIX_DBPEDIA_ONTOLOGY +
                 "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
                 "{?d rdfs:label ?dlabel .}\n" +
-                UNION +
+                SPARQLConsts.UNION +
                 "{?d foaf:name ?dlabel .}\n" +
                 "{\n" +
                 "select distinct ?d (ABS(" + answerPop + " - ?v) AS ?sd) where {\n" +
@@ -1124,7 +1102,7 @@ public class ARQClient {
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
         try {
-            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE, PAGE_RANK_GRAPH);
+            ResultSet results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE, SPARQLConsts.PAGE_RANK_GRAPH);
             distractors = getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1135,7 +1113,7 @@ public class ARQClient {
     private float getVRankOfResource(String uri) {
         uri = "<" + uri + ">";
         String var = "v";
-        String queryString = PREFIX_VRANK +
+        String queryString = SPARQLConsts.PREFIX_VRANK +
                 "SELECT ?" + var + "\n" +
                 "FROM <http://dbpedia.org> \n" +
                 "FROM <http://people.aifb.kit.edu/ath/#DBpedia_PageRank> \n" +
@@ -1144,7 +1122,7 @@ public class ARQClient {
                 "}\n";
 
         try {
-            ResultSet results = runSelectQuery(queryString, DBPEDIA_SPARQL_SERVICE);
+            ResultSet results = runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
             if(results != null){
                 while (results.hasNext()){
                     QuerySolution result = results.next();
