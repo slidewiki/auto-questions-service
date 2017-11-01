@@ -5,9 +5,6 @@ import de.bonn.eis.utils.QGenUtils;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.*;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -24,10 +21,6 @@ import java.util.List;
 public class QGenApplication {
 
     private static final String DBPEDIA_PERSON = "DBpedia:Person";
-    private static final String DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE = "dbpediaSpotlightConfidenceForSlide";
-    private static final String DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK = "dbpediaSpotlightConfidenceForDeck";
-    private static final double SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE = 0.6;
-    private static final double SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE = 0.6;
     private static final String GAP_FILL = "gap-fill";
     private static final String SELECT = "select";
     private static final String WHO_AM_I = "whoami";
@@ -39,21 +32,7 @@ public class QGenApplication {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response generateQuestionsForSlides(@PathParam("type") String type, @PathParam("level") String level, @PathParam("deckID") String deckID) {
-        Client client = ClientBuilder.newClient();
-        String hostIp = "https://nlpstore.experimental.slidewiki.org/nlp/" + deckID;
-        WebTarget webTarget = client.target(hostIp);
-        NLP nlp = webTarget
-                .request(MediaType.APPLICATION_JSON)
-                .get(NLP.class);
-        if (nlp == null) {
-            hostIp = "https://nlpservice.experimental.slidewiki.org/nlp/nlpForDeck/" + deckID;
-            webTarget = client.target(hostIp);
-            nlp = webTarget
-                    .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_SLIDE, SPOTLIGHT_CONFIDENCE_FOR_SLIDE_VALUE)
-                    .queryParam(DBPEDIA_SPOTLIGHT_CONFIDENCE_FOR_DECK, SPOTLIGHT_CONFIDENCE_FOR_DECK_VALUE)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get(NLP.class);
-        }
+        NLP nlp = NLPServiceClient.getNlp(deckID);
         if (nlp != null) {
             DBPediaSpotlightResult spotlightResults = nlp.getDBPediaSpotlight();
             if (spotlightResults != null) {

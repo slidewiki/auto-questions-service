@@ -2,6 +2,7 @@ package de.bonn.eis.controller;
 
 import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
+import rita.RiTa;
 import rita.RiWordNet;
 
 import java.io.FileInputStream;
@@ -36,6 +37,26 @@ public class LanguageProcessor {
         String[] synonyms = wordnet.getAllSynonyms(surfaceForm, RiWordNet.NOUN);
         synList = Arrays.asList(synonyms);
         return synList;
+    }
+
+    static List<String> singularizePluralTypes(List<String> pluralTypes) {
+        // Singularize plural types
+        ArrayList<String> singleTypes = new ArrayList<>();
+        for (String pluralType : pluralTypes) {
+            String[] typeArray = pluralType.split(" ");
+            StringBuilder result = new StringBuilder();
+            for (String s : typeArray) {
+                String singular = RiTa.singularize(s);
+                String plural = RiTa.pluralize(singular);
+                if (plural.equalsIgnoreCase(s)) {
+                    result.append(singular).append(" ");
+                } else {
+                    result.append(s).append(" ");
+                }
+            }
+            singleTypes.add(result.toString().trim());
+        }
+        return singleTypes;
     }
 
     public List<String> getSentences() {

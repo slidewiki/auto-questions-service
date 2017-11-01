@@ -1,14 +1,20 @@
 package de.bonn.eis.controller;
 
+import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.LinkSUMResultRow;
 import de.bonn.eis.utils.Constants;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * Created by andy on 10/31/17.
@@ -264,5 +270,146 @@ public class Queries {
             e.printStackTrace();
         }
         return distractors;
+    }
+
+    static void getHardSiblingTypes(DBPediaResource answer, List<String> sisterTypes, List<String> typeStrings) {
+        String queryString;
+        ResultSet resultSet;
+        queryString = Constants.PREFIX_RDFS + Constants.PREFIX_FOAF;
+        queryString += "SELECT DISTINCT ?dName ?aName ?d FROM <http://dbpedia.org> WHERE {\n";
+        for (String typeString : typeStrings) {
+            queryString += "{\n <" + typeString + "> rdfs:subClassOf ?st .\n" +
+                    " optional { <" + typeString + "> rdfs:label ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
+                    " optional { <" + typeString + "> foaf:name ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
+                    "}\n";
+            if (typeStrings.indexOf(typeString) != typeStrings.size() - 1) {
+                queryString += Constants.UNION;
+            }
+        }
+
+        queryString += " ?d rdfs:subClassOf ?st .\n" +
+                " optional {?d rdfs:label ?dName . filter (langMatches(lang(?dName), \"EN\"))}\n" +
+                " optional {?d foaf:name ?dName . filter (langMatches(lang(?dName), \"EN\"))}\n" +
+                " filter not exists{<" + answer.getURI() + "> a ?d .}\n" +
+                "} order by rand() limit 3";
+
+        resultSet = null;
+        try {
+            resultSet = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        RDFNode answerType = null;
+        if (resultSet != null) {
+            while (resultSet.hasNext()) {
+                QuerySolution result = resultSet.next();
+                if (result != null) {
+                    answerType = result.get("aName");
+                    RDFNode distractor = result.get("dName");
+                    String literal = QueryUtils.getStringLiteral(distractor);
+                    if (literal != null) {
+                        sisterTypes.add(literal);
+                    } else {
+                        RDFNode distractorNode = result.get("d");
+                        String distractorString = distractorNode.toString();
+                        sisterTypes.add(QueryUtils.getWikicatYAGOTypeName(distractorString));
+                    }
+                }
+            }
+            String literal = QueryUtils.getStringLiteral(answerType);
+            if (literal != null) {
+                sisterTypes.add(0, literal);
+            } else {
+                int randomIndex = ThreadLocalRandom.current().nextInt(typeStrings.size());
+                sisterTypes.add(0, QueryUtils.getWikicatYAGOTypeName(typeStrings.get(randomIndex)));
+            }
+        }
+    }
+
+    static void getEasySiblingTypesForResource(DBPediaResource answer, List<String> sisterTypes) {
+        String queryString = Constants.PREFIX_RDFS + Constants.PREFIX_OWL;
+        String resource = "<" + answer.getURI() + ">";
+        queryString += "SELECT DISTINCT ?dName ?aName WHERE {\n" +
+                resource + " a ?t .\n" +
+                resource + " a ?a .\n" +
+                " ?t a owl:Class .\n" +
+                " ?a a owl:Class .\n" +
+                " ?d a owl:Class .\n" +
+                " ?d rdfs:label ?dName .\n" +
+                " ?a rdfs:label ?aName .\n" +
+                " ?d rdfs:subClassOf ?t .\n" +
+                " filter (langMatches(lang(?aName), \"EN\")) .\n" +
+                " filter (langMatches(lang(?dName), \"EN\")) .\n" +
+                " filter not exists{?s rdfs:subClassOf ?a}\n" +
+                " filter not exists{" + resource + " a ?d .}\n" +
+                "} order by rand() limit 3";
+
+        ResultSet resultSet = null;
+        try {
+            resultSet = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        RDFNode answerType = null;
+        if (resultSet != null) {
+            while (resultSet.hasNext()) {
+                QuerySolution result = resultSet.next();
+                if (result != null) {
+                    answerType = result.get("aName");
+                    RDFNode distractor = result.get("dName");
+                    String literal = QueryUtils.getStringLiteral(distractor);
+                    if (literal != null) {
+                        sisterTypes.add(literal);
+                    }
+                }
+            }
+            String literal = QueryUtils.getStringLiteral(answerType);
+            if (literal != null) {
+                sisterTypes.add(0, literal);
+            }
+        }
+    }
+
+    static List<String> getEasySiblingTypesFromSpotlightTypes(DBPediaResource answer, List<String> sisterTypes, String types) {
+        String[] typesArray = types.split(",");
+        List<String> resourceTypeList = Arrays.asList(typesArray);
+        resourceTypeList = resourceTypeList.stream().filter(type -> type.toLowerCase().contains(Constants.DBPEDIA)).collect(Collectors.toList());
+        if (resourceTypeList != null) {
+            int size = resourceTypeList.size();
+            sisterTypes.add(QueryUtils.getLabelOfSpotlightType(resourceTypeList.get(size - 1)));
+            for (int i = size - 1; i > 0; i--) {
+                String type = resourceTypeList.get(i);
+                String superType = resourceTypeList.get(i - 1);
+                String queryString =
+                        Constants.PREFIX_RDF + Constants.PREFIX_RDFS + Constants.PREFIX_OWL;
+                queryString = QueryUtils.addNsAndType(queryString, type, false);
+                queryString = QueryUtils.addNsAndType(queryString, superType, false);
+                type = QueryUtils.getNsAndTypeForSpotlightType(type);
+                superType = QueryUtils.getNsAndTypeForSpotlightType(superType);
+
+                queryString += "SELECT DISTINCT ?name FROM <http://dbpedia.org> WHERE {\n" +
+                        //                            "<" + answer.getURI() + "> a " + type + " .\n" +
+                        " ?t a owl:Class .\n" +
+                        " ?t rdfs:subClassOf " + superType + " .\n" +
+                        " ?t rdfs:label ?name .\n" +
+                        " filter (?t != " + type + ") .\n" +
+                        " filter (langMatches(lang(?name), \"EN\")) ." +
+                        " filter not exists {<" + answer.getURI() + "> a ?t } ." +
+                        "} order by rand() limit 3";
+                ResultSet resultSet = null;
+                try {
+                    resultSet = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                QueryUtils.addResultsToList(resultSet, sisterTypes, "name");
+                if (sisterTypes.size() == 4) {
+                    break;
+                } else if (sisterTypes.size() > 4) {
+                    sisterTypes = sisterTypes.subList(0, 4);
+                }
+            }
+        }
+        return sisterTypes;
     }
 }

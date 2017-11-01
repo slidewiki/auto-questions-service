@@ -24,7 +24,7 @@ public class QueryUtils {
     static String getBaseTypeForEasy(DBPediaResource resource) {
         String baseType = "";
         if (!resource.getTypes().isEmpty()) {
-            baseType = QueryUtils.getMostSpecificSpotlightType(resource.getTypes());
+            baseType = getMostSpecificSpotlightType(resource.getTypes());
         } else {
             List<String> specificTypes = Queries.getNMostSpecificTypes(resource.getURI(), 1, true);
             if (!specificTypes.isEmpty()) {
