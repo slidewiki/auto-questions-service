@@ -2,6 +2,7 @@ package de.bonn.eis.controller;
 
 import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
+import rita.RiWordNet;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,6 +29,13 @@ public class LanguageProcessor {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    static List<String> attemptToGetSynonyms(RiWordNet wordnet, String surfaceForm) {
+        List<String> synList;
+        String[] synonyms = wordnet.getAllSynonyms(surfaceForm, RiWordNet.NOUN);
+        synList = Arrays.asList(synonyms);
+        return synList;
     }
 
     public List<String> getSentences() {

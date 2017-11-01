@@ -3,7 +3,7 @@ package de.bonn.eis.utils;
 /**
  * Created by andy on 10/31/17.
  */
-public class SPARQLConsts {
+public class Constants {
     public static final String DBPEDIA_URL = "http://dbpedia.org";
     public static final String DBPEDIA_SPARQL_SERVICE = DBPEDIA_URL + "/sparql/";
     public static final String DBPEDIA_ONTOLOGY = DBPEDIA_URL + "/ontology/";
@@ -27,4 +27,6 @@ public class SPARQLConsts {
     public static final String PREFIX_DBPEDIA_PROPERTY = "PREFIX dbp-prop:<http://dbpedia.org/property/>";
     public static final String DBPEDIA_PAGE_RANK = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
     public static final String PAGE_RANK_GRAPH = "http://people.aifb.kit.edu/ath/#DBpedia_PageRank";
+    public static String LEVEL_EASY = "easy";
+    public static String LEVEL_HARD = "hard";
 }

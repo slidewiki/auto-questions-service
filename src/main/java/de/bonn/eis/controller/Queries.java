@@ -1,7 +1,7 @@
 package de.bonn.eis.controller;
 
 import de.bonn.eis.model.LinkSUMResultRow;
-import de.bonn.eis.utils.SPARQLConsts;
+import de.bonn.eis.utils.Constants;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFactory;
@@ -16,14 +16,14 @@ import java.util.List;
 public class Queries {
     static int getTypeDepth(String type) {
         String queryString =
-                SPARQLConsts.PREFIX_RDF + SPARQLConsts.PREFIX_FOAF + SPARQLConsts.PREFIX_RDFS +
+                Constants.PREFIX_RDF + Constants.PREFIX_FOAF + Constants.PREFIX_RDFS +
                         "SELECT DISTINCT ?path FROM <http://dbpedia.org> WHERE {\n" +
                         "<" + type + "> rdfs:subClassOf* ?path . }";
 
         ResultSet results;
         int count = 0;
         try {
-            results = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            results = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
             while (results.hasNext()) {
                 results.next();
                 count++;
@@ -34,16 +34,16 @@ public class Queries {
         return count;
     }
 
-    static List<String> getNPopularDistractorsForBaseType(String uri, String baseType, int n) {
+    static List<String> getNPopularDistractorsForBaseTypeAndTriples(String uri, String baseType, int n) {
         List<String> distractors = new ArrayList<>();
         float answerPop = QueryUtils.getVRankOfResource(uri);
         uri = "<" + uri + ">";
         baseType = "<" + baseType + ">";
         String var = "label";
-        String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_FOAF + SPARQLConsts.PREFIX_RDF + SPARQLConsts.PREFIX_VRANK + SPARQLConsts.PREFIX_DBPEDIA_ONTOLOGY +
+        String queryString = Constants.PREFIX_RDFS + Constants.PREFIX_FOAF + Constants.PREFIX_RDF + Constants.PREFIX_VRANK + Constants.PREFIX_DBPEDIA_ONTOLOGY +
                 "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
                 "{?d rdfs:label ?dlabel .}\n" +
-                SPARQLConsts.UNION +
+                Constants.UNION +
                 "{?d foaf:name ?dlabel .}\n" +
                 "{\n" +
                 "select distinct ?d (ABS(" + answerPop + " - ?v) AS ?sd) where {\n" +
@@ -60,7 +60,7 @@ public class Queries {
                 "} group by ?d ?sd order by (?sd) limit " + n;
 
         try {
-            ResultSet results = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE, SPARQLConsts.PAGE_RANK_GRAPH);
+            ResultSet results = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE, Constants.PAGE_RANK_GRAPH);
             distractors = QueryUtils.getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -69,7 +69,7 @@ public class Queries {
     }
 
     static List<String> getNMostSpecificTypes(String resourceURI, int n, boolean owlClassOnly) {
-        String queryString = SPARQLConsts.PREFIX_RDFS;
+        String queryString = Constants.PREFIX_RDFS;
         String variableName = "type";
         resourceURI = "<" + resourceURI + ">";
 
@@ -78,10 +78,10 @@ public class Queries {
                 " select distinct ?" + variableName + " where {\n" +
                 resourceURI + " a ?" + variableName + " .\n";
         if (owlClassOnly) {
-            queryString = SPARQLConsts.PREFIX_OWL + queryString;
+            queryString = Constants.PREFIX_OWL + queryString;
             queryString += "?" + variableName + " a owl:Class .\n";
         } else {
-            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_URL + "\"))";
+            queryString += "FILTER (strstarts(str(?" + variableName + "), \"" + Constants.DBPEDIA_URL + "\"))";
         }
         queryString += " }\n" +
                 " }\n" +
@@ -90,7 +90,7 @@ public class Queries {
 
         ResultSet resultSet = null;
         try {
-            resultSet = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            resultSet = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -98,7 +98,7 @@ public class Queries {
     }
 
     static List<String> getNMostSpecificYAGOTypesForDepthRange(String resourceURI, int n, int depthLowerBound, int depthUpperBound) {
-        String queryString = SPARQLConsts.PREFIX_RDFS;
+        String queryString = Constants.PREFIX_RDFS;
         String variableName = "type";
         resourceURI = "<" + resourceURI + ">";
         queryString += "SELECT ?" + variableName + " ?count WHERE {\n" +
@@ -107,8 +107,8 @@ public class Queries {
                 "  {\n" +
                 "   select distinct ?" + variableName + " where {\n" +
                 resourceURI + " a ?" + variableName + " .\n" +
-                "   filter (strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_URL + "\"))\n" +
-                "   filter (!strstarts(str(?" + variableName + "), \"" + SPARQLConsts.DBPEDIA_CLASS_YAGO_WIKICAT + "\"))\n" +
+                "   filter (strstarts(str(?" + variableName + "), \"" + Constants.DBPEDIA_URL + "\"))\n" +
+                "   filter (!strstarts(str(?" + variableName + "), \"" + Constants.DBPEDIA_CLASS_YAGO_WIKICAT + "\"))\n" +
                 "  }\n" +
                 " }\n" +
                 " ?" + variableName + " rdfs:subClassOf* ?path .\n" +
@@ -126,7 +126,7 @@ public class Queries {
 //            e.printStackTrace();
 //        }
 
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQLConsts.DBPEDIA_SPARQL_SERVICE, queryString);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(Constants.DBPEDIA_SPARQL_SERVICE, queryString);
         qExec.addDefaultGraph("http://dbpedia.org");
         ResultSet resultSet = null;
         try {
@@ -142,11 +142,11 @@ public class Queries {
 
     static List<LinkSUMResultRow> getLinkSUMForResource(String resourceURI) {
         resourceURI = "<" + resourceURI + ">";
-        String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_VRANK + SPARQLConsts.PREFIX_DBPEDIA_ONTOLOGY + SPARQLConsts.PREFIX_DBPEDIA_PROPERTY +
+        String queryString = Constants.PREFIX_RDFS + Constants.PREFIX_VRANK + Constants.PREFIX_DBPEDIA_ONTOLOGY + Constants.PREFIX_DBPEDIA_PROPERTY +
                 "SELECT distinct (SAMPLE (?s) AS ?subject) (SAMPLE (?p) AS ?pred) (SAMPLE(?o) AS ?object) " +
                 "(SAMPLE(?slabel) AS ?sublabel) (SAMPLE (?plabel) AS ?predlabel) (SAMPLE(?olabel) AS ?oblabel) ?v \n" +
-                "FROM <" + SPARQLConsts.DBPEDIA_URL + "> \n" +
-                "FROM <" + SPARQLConsts.DBPEDIA_PAGE_RANK + "> \n" +
+                "FROM <" + Constants.DBPEDIA_URL + "> \n" +
+                "FROM <" + Constants.DBPEDIA_PAGE_RANK + "> \n" +
                 "WHERE {\n" +
                 "\t{\t" + resourceURI + " ?p ?o.\n" +
                 "\t\tFILTER regex(str(?o),\"http://dbpedia.org/resource\",\"i\").\n" +
@@ -179,8 +179,8 @@ public class Queries {
 //        }
 
 //        String DBPEDIA_SPARQL_SERVICE = "http://dbpedia.org/sparql/";
-        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(SPARQLConsts.DBPEDIA_SPARQL_SERVICE, queryString);
-        qExec.addDefaultGraph(SPARQLConsts.DBPEDIA_URL);
+        QueryEngineHTTP qExec = (QueryEngineHTTP) QueryExecutionFactory.sparqlService(Constants.DBPEDIA_SPARQL_SERVICE, queryString);
+        qExec.addDefaultGraph(Constants.DBPEDIA_URL);
         ResultSet resultSet = null;
         try {
             resultSet = qExec.execSelect();
@@ -203,7 +203,7 @@ public class Queries {
         return QueryUtils.getResultSetAsObjectList(resultSet);
     }
 
-    static List<String> getNPopularDistractorsForBaseType(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second, int n, int level) {
+    static List<String> getNPopularDistractorsForBaseTypeAndTriples(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second, int n, int level) {
         List<String> distractors = new ArrayList<>();
         float answerPop = QueryUtils.getVRankOfResource(uri);
         uri = "<" + uri + ">";
@@ -216,14 +216,14 @@ public class Queries {
         String p2 = second.getPredicate() != null ? "<" + second.getPredicate() + "> " : null;
         String o2 = second.getObject() != null ? "<" + second.getObject() + "> " : "?d ";
 
-        String queryString = SPARQLConsts.PREFIX_RDFS +
-                SPARQLConsts.PREFIX_FOAF +
-                SPARQLConsts.PREFIX_RDF +
-                SPARQLConsts.PREFIX_VRANK +
-                SPARQLConsts.PREFIX_DBPEDIA_ONTOLOGY +
+        String queryString = Constants.PREFIX_RDFS +
+                Constants.PREFIX_FOAF +
+                Constants.PREFIX_RDF +
+                Constants.PREFIX_VRANK +
+                Constants.PREFIX_DBPEDIA_ONTOLOGY +
                 "select distinct ?d (SAMPLE(?dlabel) AS ?" + var + ") where {" +
                 "{?d rdfs:label ?dlabel .}\n" +
-                SPARQLConsts.UNION +
+                Constants.UNION +
                 "{?d foaf:name ?dlabel .}\n" +
                 "{\n" +
                 "select distinct ?d (ABS(" + answerPop + " - ?v) AS ?sd) where {\n" +
@@ -258,7 +258,7 @@ public class Queries {
                         "} group by ?d ?sd order by (?sd) limit " + n;
 
         try {
-            ResultSet results = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE, SPARQLConsts.PAGE_RANK_GRAPH);
+            ResultSet results = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE, Constants.PAGE_RANK_GRAPH);
             distractors = QueryUtils.getResultSetAsStringList(results, var, true);
         } catch (Exception e) {
             e.printStackTrace();

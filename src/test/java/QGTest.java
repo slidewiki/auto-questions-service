@@ -27,7 +27,7 @@
 //
 //    @Test
 //    public void testQGen() {
-//        QuestionGenerator questionGenerator = new QuestionGenerator();
+//        QGenApplication questionGenerator = new QGenApplication();
 ////        when(questionGenerator.generateQuestionsForText(contentMock, contextMock)).thenReturn()
 //        try {
 //            if(questionGenerator == null){

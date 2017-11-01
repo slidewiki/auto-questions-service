@@ -2,7 +2,7 @@ package de.bonn.eis.controller;
 
 import de.bonn.eis.model.DBPediaResource;
 import de.bonn.eis.model.LinkSUMResultRow;
-import de.bonn.eis.utils.SPARQLConsts;
+import de.bonn.eis.utils.Constants;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Literal;
@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by andy on 10/31/17.
  */
 public class QueryUtils {
-    private static final String PREFIX_DBRES = "PREFIX dbres: <" + SPARQLConsts.DBPEDIA_ONTOLOGY + ">\n";
+    private static final String PREFIX_DBRES = "PREFIX dbres: <" + Constants.DBPEDIA_ONTOLOGY + ">\n";
     private static final String PREFIX_SCHEMA = "PREFIX schema: <http://schema.org/>\n";
     private static final String PREFIX_DUL = "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl>\n";
 
@@ -31,7 +31,7 @@ public class QueryUtils {
                 baseType = specificTypes.get(0);
             }
         }
-        if (baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(SPARQLConsts.OWL_PERSON) || Queries.getTypeDepth(baseType) <= 3) {
+        if (baseType == null || baseType.isEmpty() || baseType.equalsIgnoreCase(Constants.OWL_PERSON) || Queries.getTypeDepth(baseType) <= 3) {
             List<String> yagoTypes = null;
             int lowerBound = 11;
             while ((yagoTypes == null || yagoTypes.isEmpty()) && lowerBound > 3) {
@@ -53,7 +53,7 @@ public class QueryUtils {
     static float getVRankOfResource(String uri) {
         uri = "<" + uri + ">";
         String var = "v";
-        String queryString = SPARQLConsts.PREFIX_VRANK +
+        String queryString = Constants.PREFIX_VRANK +
                 "SELECT ?" + var + "\n" +
                 "FROM <http://dbpedia.org> \n" +
                 "FROM <http://people.aifb.kit.edu/ath/#DBpedia_PageRank> \n" +
@@ -62,7 +62,7 @@ public class QueryUtils {
                 "}\n";
 
         try {
-            ResultSet results = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            ResultSet results = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
             if (results != null) {
                 while (results.hasNext()) {
                     QuerySolution result = results.next();
@@ -113,17 +113,17 @@ public class QueryUtils {
 
     static String getLabelOfType(String type) {
         type = "<" + type + ">";
-        String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_FOAF;
+        String queryString = Constants.PREFIX_RDFS + Constants.PREFIX_FOAF;
         String variable = "name";
         queryString += "SELECT ?" + variable + " FROM <http://dbpedia.org> WHERE {\n" +
                 "{" + type + " rdfs:label ?name .}\n" +
-                SPARQLConsts.UNION +
+                Constants.UNION +
                 "{" + type + " foaf:name ?name .}\n" +
                 " filter (langMatches(lang(?name), \"EN\")) ." +
                 "}";
         ResultSet results = null;
         try {
-            results = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            results = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -197,14 +197,14 @@ public class QueryUtils {
 
     static String getLabelOfSpotlightType(String type) {
         String nsAndType = getNsAndTypeForSpotlightType(type);
-        String queryString = SPARQLConsts.PREFIX_RDFS + PREFIX_DBRES;
+        String queryString = Constants.PREFIX_RDFS + PREFIX_DBRES;
         queryString += "SELECT ?name FROM <http://dbpedia.org> WHERE {\n" +
                 nsAndType + " rdfs:label ?name .\n" +
                 " filter (langMatches(lang(?name), \"EN\")) ." +
                 "}";
         ResultSet results = null;
         try {
-            results = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+            results = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -259,7 +259,7 @@ public class QueryUtils {
         } else if (namespace.equalsIgnoreCase("dul")) {
             prefix = PREFIX_DUL;
         } else if (namespace.equalsIgnoreCase("wikidata")) {
-            prefix = SPARQLConsts.PREFIX_WIKIDATA;
+            prefix = Constants.PREFIX_WIKIDATA;
         }
         if (!queryString.contains(prefix)) {
             queryString = prefix + queryString;
@@ -269,7 +269,7 @@ public class QueryUtils {
 
     static String getWikicatYAGOTypeName(String type) {
         StringBuilder stringBuilder = new StringBuilder();
-        boolean containsYago = type.toLowerCase().contains(SPARQLConsts.YAGO);
+        boolean containsYago = type.toLowerCase().contains(Constants.YAGO);
         String[] typeArray = type.split("/");
         type = typeArray[typeArray.length - 1];
         // Split camel case or title case
@@ -278,10 +278,10 @@ public class QueryUtils {
         String prefixOne = "1";
         for (int i = 0; i < array.length; i++) {
             String s = array[i];
-            if (s.equalsIgnoreCase(SPARQLConsts.WIKICAT)) {
+            if (s.equalsIgnoreCase(Constants.WIKICAT)) {
                 continue;
             }
-            if (s.equalsIgnoreCase(SPARQLConsts.YAGO)) {
+            if (s.equalsIgnoreCase(Constants.YAGO)) {
                 containsYago = true;
                 continue;
             }
@@ -297,9 +297,9 @@ public class QueryUtils {
     static String getMostSpecificSpotlightType(String types) {
         String[] typeArray = types.split(",");
         for (int i = typeArray.length - 1; i >= 0; i--) {
-            if (typeArray[i].toLowerCase().contains(SPARQLConsts.DBPEDIA)) {
+            if (typeArray[i].toLowerCase().contains(Constants.DBPEDIA)) {
                 String ontologyName = typeArray[i].split(":")[1];
-                return SPARQLConsts.DBPEDIA_ONTOLOGY + ontologyName;
+                return Constants.DBPEDIA_ONTOLOGY + ontologyName;
             }
         }
         return null;

@@ -1,15 +1,17 @@
 package de.bonn.eis.controller;
 
-import de.bonn.eis.model.DBPediaResource;
-import de.bonn.eis.model.LinkSUMResultRow;
-import de.bonn.eis.model.WhoAmIQuestionStructure;
-import de.bonn.eis.utils.NLPConsts;
-import de.bonn.eis.utils.SPARQLConsts;
+import com.google.common.collect.ImmutableListMultimap;
+import de.bonn.eis.model.*;
+import de.bonn.eis.utils.Constants;
+import de.bonn.eis.utils.QGenLogger;
+import de.bonn.eis.utils.QGenUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.RDFNode;
 import rita.RiTa;
+import rita.RiWordNet;
 
+import javax.servlet.ServletContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,18 +21,118 @@ import java.util.stream.Collectors;
 /**
  * Created by Ainuddin Faizan on 1/3/17.
  */
-class DistractorGenerator {
-    static List<String> getExternalDistractors(DBPediaResource answer, String level) {
+class QuestionAndDistractorGenerator {
+    private static final String BLANK = "________";
+    private static final String SELECT_QUESTION_TEXT = " is a: ";
+
+    static List<QuestionSetPerSlide> getGapFillQuestions(String text, List<NlpProcessResults> nlpProcessResults, List<GapFillDistractor> distractorsPerResource) {
+        List<QuestionSetPerSlide> questionSetPerSlideList = new ArrayList<>();
+        QuestionSetPerSlide.QuestionSetPerSlideBuilder builder;
+        List<Question> questions;
+
+        if (text != null) {
+            builder = QuestionSetPerSlide.builder();
+            questions = getGapFillQuestionSetForText(text, distractorsPerResource);
+            builder.questionSet(questions);
+            questionSetPerSlideList.add(builder.build());
+        } else if (nlpProcessResults != null) {
+            // Each process result is for a slide
+            for (NlpProcessResults result : nlpProcessResults) {
+                builder = QuestionSetPerSlide.builder();
+                questions = getGapFillQuestionSetForText(result.getSlideTitleAndText(), distractorsPerResource);
+                builder.
+                        slideId(result.getSlideId()).
+                        questionSet(questions);
+                questionSetPerSlideList.add(builder.build());
+            }
+        }
+        return questionSetPerSlideList;
+    }
+
+    private static List<Question> getGapFillQuestionSetForText(String text, List<GapFillDistractor> distractorsPerResource) {
+        List<Question> gapFillQuestionSets = new ArrayList<>();
+        String cleanText = text.replaceAll("/\\s*(?:[\\dA-Z]+\\.|[a-z]\\)|•)+/gm", ". ");
+        cleanText = cleanText.replaceAll("/(\r\n|\n|\r)/gm", ". ");
+        cleanText = cleanText.replaceAll("\n", ". ");
+        LanguageProcessor processor = new LanguageProcessor(cleanText);
+        List<String> sentences = processor.getSentences();
+
+        for (String s : sentences) {
+            for (GapFillDistractor gapFillDistractor : distractorsPerResource) {
+                String resourceName = gapFillDistractor.getSurfaceForm();
+                String pluralResourceName = gapFillDistractor.getPluralSurfaceForm();
+                MCQQuestion.MCQQuestionBuilder builder = MCQQuestion.builder();
+                if (!s.equalsIgnoreCase(resourceName + ".") && QGenUtils.sourceHasWordIgnoreCase(s, resourceName)) {
+                    String questionText = s.replaceAll("(?i)\\b" + resourceName + "\\b", BLANK);
+                    if (QGenUtils.sourceHasWordIgnoreCase(s, pluralResourceName)) {
+                        questionText = questionText.replaceAll("(?i)\\b" + pluralResourceName + "\\b", BLANK);
+                        resourceName = resourceName + ", " + pluralResourceName;
+                    }
+                    List<String> inTextDistractors = gapFillDistractor.getInTextDistractors();
+                    String finalQuestionText = questionText;
+                    inTextDistractors = inTextDistractors.stream().filter(d -> !QGenUtils.sourceHasWordIgnoreCase(finalQuestionText, d)).collect(Collectors.toList());
+                    builder.
+                            questionText(questionText).
+                            answer(resourceName).
+                            inTextDistractors(inTextDistractors).
+                            externalDistractors(gapFillDistractor.getExternalDistractors());
+                    gapFillQuestionSets.add(builder.build());
+                }
+            }
+        }
+        if (gapFillQuestionSets.isEmpty()) {
+            return null;
+        }
+        return gapFillQuestionSets;
+    }
+
+    static List<GapFillDistractor> getGapFillDistractors(ServletContext servletContext, List<DBPediaResource> dbPediaResources, String level) {
+
+        List<GapFillDistractor> distractorsPerResource = new ArrayList<>();
+        String env = servletContext.getInitParameter("env");
+        boolean envIsDev = env == null || !env.equalsIgnoreCase("prod");
+
+        String dir = System.getProperty("user.dir");
+        RiWordNet wordnet = new RiWordNet(dir + "/wordnet/");
+
+        ImmutableListMultimap<String, DBPediaResource> mapOfGroupedResources = TextInfoRetriever.groupResourcesByType(dbPediaResources);
+        for (DBPediaResource resource : dbPediaResources) {
+            String surfaceForm = resource.getSurfaceForm();
+            String plural = RiTa.pluralize(surfaceForm);
+            if (envIsDev) {
+                QGenLogger.info(surfaceForm);
+            }
+            List<String> externalDistractors = getExternalDistractors(resource, level);
+            if (externalDistractors == null) {
+                externalDistractors = LanguageProcessor.attemptToGetSynonyms(wordnet, resource.getSurfaceForm());
+            }
+            List<String> inTextDistractors = mapOfGroupedResources.get(resource.getTypes()).stream().
+                    filter(res -> (!res.equals(resource) && !res.getSurfaceForm().equalsIgnoreCase(resource.getSurfaceForm())))
+                    .map(DBPediaResource::getSurfaceForm).collect(Collectors.toList());
+            QGenUtils.removeDuplicatesFromStringList(inTextDistractors);
+            GapFillDistractor.GapFillDistractorBuilder builder = GapFillDistractor.builder();
+            builder.
+                    surfaceForm(resource.getSurfaceForm()).
+                    pluralSurfaceForm(plural).
+                    resourceURI(resource.getURI()).
+                    inTextDistractors(inTextDistractors).
+                    externalDistractors(externalDistractors);
+            distractorsPerResource.add(builder.build());
+        }
+        return distractorsPerResource;
+    }
+
+    private static List<String> getExternalDistractors(DBPediaResource answer, String level) {
         List<String> resourceNames = new ArrayList<>();
 
-        if (level.equals(NLPConsts.LEVEL_EASY)) {
+        if (level.equals(Constants.LEVEL_EASY)) {
             String baseType = QueryUtils.getBaseTypeForEasy(answer);
-            return Queries.getNPopularDistractorsForBaseType(answer.getURI(), baseType, 3);
-        } else if (level.equals(NLPConsts.LEVEL_HARD)) {
+            return Queries.getNPopularDistractorsForBaseTypeAndTriples(answer.getURI(), baseType, 3);
+        } else if (level.equals(Constants.LEVEL_HARD)) {
             List<String> types = Queries.getNMostSpecificTypes(answer.getURI(), 5, false);
             List<String> distractors = new ArrayList<>();
             for (String type : types) {
-                distractors.addAll(Queries.getNPopularDistractorsForBaseType(answer.getURI(), type, 3));
+                distractors.addAll(Queries.getNPopularDistractorsForBaseTypeAndTriples(answer.getURI(), type, 3));
                 if (distractors.size() >= 3) {
                     return distractors.subList(0, 3);
                 }
@@ -39,14 +141,37 @@ class DistractorGenerator {
         return resourceNames;
     }
 
-    static List<String> getSelectQuestionDistractors(DBPediaResource answer, String level) {
+    static List<MCQQuestion> getSelectQuestions(List<DBPediaResource> resources, String level) {
+        if (resources != null && !resources.isEmpty()) {
+            List<MCQQuestion> selectQuestions = new ArrayList<>();
+            resources.forEach(resource -> {
+                MCQQuestion.MCQQuestionBuilder questionBuilder = MCQQuestion.builder();
+                List<String> answerAndDistractors = getSelectQuestionDistractors(resource, level);
+                if (answerAndDistractors != null && !answerAndDistractors.isEmpty()) {
+                    String answer = answerAndDistractors.get(0);
+                    if (!answer.trim().isEmpty()) {
+                        questionBuilder.questionText(resource.getSurfaceForm() + SELECT_QUESTION_TEXT)
+                                .answer(answer);
+                        if (answerAndDistractors.size() > 1) {
+                            questionBuilder.externalDistractors(answerAndDistractors.subList(1, answerAndDistractors.size()));
+                        }
+                        selectQuestions.add(questionBuilder.build());
+                    }
+                }
+            });
+            return selectQuestions;
+        }
+        return null;
+    }
+
+    private static List<String> getSelectQuestionDistractors(DBPediaResource answer, String level) {
         List<String> sisterTypes = new ArrayList<>();
-        if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
+        if (level.equalsIgnoreCase(Constants.LEVEL_EASY)) {
             String types = answer.getTypes();
             if (!types.isEmpty()) {
                 String[] typesArray = types.split(",");
                 List<String> resourceTypeList = Arrays.asList(typesArray);
-                resourceTypeList = resourceTypeList.stream().filter(type -> type.toLowerCase().contains(SPARQLConsts.DBPEDIA)).collect(Collectors.toList());
+                resourceTypeList = resourceTypeList.stream().filter(type -> type.toLowerCase().contains(Constants.DBPEDIA)).collect(Collectors.toList());
                 if (resourceTypeList != null) {
                     int size = resourceTypeList.size();
                     sisterTypes.add(QueryUtils.getLabelOfSpotlightType(resourceTypeList.get(size - 1)));
@@ -54,7 +179,7 @@ class DistractorGenerator {
                         String type = resourceTypeList.get(i);
                         String superType = resourceTypeList.get(i - 1);
                         String queryString =
-                                SPARQLConsts.PREFIX_RDF + SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_OWL;
+                                Constants.PREFIX_RDF + Constants.PREFIX_RDFS + Constants.PREFIX_OWL;
                         queryString = QueryUtils.addNsAndType(queryString, type, false);
                         queryString = QueryUtils.addNsAndType(queryString, superType, false);
                         type = QueryUtils.getNsAndTypeForSpotlightType(type);
@@ -71,7 +196,7 @@ class DistractorGenerator {
                                 "} order by rand() limit 3";
                         ResultSet resultSet = null;
                         try {
-                            resultSet = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+                            resultSet = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -84,7 +209,7 @@ class DistractorGenerator {
                     }
                 }
             } else {
-                String queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_OWL;
+                String queryString = Constants.PREFIX_RDFS + Constants.PREFIX_OWL;
                 String resource = "<" + answer.getURI() + ">";
                 queryString += "SELECT DISTINCT ?dName ?aName WHERE {\n" +
                         resource + " a ?t .\n" +
@@ -103,7 +228,7 @@ class DistractorGenerator {
 
                 ResultSet resultSet = null;
                 try {
-                    resultSet = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+                    resultSet = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -126,7 +251,7 @@ class DistractorGenerator {
                     }
                 }
             }
-        } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
+        } else if (level.equalsIgnoreCase(Constants.LEVEL_HARD)) {
             List<String> typeStrings = Queries.getNMostSpecificTypes(answer.getURI(), 10, false);
             //TODO Decide whether to use many types = distractors are of different types
             //TODO one type = distractors are of the same type e.g. all are rivers
@@ -135,7 +260,7 @@ class DistractorGenerator {
             }
             String queryString;
             ResultSet resultSet;
-            queryString = SPARQLConsts.PREFIX_RDFS + SPARQLConsts.PREFIX_FOAF;
+            queryString = Constants.PREFIX_RDFS + Constants.PREFIX_FOAF;
             queryString += "SELECT DISTINCT ?dName ?aName ?d FROM <http://dbpedia.org> WHERE {\n";
             for (String typeString : typeStrings) {
                 queryString += "{\n <" + typeString + "> rdfs:subClassOf ?st .\n" +
@@ -143,7 +268,7 @@ class DistractorGenerator {
                         " optional { <" + typeString + "> foaf:name ?aName. filter (langMatches(lang(?aName), \"EN\")) }\n" +
                         "}\n";
                 if (typeStrings.indexOf(typeString) != typeStrings.size() - 1) {
-                    queryString += SPARQLConsts.UNION;
+                    queryString += Constants.UNION;
                 }
             }
 
@@ -155,7 +280,7 @@ class DistractorGenerator {
 
             resultSet = null;
             try {
-                resultSet = SPARQLClient.runSelectQuery(queryString, SPARQLConsts.DBPEDIA_SPARQL_SERVICE);
+                resultSet = SPARQLClient.runSelectQuery(queryString, Constants.DBPEDIA_SPARQL_SERVICE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -204,7 +329,26 @@ class DistractorGenerator {
         return singleTypes;
     }
 
-    static WhoAmIQuestionStructure getWhoAmIQuestionAndDistractors(DBPediaResource resource, String level) {
+    static List<MCQQuestion> getWhoamIQuestions(List<DBPediaResource> dbPediaResources, String level) {
+        if (dbPediaResources != null && !dbPediaResources.isEmpty()) {
+            List<MCQQuestion> questions = new ArrayList<>();
+            dbPediaResources.forEach(resource -> {
+                WhoAmIQuestionStructure whoAmIQuestionStructureAndAnswers = getWhoAmIQuestionAndDistractors(resource, level);
+                if (whoAmIQuestionStructureAndAnswers != null) {
+                    MCQQuestion.MCQQuestionBuilder builder = MCQQuestion.builder();
+                    builder
+                            .questionText(whoAmIQuestionStructureAndAnswers.getQuestion())
+                            .answer(whoAmIQuestionStructureAndAnswers.getAnswer())
+                            .externalDistractors(whoAmIQuestionStructureAndAnswers.getDistractors());
+                    questions.add(builder.build());
+                }
+            });
+            return questions;
+        }
+        return null;
+    }
+
+    private static WhoAmIQuestionStructure getWhoAmIQuestionAndDistractors(DBPediaResource resource, String level) {
         String uri = resource.getURI();
         List<String> mostSpecificTypes = Queries.getNMostSpecificTypes(uri, 1, true);
         String baseType = "";
@@ -212,7 +356,7 @@ class DistractorGenerator {
         if (mostSpecificTypes != null && !mostSpecificTypes.isEmpty()) {
             baseType = mostSpecificTypes.get(0);
         }
-        if (baseType.isEmpty() || baseType.equalsIgnoreCase(SPARQLConsts.OWL_PERSON)) {
+        if (baseType.isEmpty() || baseType.equalsIgnoreCase(Constants.OWL_PERSON)) {
             List<String> yagoTypes = Queries.getNMostSpecificYAGOTypesForDepthRange(uri, 10, 11, 14);
             if (!yagoTypes.isEmpty()) {
                 int randomIndex = ThreadLocalRandom.current().nextInt(yagoTypes.size());
@@ -249,7 +393,7 @@ class DistractorGenerator {
             });
             linkSUMResults = tempResults;
             int size = linkSUMResults.size();
-            if (level.equalsIgnoreCase(NLPConsts.LEVEL_EASY)) {
+            if (level.equalsIgnoreCase(Constants.LEVEL_EASY)) {
                 int bound = size <= 10 ? size : 10;
                 randomIndex = ThreadLocalRandom.current().nextInt(bound);
                 linkSUMResultRow = linkSUMResults.get(randomIndex);
@@ -270,10 +414,10 @@ class DistractorGenerator {
                     i--;
                 }
                 secondLinkSUMResultRow.getWhoAmIFromLinkSUMRow(builder, 2);
-                List<String> distractors = Queries.getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 1);
+                List<String> distractors = Queries.getNPopularDistractorsForBaseTypeAndTriples(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 1);
                 builder.distractors(distractors);
 
-            } else if (level.equalsIgnoreCase(NLPConsts.LEVEL_HARD)) {
+            } else if (level.equalsIgnoreCase(Constants.LEVEL_HARD)) {
                 linkSUMResultRow = WhoAmIHelper.getHardPropertyForWhoAmI(linkSUMResults);
                 linkSUMResultRow.getWhoAmIFromLinkSUMRow(builder, 1);
 
@@ -286,11 +430,11 @@ class DistractorGenerator {
                     i--;
                 }
                 secondLinkSUMResultRow.getWhoAmIFromLinkSUMRow(builder, 2);
-                List<String> distractors = Queries.getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 2);
+                List<String> distractors = Queries.getNPopularDistractorsForBaseTypeAndTriples(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3, 2);
                 if (distractors.isEmpty() || distractors.size() < 3) {
-                    distractors.addAll(Queries.getNPopularDistractorsForBaseType(uri, baseType, secondLinkSUMResultRow, linkSUMResultRow, 3 - distractors.size(), 2));
+                    distractors.addAll(Queries.getNPopularDistractorsForBaseTypeAndTriples(uri, baseType, secondLinkSUMResultRow, linkSUMResultRow, 3 - distractors.size(), 2));
                     if (distractors.isEmpty() || distractors.size() < 3) {
-                        distractors.addAll(Queries.getNPopularDistractorsForBaseType(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3 - distractors.size(), 1));
+                        distractors.addAll(Queries.getNPopularDistractorsForBaseTypeAndTriples(uri, baseType, linkSUMResultRow, secondLinkSUMResultRow, 3 - distractors.size(), 1));
                     }
                 }
                 builder.distractors(distractors);
