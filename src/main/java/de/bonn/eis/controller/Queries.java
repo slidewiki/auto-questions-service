@@ -40,7 +40,7 @@ public class Queries {
         return count;
     }
 
-    static List<String> getNPopularDistractorsForBaseTypeAndTriples(String uri, String baseType, int n) {
+    static List<String> getDistractorsByPopularityForBaseType(String uri, String baseType, int n) {
         List<String> distractors = new ArrayList<>();
         float answerPop = QueryUtils.getVRankOfResource(uri);
         uri = "<" + uri + ">";
@@ -209,7 +209,7 @@ public class Queries {
         return QueryUtils.getResultSetAsObjectList(resultSet);
     }
 
-    static List<String> getNPopularDistractorsForBaseTypeAndTriples(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second, int n, int level) {
+    static List<String> getDistractorsByPopularityForBaseType(String uri, String baseType, LinkSUMResultRow first, LinkSUMResultRow second, int n, int level) {
         List<String> distractors = new ArrayList<>();
         float answerPop = QueryUtils.getVRankOfResource(uri);
         uri = "<" + uri + ">";

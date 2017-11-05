@@ -58,21 +58,22 @@ public class QGenApplication {
                         }
                     }
                     resources = temp;
+                    QuestionAndDistractorGenerator questionAndDistractorGenerator = new QuestionAndDistractorGenerator(servletContext, resources, level);
                     if (type.equals(GAP_FILL)) {
-                        List<GapFillDistractor> distractors = QuestionAndDistractorGenerator.getGapFillDistractors(servletContext, resources, level);
-                        List<QuestionSetPerSlide> gapFillQuestionSets = QuestionAndDistractorGenerator.getGapFillQuestions(null, nlp.getChildren(), distractors);
+                        List<GapFillDistractor> distractors = questionAndDistractorGenerator.getGapFillDistractors();
+                        List<QuestionSetPerSlide> gapFillQuestionSets = questionAndDistractorGenerator.getGapFillQuestions(null, nlp.getChildren(), distractors);
                         if (gapFillQuestionSets != null) {
                             return Response.status(200).entity(gapFillQuestionSets).build();
                         }
                     }
                     if (type.equals(SELECT)) {
-                        List<MCQQuestion> selectQuestions = QuestionAndDistractorGenerator.getSelectQuestions(resources, level);
+                        List<MCQQuestion> selectQuestions = questionAndDistractorGenerator.getSelectQuestions();
                         if (selectQuestions != null) {
                             return Response.status(200).entity(selectQuestions).build();
                         }
                     }
                     if (type.equals(WHO_AM_I)) {
-                        List<MCQQuestion> questions = QuestionAndDistractorGenerator.getWhoamIQuestions(resources, level);
+                        List<MCQQuestion> questions = questionAndDistractorGenerator.getWhoamIQuestions();
                         if (questions != null) {
                             return Response.status(200).entity(questions).build();
                         }
@@ -98,21 +99,22 @@ public class QGenApplication {
         List<DBPediaResource> dbPediaResources = retriever.getDbPediaResources();
         if (dbPediaResources != null && !dbPediaResources.isEmpty()) {
             resources.addAll(retriever.getFrequentWords(NO_OF_FREQUENT_RESOURCES).keySet());
+            QuestionAndDistractorGenerator questionAndDistractorGenerator = new QuestionAndDistractorGenerator(servletContext, resources, level);
             if (type.equals(GAP_FILL)) {
-                List<GapFillDistractor> distractors = QuestionAndDistractorGenerator.getGapFillDistractors(servletContext, resources, level);
-                List<QuestionSetPerSlide> gapFillQuestionSets = QuestionAndDistractorGenerator.getGapFillQuestions(text, null, distractors);
+                List<GapFillDistractor> distractors = questionAndDistractorGenerator.getGapFillDistractors();
+                List<QuestionSetPerSlide> gapFillQuestionSets = questionAndDistractorGenerator.getGapFillQuestions(text, null, distractors);
                 if (gapFillQuestionSets != null) {
                     return Response.status(200).entity(gapFillQuestionSets).build();
                 }
             }
             if (type.equals(SELECT)) {
-                List<MCQQuestion> selectQuestions = QuestionAndDistractorGenerator.getSelectQuestions(resources, level);
+                List<MCQQuestion> selectQuestions = questionAndDistractorGenerator.getSelectQuestions();
                 if (selectQuestions != null) {
                     return Response.status(200).entity(selectQuestions).build();
                 }
             }
             if (type.equals(WHO_AM_I)) {
-                List<MCQQuestion> questions = QuestionAndDistractorGenerator.getWhoamIQuestions(resources, level);
+                List<MCQQuestion> questions = questionAndDistractorGenerator.getWhoamIQuestions();
                 if (questions != null) {
                     return Response.status(200).entity(questions).build();
                 }
