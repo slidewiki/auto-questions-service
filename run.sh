@@ -1,23 +1,9 @@
 #!/usr/bin/env bash
-env=""
-if [ "$#" -eq 1 ]; then
-    if [ "$1" = "prod" ]; then
-        env="$1"
-        echo "$env"
-    fi
-fi
 
 cd 'mytomcatdocker'
 
-if [ "$env" != "prod" ]; then
-    docker pull andyfaizan/tomcat-dev # image on docker hub; building not required
-    docker run --rm --name tomcat-dev -p 8080:8080 andyfaizan/tomcat-dev &
-else
-    ### Scenario 2 ###
-    # Running this docker container with another container for spotlight on the same host
-    docker pull andyfaizan/tomcat-prod
-    docker run --rm --link spotlight:english_spotlight --name tomcat -p 8080:8080 andyfaizan/tomcat-prod &
-fi
+docker pull andyfaizan/tomcat-dev # image on docker hub; building not required
+docker run --rm --name tomcat-dev -p 8080:8080 andyfaizan/tomcat-dev &
 
 cd '..'
 

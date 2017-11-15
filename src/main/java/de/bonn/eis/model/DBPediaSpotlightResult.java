@@ -30,7 +30,6 @@ import java.util.Map;
 })
 public class DBPediaSpotlightResult implements Serializable {
 
-    private final static long serialVersionUID = -4700003125831217985L;
     @JsonProperty("@text")
     private String text;
     @JsonProperty("@confidence")
