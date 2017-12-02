@@ -23,11 +23,14 @@ public class WhoAmIVerbaliser implements Verbaliser{
     private static final String IS = " is ";
     private static final String SUCCESSOR = "successor";
     private static final String PREDECESSOR = "predecessor";
+    private static final String BEFORE = "before";
+    private static final String AFTER = "after";
     private static final String SPACE = " ";
     private static final String I_AM_THE = "I am the ";
     private static final String INFLUENCED = "influenced";
     private static final String WHO_AM_I = "Who am I?";
     private static final String KNOWN_FOR = "known for";
+    private static final String NAMED_FOR = "named for";
     private static final String ME = " me";
     private static final String I_AM_AN = "I am an ";
     private Map<String, String> predicateToPhraseMap;
@@ -121,7 +124,18 @@ public class WhoAmIVerbaliser implements Verbaliser{
                             append(predicate).
                             append(SPACE).
                             append(object);
-                } else  if (predicate.endsWith("er") ||
+                } else if(predicate.equalsIgnoreCase(NAMED_FOR)) {
+                    questionText.append(object).
+                            append(IS).
+                            append(predicate).
+                            append(ME);
+                } else if(predicate.equalsIgnoreCase(BEFORE)
+                        || predicate.equalsIgnoreCase(AFTER)){
+                    questionText.append(I_AM_THE).
+                            append(predicate.equalsIgnoreCase(BEFORE) ? PREDECESSOR : SUCCESSOR).
+                            append(OF).
+                            append(object);
+                } else if (predicate.endsWith("er") ||
                         predicate.endsWith("or")){
                     if(predicate.equalsIgnoreCase(SUCCESSOR)
                             || predicate.equalsIgnoreCase(PREDECESSOR)){
@@ -160,7 +174,12 @@ public class WhoAmIVerbaliser implements Verbaliser{
                             append(predicate).
                             append(SPACE).
                             append(ME);
-                } else  if (predicate.endsWith("er") ||
+                } else if(predicate.equalsIgnoreCase(BEFORE)
+                        || predicate.equalsIgnoreCase(AFTER)){
+                    questionText.append(subject).
+                            append(" is my ").
+                            append(predicate.equalsIgnoreCase(BEFORE) ? PREDECESSOR : SUCCESSOR);
+                } else if (predicate.endsWith("er") ||
                         predicate.endsWith("or")){
                     if(predicate.equalsIgnoreCase(SUCCESSOR)
                             || predicate.equalsIgnoreCase(PREDECESSOR)){

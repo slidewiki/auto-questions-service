@@ -60,4 +60,14 @@ public class QGenUtils {
 
         return s1.equals(s2);
     }
+
+    public static List<DBPediaResource> getEntitiesOfType(List<DBPediaResource> resources, String type) {
+        List<DBPediaResource> typeEntities = new ArrayList<>();
+        for (DBPediaResource resource : resources) {
+            if (resource.getTypes().contains(type)) {
+                typeEntities.add(resource);
+            }
+        }
+        return typeEntities;
+    }
 }

@@ -33,8 +33,12 @@ public class TextInfoRetriever {
         dbPediaResources = response.getDBPediaResources();
     }
 
+    public TextInfoRetriever(List<DBPediaResource> dbPediaResources) {
+        this.dbPediaResources = dbPediaResources;
+    }
+
     /**
-     * @param n Number of frequent words desired. Pass 0 to get all words
+     * @param n Number of frequent resources desired. Pass 0 to get all words
      * @return A Map of most frequent de.bonn.eis.model.DBPediaResource objects and their count in Integer
      */
     public Map<DBPediaResource, Integer> getFrequentWords(int n) {
@@ -42,13 +46,11 @@ public class TextInfoRetriever {
         Map<String, Integer> wordFrequencyPairs = new LinkedHashMap<>();
         Map<String, DBPediaResource> frequentResources = new LinkedHashMap<>();
 
-        // get frequency of each unique word
+        // get frequency of each unique resource
         for (DBPediaResource dbPediaResource : dbPediaResources) {
-//            if (Double.parseDouble(dbPediaResource.getPercentageOfSecondRank()) < 0.5) {
-                int frequency = wordFrequencyPairs.getOrDefault(dbPediaResource.getSurfaceForm(), 0) + 1;
-                wordFrequencyPairs.put(dbPediaResource.getSurfaceForm(), frequency);
-                frequentResources.putIfAbsent(dbPediaResource.getSurfaceForm(), dbPediaResource);
-//            }
+                int frequency = wordFrequencyPairs.getOrDefault(dbPediaResource.getURI(), 0) + 1;
+                wordFrequencyPairs.put(dbPediaResource.getURI(), frequency);
+                frequentResources.putIfAbsent(dbPediaResource.getURI(), dbPediaResource);
         }
 
         Map<String, Integer> sortedMap = QGenUtils.sortMap(wordFrequencyPairs);

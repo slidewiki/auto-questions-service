@@ -38,25 +38,12 @@ public class QGenApplication {
             if (spotlightResults != null) {
                 List<DBPediaResource> resources = spotlightResults.getDBPediaResources();
                 if (resources != null && !resources.isEmpty()) {
-                    resources = QGenUtils.removeDuplicatesFromResourceList(resources);
-//                    List<Frequency> frequencies = nlp.getDBPediaSpotlightURIFrequencies();
                     List<DBPediaResource> temp = new ArrayList<>();
-//                    for (Frequency frequency : frequencies) {
-                        for (DBPediaResource resource : resources) {
-//                            if (resource.getURI().equals(frequency.getEntry())) {
-                                if (type.equals(WHO_AM_I)) {
-                                    if (resource.getTypes().contains(DBPEDIA_PERSON)) {
-                                        temp.add(resource);
-                                    }
-                                } else {
-                                    temp.add(resource);
-                                }
-//                            }
-                            if (temp.size() == NO_OF_FREQUENT_RESOURCES) {
-                                break;
-                            }
-                        }
-//                    }
+                    if(type.equals(WHO_AM_I)) {
+                        resources = QGenUtils.getEntitiesOfType(resources, DBPEDIA_PERSON);
+                    }
+                    TextInfoRetriever retriever = new TextInfoRetriever(resources);
+                    temp.addAll(retriever.getFrequentWords(NO_OF_FREQUENT_RESOURCES).keySet());
                     resources = temp;
                     QuestionAndDistractorGenerator questionAndDistractorGenerator = new QuestionAndDistractorGenerator(servletContext, resources, level);
                     if (type.equals(GAP_FILL)) {
