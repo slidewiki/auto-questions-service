@@ -25,11 +25,11 @@
                 <artifactId>tomcat7-maven-plugin</artifactId>
                 <version>2.2</version>
                 <configuration>
-                    <url>http://localhost:8080/manager/text</url>
+                    <url>https://cryptic-chamber-76097.herokuapp.com/manager/text</url>
                     <server>TomcatServer</server>
                     <path>/</path>
-                    <username>admin</username>
-                    <password>admin</password>
+                    <username>andyfaizan</username>
+                    <password>bonn-slidewiki</password>
                 </configuration>
             </plugin>
             <plugin>
