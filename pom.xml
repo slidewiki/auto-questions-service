@@ -84,7 +84,7 @@
         <jsoup.version>1.10.2</jsoup.version>
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
         <inflector.version>0.7.0</inflector.version>
-        <opennlp-tools.version>1.7.2</opennlp-tools.version>
+        <opennlp-tools.version>1.8.2</opennlp-tools.version>
     </properties>
 
     <dependencies>
